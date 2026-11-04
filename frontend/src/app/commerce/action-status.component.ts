@@ -3,7 +3,12 @@ import { createAction } from './ui';
 @Component({
   selector: 'app-action-status',
   standalone: true,
-  template: `@if (action().error()) {
+  template: `@if (action().busy() && !action().message()) {
+      <p class="note" role="status" aria-live="polite">
+        Processando solicitação. Não feche esta página enquanto a confirmação estiver pendente.
+      </p>
+    }
+    @if (action().error()) {
       <p class="note error" role="alert">{{ action().error() }}</p>
     }
     @if (action().uncertain()) {
