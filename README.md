@@ -16,6 +16,8 @@ Abra a porta **8080** na aba **Ports**. O script compila e sobe o app completo n
 
 Instruções completas: [docs/CODESPACE.md](docs/CODESPACE.md). Fluxos, papéis e limites: [docs/OPERACAO.md](docs/OPERACAO.md).
 
+**Hospedagem comercial e HTTPS:** antes de publicar, consulte [docs/HOSPEDAGEM.md](docs/HOSPEDAGEM.md). A Vercel Hobby gratuita não autoriza uso comercial; a implantação Docker com Caddy mantém API e interface na mesma origem. Nenhuma URL externa foi homologada.
+
 **Pagamentos são registrados e conferidos manualmente pela loja.** Cobrança/reembolso bancário automático, emissão fiscal e publicação em domínio real dependem de integrações e credenciais externas. Não há credenciais de produção embutidas nem emissão fiscal simulada. A versão atende uma loja/local principal e um caixa físico.
 
 ## Matriz de versões
