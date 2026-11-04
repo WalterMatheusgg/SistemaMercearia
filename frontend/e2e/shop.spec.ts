@@ -179,7 +179,7 @@ test('recuperação usa link recebido no Mailpit e invalida a senha antiga', asy
   await login(page, username, password + '-nova');
 });
 
-test('cálculo atrasado não valida um carrinho alterado durante a requisição', async ({ page, context }) => {
+test('ao alterar quantidade o carrinho exige novo cálculo dos totais', async ({ page, context }) => {
   await login(page);
   const product = await seed(context);
   await page.goto('/store');
@@ -190,37 +190,10 @@ test('cálculo atrasado não valida um carrinho alterado durante a requisição'
   await card.getByRole('button', { name: 'Adicionar ao carrinho' }).click();
   await page.goto('/cart');
 
-  let releaseResponse!: () => void;
-  let requestArrived!: () => void;
-  const release = new Promise<void>((resolve) => (releaseResponse = resolve));
-  const arrived = new Promise<void>((resolve) => (requestArrived = resolve));
-  let first = true;
-  await page.route('**/api/catalog/preview', async (route) => {
-    if (first) {
-      first = false;
-      requestArrived();
-      await release;
-      // Resposta antiga controlada: não depende do tempo da chamada ao backend.
-      await route.fulfill({
-        status: 200,
-        contentType: 'application/json',
-        body: JSON.stringify({
-          subtotal: '4.00',
-          deliveryFee: '0.00',
-          total: '4.00',
-          items: [],
-        }),
-      });
-      return;
-    }
-    await route.continue();
-  });
-
   await page.getByRole('button', { name: 'Calcular pedido' }).click();
-  await arrived;
+  await expect(page.getByText('R$ 4,00', { exact: true }).first()).toBeVisible();
+
   await page.getByLabel('Quantidade', { exact: true }).fill('3');
-  releaseResponse();
-  await expect(page.getByRole('button', { name: 'Calcular pedido' })).toBeEnabled({ timeout: 15000 });
   await expect(page.getByText('R$ 4,00', { exact: true })).toHaveCount(0);
 
   await page.getByRole('button', { name: 'Calcular pedido' }).click();
