@@ -179,6 +179,43 @@ test('recuperação usa link recebido no Mailpit e invalida a senha antiga', asy
   await login(page, username, password + '-nova');
 });
 
+test('cálculo atrasado não valida um carrinho alterado durante a requisição', async ({ page, context }) => {
+  await login(page);
+  const product = await seed(context);
+  await page.goto('/store');
+  await page.getByLabel('Buscar produto ou código').fill(product.code);
+  await page.getByRole('button', { name: 'Buscar', exact: true }).click();
+  const card = page.locator('article').filter({ hasText: product.code });
+  await card.getByLabel('Quantidade em UN').fill('2');
+  await card.getByRole('button', { name: 'Adicionar ao carrinho' }).click();
+  await page.goto('/cart');
+
+  let releaseResponse!: () => void;
+  let requestArrived!: () => void;
+  const release = new Promise<void>((resolve) => (releaseResponse = resolve));
+  const arrived = new Promise<void>((resolve) => (requestArrived = resolve));
+  let first = true;
+  await page.route('**/api/catalog/preview', async (route) => {
+    const response = await route.fetch();
+    if (first) {
+      first = false;
+      requestArrived();
+      await release;
+    }
+    await route.fulfill({ response });
+  });
+
+  await page.getByRole('button', { name: 'Calcular pedido' }).click();
+  await arrived;
+  await page.getByLabel('Quantidade', { exact: true }).fill('3');
+  releaseResponse();
+  await expect(page.getByRole('button', { name: 'Calcular pedido' })).toBeEnabled();
+  await expect(page.getByText('R$ 4,00', { exact: true })).toHaveCount(0);
+
+  await page.getByRole('button', { name: 'Calcular pedido' }).click();
+  await expect(page.getByText('R$ 6,00', { exact: true }).first()).toBeVisible();
+});
+
 test('estoquista não acessa financeiro nem gestão de usuários', async ({ page, context }) => {
   await login(page);
   const username = 'stock-' + randomUUID().slice(0, 8);
