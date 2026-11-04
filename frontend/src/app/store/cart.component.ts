@@ -30,6 +30,20 @@ export class CartComponent {
   paymentChoice = 'PAY_ON_PICKUP';
   note = '';
   calculating = false;
+  private previewRevision = 0;
+
+  /** A resposta de um cálculo antigo nunca deve confirmar um carrinho já alterado. */
+  invalidatePreview(): void {
+    this.previewRevision++;
+    this.preview.set(null);
+    this.error.set('');
+  }
+
+  onFulfillmentChange(): void {
+    this.paymentChoice = this.fulfillment === 'DELIVERY' ? 'MANUAL_PIX' : 'PAY_ON_PICKUP';
+    this.invalidatePreview();
+  }
+
   constructor() {
     this.http
       .get<any>('/api/catalog/store')
@@ -37,11 +51,11 @@ export class CartComponent {
   }
   change(id: string, value: string) {
     this.cart.update(id, value);
-    this.preview.set(null);
+    this.invalidatePreview();
   }
   remove(id: string) {
     this.cart.remove(id);
-    this.preview.set(null);
+    this.invalidatePreview();
   }
   body() {
     return {
@@ -54,24 +68,28 @@ export class CartComponent {
     };
   }
   calculate() {
+    if (this.calculating || this.action.locked()) return;
+    const revision = ++this.previewRevision;
+    const body = this.body();
+    this.preview.set(null);
+    this.error.set('');
     this.calculating = true;
     this.http
       .get('/api/auth/csrf')
-      .pipe(switchMap(() => this.http.post<any>('/api/catalog/preview', this.body())))
+      .pipe(switchMap(() => this.http.post<any>('/api/catalog/preview', body)))
       .subscribe({
-        next: (r) => {
-          this.preview.set(r);
-          this.error.set('');
+        next: (result) => {
+          if (revision === this.previewRevision) this.preview.set(result);
           this.calculating = false;
         },
-        error: (e) => {
-          this.error.set(detail(e));
+        error: (cause) => {
+          if (revision === this.previewRevision) this.error.set(detail(cause));
           this.calculating = false;
         },
       });
   }
   checkout() {
-    if (!this.preview()) return;
+    if (this.calculating || this.action.locked() || !this.preview()) return;
     this.action.submit('/api/account/orders', this.body(), (r) => {
       this.cart.clear();
       void this.router.navigate(['/account'], { queryParams: { order: r.id } });
