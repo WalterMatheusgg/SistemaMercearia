@@ -233,3 +233,19 @@ test('estoquista não acessa financeiro nem gestão de usuários', async ({ page
   await page.goto('/admin/finance');
   await expect(page).toHaveURL(/\/admin\/home/);
 });
+
+test('cada aba exibe seu módulo seguido do nome Loja', async ({ page }) => {
+  await page.goto('/store');
+  await expect(page).toHaveTitle('Loja virtual | Loja');
+  await expect(page.getByRole('link', { name: 'Loja, página inicial' })).toBeVisible();
+  await page.goto('/cart');
+  await expect(page).toHaveTitle('Meu carrinho | Loja');
+  await page.goto('/login');
+  await expect(page).toHaveTitle('Entrar | Loja');
+  await login(page);
+  await expect(page).toHaveTitle('Painel | Loja');
+  await page.goto('/admin/inventory');
+  await expect(page).toHaveTitle('Estoque | Loja');
+  await page.goto('/admin/sales');
+  await expect(page).toHaveTitle('Vendas e pedidos | Loja');
+});

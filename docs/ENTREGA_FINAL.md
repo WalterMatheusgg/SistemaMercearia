@@ -1,6 +1,8 @@
-# Entrega do sistema Ferragens
+# Entrega da Loja — Sistema de gestão e vendas
 
 **Fonte canônica:** [main do SistemaMercearia](https://github.com/WalterMatheusgg/SistemaMercearia/tree/main). A antiga branch de trabalho foi integrada e excluída. Use a versão da `main` para atualizações e instalações.
+
+A marca do aplicativo é apenas **Loja**, com títulos individualizados por seção no navegador. [Veja os ajustes visuais](DESIGN_LOJA.md).
 
 ## O que está entregue
 

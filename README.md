@@ -1,6 +1,6 @@
-# Ferragens
+# Loja — Gestão e loja online
 
-Sistema para gestão de uma loja de ferragens, com área interna e portal do cliente. Inclui produtos/estoque, clientes/fornecedores, vendas/orçamentos, caixa, compras/recebimentos, contas, relatórios, pedidos online e notificações configuráveis.
+**Loja** é um sistema de gestão comercial com operação interna e portal do cliente. Inclui produtos/estoque, clientes/fornecedores, vendas/orçamentos, caixa, compras/recebimentos, contas, relatórios, pedidos online e notificações configuráveis.
 
 ## Começar no Codespace
 
@@ -13,6 +13,8 @@ bash scripts/start.sh
 ```
 
 Abra a porta **8080** na aba **Ports**. O script compila e sobe o app completo no Docker, preservando o banco e o `.env` existentes. Em ambiente novo cria senhas locais aleatórias: consulte o login administrativo no `.env`. O catálogo é público; contas administrativas entram na gestão, e clientes entram em Minha conta. E-mails de desenvolvimento aparecem no Mailpit, porta **8025**.
+
+Para conferir o usuário e a senha **inicial** no terminal privado do Codespace use `bash scripts/admin-access.sh`. O usuário padrão é `admin`; por segurança não existe senha universal `admin/admin`. Veja a experiência visual em [docs/DESIGN_LOJA.md](docs/DESIGN_LOJA.md).
 
 Instruções completas: [docs/CODESPACE.md](docs/CODESPACE.md). Conferência segura de funcionamento: `bash scripts/smoke.sh`. Antes da hospedagem, execute `python3 scripts/preflight-production.py .env`. Entrega e pendências: [docs/ENTREGA_FINAL.md](docs/ENTREGA_FINAL.md). Fluxos, papéis e limites: [docs/OPERACAO.md](docs/OPERACAO.md).
 
