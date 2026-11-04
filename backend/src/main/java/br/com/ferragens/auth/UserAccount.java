@@ -58,6 +58,10 @@ public class UserAccount {
         return username;
     }
 
+    public UUID getId() { return id; }
+
+    public UUID getStoreId() { return storeId; }
+
     public String getPasswordHash() {
         return passwordHash;
     }

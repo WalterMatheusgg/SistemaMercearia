@@ -1,4 +1,5 @@
 :host { display: block; min-height: 100vh; }
+.logout-error { margin: 0; padding: 12px 24px; color: var(--danger); background: #f9eeec; }
 .admin-shell { min-height: 100vh; }
 .topbar { display: flex; align-items: center; justify-content: space-between; height: 66px; padding: 0 28px; border-bottom: 1px solid var(--line); background: #fff; }
 .brand { display: flex; align-items: center; gap: 12px; color: var(--ink); font-size: 13px; font-weight: 800; letter-spacing: .8px; text-decoration: none; }

@@ -20,11 +20,19 @@ import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.AuthenticationEntryPoint;
 import org.springframework.security.web.access.AccessDeniedHandler;
 import org.springframework.security.web.authentication.session.ChangeSessionIdAuthenticationStrategy;
+import org.springframework.security.web.authentication.session.CompositeSessionAuthenticationStrategy;
 import org.springframework.security.web.authentication.session.SessionAuthenticationStrategy;
+import org.springframework.security.web.authentication.logout.CompositeLogoutHandler;
+import org.springframework.security.web.authentication.logout.LogoutHandler;
+import org.springframework.security.web.authentication.logout.SecurityContextLogoutHandler;
 import org.springframework.security.web.context.HttpSessionSecurityContextRepository;
 import org.springframework.security.web.context.SecurityContextRepository;
 import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
+import org.springframework.security.web.csrf.CsrfAuthenticationStrategy;
+import org.springframework.security.web.csrf.CsrfLogoutHandler;
 import tools.jackson.databind.ObjectMapper;
+
+import java.util.List;
 
 @Configuration
 public class SecurityConfiguration {
@@ -60,14 +68,28 @@ public class SecurityConfiguration {
         return new HttpSessionSecurityContextRepository();
     }
 
-        @Bean
-        SessionAuthenticationStrategy sessionAuthenticationStrategy() {
-                return new ChangeSessionIdAuthenticationStrategy();
-        }
+    @Bean
+    CookieCsrfTokenRepository csrfTokenRepository() {
+        return CookieCsrfTokenRepository.withHttpOnlyFalse();
+    }
+
+    @Bean
+    SessionAuthenticationStrategy sessionAuthenticationStrategy(CookieCsrfTokenRepository csrfTokens) {
+        var csrf = new CsrfAuthenticationStrategy(csrfTokens);
+        csrf.setRequestHandler(new SpaCsrfTokenRequestHandler());
+        return new CompositeSessionAuthenticationStrategy(List.of(
+                new ChangeSessionIdAuthenticationStrategy(), csrf));
+    }
+
+    @Bean
+    LogoutHandler applicationLogoutHandler(CookieCsrfTokenRepository csrfTokens) {
+        return new CompositeLogoutHandler(new SecurityContextLogoutHandler(), new CsrfLogoutHandler(csrfTokens));
+    }
 
     @Bean
     SecurityFilterChain securityFilterChain(HttpSecurity http,
                                                     SecurityContextRepository securityContextRepository,
+                                                    CookieCsrfTokenRepository csrfTokens,
                                                     ObjectMapper objectMapper) throws Exception {
                 AccessDeniedHandler accessDeniedHandler = (request, response, exception) -> {
                     response.setStatus(HttpStatus.FORBIDDEN.value());
@@ -86,7 +108,7 @@ public class SecurityConfiguration {
 
         http
                 .csrf(csrf -> csrf
-                        .csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse())
+                        .csrfTokenRepository(csrfTokens)
                         .csrfTokenRequestHandler(new SpaCsrfTokenRequestHandler()))
                 .securityContext(context -> context.securityContextRepository(securityContextRepository))
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED))
@@ -94,9 +116,9 @@ public class SecurityConfiguration {
                                 .authenticationEntryPoint(authenticationEntryPoint)
                                 .accessDeniedHandler(accessDeniedHandler))
                 .authorizeHttpRequests(authorize -> authorize
-                        .requestMatchers("/api/auth/csrf", "/api/auth/login", "/api/auth/logout",
-                                        "/actuator/health", "/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html")
+                        .requestMatchers("/api/auth/csrf", "/api/auth/login", "/api/auth/logout", "/actuator/health")
                         .permitAll()
+                        .requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").authenticated()
                         .requestMatchers(HttpMethod.OPTIONS, "/**").denyAll()
                         .anyRequest().authenticated())
                 .formLogin(form -> form.disable())

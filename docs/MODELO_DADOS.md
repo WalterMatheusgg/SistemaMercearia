@@ -57,7 +57,18 @@ erDiagram
 
 `product.cost` e `product.price` são `NUMERIC(14,2)` e não nulos/não negativos. IDs são UUID. `code` é único no banco e normalizado para maiúsculas na aplicação. `DELETE /api/admin/products/{id}` é inativação lógica. Não há coluna de quantidade ou estoque no produto.
 
-V1 também insere uma loja principal, sete papéis planejados, categorias iniciais e unidades `UN`, `M`, `KG` e `L`. Esses dados iniciais não são produtos nem estoque simulado.
+V1 também insere uma loja principal, sete papéis, categorias iniciais e unidades `UN`, `M`, `KG` e `L`. Esses dados iniciais não são produtos nem estoque simulado.
+
+## Estoque persistido pela V2
+
+| Tabela / alteração | Dados e garantias |
+| --- | --- |
+| `unit.quantity_scale`, `quantity_step` | Precisão e incremento: UN 0/1, M 2/0.01, KG e L 3/0.001 |
+| `inventory_location` | Local ativo vinculado à loja; cria o local principal sem quantidades |
+| `inventory_balance` | Chave produto/local; físico, reservado, indisponível, mínimo, revisão e atualização. `NUMERIC(19,4)`; disponível não negativo |
+| `inventory_movement` | Evento imutável com snapshots de produto/unidade, quantidade, variação, saldo/mínimo anterior e posterior, ator, motivo, instante, chave idempotente e referência de estorno |
+
+O banco restringe saldo inicial único por produto/local, estorno único por movimento e chave idempotente única por loja. Um trigger rejeita UPDATE/DELETE do histórico. Não há saldos reais inseridos pela migração. Reservas e bloqueios têm colunas de saldo, mas ainda não têm tabelas de documentos ou operações próprias.
 
 ## Planejado, ainda sem tabelas
 
@@ -66,7 +77,7 @@ V1 também insere uma loja principal, sete papéis planejados, categorias inicia
 | Produtos | Marca, variação/SKU, embalagem e fator de conversão, quando casos de uso confirmarem cardinalidade |
 | Clientes | Cliente, endereços, contatos verificados e identificadores protegidos |
 | Compras | Fornecedor, pedido de compra, item, recebimento parcial e documento de origem |
-| Estoque | Localização, movimento imutável, reserva, lote quando necessário, contagem e ajuste auditado |
+| Estoque | Documento de reserva, bloqueio, lote quando necessário, transferência e sessão de inventário |
 | Venda | Orçamento, pedido, venda, itens com snapshot de nome/código/preço/tributação e cancelamento/devolução |
 | Caixa e pagamentos | Sessão de caixa, lançamento por meio, liquidação, título a pagar/receber e conciliação |
 | Entrega | Opção de fulfillment, reserva, coleta/expedição e comprovante de entrega |

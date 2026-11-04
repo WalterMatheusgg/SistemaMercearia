@@ -8,17 +8,21 @@
 - CRUD administrativo paginado de produtos, erros ProblemDetail, OpenAPI e health mínimo.
 - Angular Material standalone: login, navegação administrativa, pesquisa/paginação, cadastro, edição e inativação conectados ao backend.
 - Testes JUnit/Mockito e integração Testcontainers com PostgreSQL/Mailpit.
+- Estoque por produto/local com saldo inicial, entradas, saídas, perdas, contagens e mínimo, histórico imutável e estorno integral.
+- Bloqueios transacionais para concorrência, idempotência por operação, revisão na contagem e precisão por unidade.
+- Renovação de CSRF no login/logout, logout com erro explícito, locale/paginador pt-BR e OpenAPI autenticado.
+- CI para testes/builds Java e Angular; testes do estoque, de componentes e dos contratos HTTP.
 
 ## Próximas entregas
 
 1. Política de usuários/permissões, auditoria administrativa, recuperação de senha e configuração de loja.
-2. Fornecedores e compras, recebimento parcial e registro imutável de movimentos de estoque.
-3. Reservas concorrentes, disponibilidade, contagens, inventário e alertas operacionais.
+2. Fornecedores e compras, recebimento parcial vinculado aos movimentos de estoque existentes.
+3. Reservas concorrentes de pedidos, bloqueios, fluxo de inventário completo e alertas operacionais por e-mail.
 4. Clientes, orçamento, venda de balcão, snapshots comerciais e caixa por meio de pagamento.
 5. Contas a pagar/receber, liquidação, estorno e relatórios financeiros reconciliáveis.
 6. Catálogo público sem custo, cliente, carrinho, pedido, retirada e entrega.
 7. Preferências de notificação e outbox transacional com processamento, deduplicação, retries limitados e histórico.
-8. Endurecimento de produção: HTTPS, cookie Secure, segredos gerenciados, backup/restore testado, observabilidade, auditoria, rate limiting, CI e testes de navegador.
+8. Endurecimento de produção: HTTPS, cookie Secure, segredos gerenciados, backup/restore testado, observabilidade, auditoria geral, rate limiting e testes de navegador.
 
 ## Critérios antes de avançar um domínio
 

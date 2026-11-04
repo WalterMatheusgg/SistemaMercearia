@@ -8,7 +8,10 @@
 - Pedido online reserva disponibilidade. Na entrega, consome a reserva e baixa o físico exatamente uma vez.
 - Operações simultâneas devem ser atômicas e não comprometer mais unidades do que a disponibilidade.
 - Cancelamentos e devoluções preservam os eventos e documentos anteriores; devolução recebida gera movimento de entrada próprio, após inspeção.
-- Produto não armazena um saldo editável. O saldo futuro será derivado da razão de movimentos e reservas.
+- Produto não armazena um saldo editável. O saldo por local e o evento imutável são atualizados atomicamente; reservado/indisponível ficam zerados até seus fluxos serem implementados.
+- Já implementado: saldo inicial, entrada/saída manual, perda, ajuste por contagem, mínimo e estorno integral. Pedido online, venda, pagamento e devolução comercial ainda estão planejados; movimento manual não representa esses documentos.
+- Contagem requer a revisão consultada e não pode sobrescrever um movimento posterior. Estorno preserva o original e não pode ocorrer duas vezes nem gerar disponível negativo.
+- Operação exige motivo e chave idempotente; repetição do mesmo comando retorna o evento original. O mínimo altera a configuração com variação física zero.
 
 ## Venda, financeiro e cliente
 
@@ -20,8 +23,8 @@
 
 ## Precisão decimal e API
 
-- Dinheiro: `BigDecimal` e `NUMERIC(14,2)`. Medidas e conversões futuras usarão `BigDecimal` e precisão/escala definida pelo tipo de unidade.
-- Nesta fundação, valores negativos e mais de duas casas decimais são rejeitados. Não há arredondamento implícito; regras de arredondamento fiscal/comercial devem ser escolhidas antes de implementar descontos, impostos ou parcelamento.
+- Dinheiro: `BigDecimal` e `NUMERIC(14,2)`. Estoque: `BigDecimal` e `NUMERIC(19,4)`, validado pelo incremento da unidade (UN 1; M 0.01; KG/L 0.001). Unidade com histórico não pode ser trocada.
+- Para dinheiro, valores negativos e mais de duas casas decimais são rejeitados. Não há arredondamento implícito; regras de arredondamento fiscal/comercial devem ser escolhidas antes de implementar descontos, impostos ou parcelamento.
 - A API recebe e retorna dinheiro como string decimal com ponto e duas casas, por exemplo `"199.90"`, para não passar por ponto flutuante binário no JavaScript.
 - Totais comerciais serão calculados no backend usando uma política de arredondamento explícita por operação; cliente não envia total confiável.
 

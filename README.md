@@ -1,12 +1,12 @@
 # Ferragens
 
-Base executável para gestão interna e loja virtual de uma loja de ferragens. O escopo desta etapa é autenticação por sessão e cadastro administrativo de produtos; os demais módulos estão planejados, não simulados.
+Base executável para gestão interna e loja virtual de uma loja de ferragens. Esta etapa entrega autenticação por sessão, cadastro administrativo de produtos e controle de estoque com histórico; os demais módulos seguem no roadmap.
 
 ## Estado desta entrega
 
-Implementado: backend Java/Spring Boot, PostgreSQL com Flyway e `ddl-auto=validate`, login persistido, papéis, CSRF para SPA, sessão por cookie HttpOnly, erros RFC Problem Details, documentação OpenAPI, health check, CRUD administrativo paginado de produtos, categorias/unidades iniciais, interface Angular em pt-BR, proxy de desenvolvimento e Mailpit local.
+Implementado: backend Java/Spring Boot, PostgreSQL com Flyway e `ddl-auto=validate`, login persistido, papéis, renovação de CSRF no login/logout, sessão por cookie HttpOnly, erros RFC Problem Details, OpenAPI autenticado, health check, CRUD administrativo paginado de produtos, categorias/unidades iniciais, interface Angular em pt-BR, proxy de desenvolvimento e Mailpit local. O estoque inclui saldos por produto/local, entrada, saída, perda, contagem, mínimo, estorno integral e histórico imutável com motivo e responsável.
 
-Planejado: estoque e reservas, compras/recebimentos, clientes, vendas/orçamentos/caixa, pagamentos, contas, devoluções, catálogo público, carrinho/checkout, entrega/retirada, relatórios, auditoria e notificações comerciais. Não há saldo de estoque no produto, botões falsos, dados de demonstração de vendas nem envio externo de e-mail.
+Planejado: reservas de pedidos, compras/recebimentos vinculados a fornecedor, clientes, vendas/orçamentos/caixa, pagamentos, contas, devoluções comerciais, catálogo público, carrinho/checkout, entrega/retirada, relatórios e notificações comerciais. A saída manual de estoque não registra venda nem pagamento. Não há envio externo de e-mail.
 
 ## Matriz de versões
 
@@ -63,7 +63,7 @@ set +a
 O perfil padrão é `local`. Na primeira execução, Flyway cria o schema e os dados iniciais. Com `BOOTSTRAP_ADMIN_ENABLED=true`, cria um usuário `ROLE_OWNER` apenas quando ainda não existe usuário; username e senha vêm do ambiente. Não há senha de produção embutida. Em ambiente seguro, defina `SESSION_COOKIE_SECURE=true` e termine HTTPS no proxy de mesma origem.
 
 - API: `http://localhost:8080/api`
-- OpenAPI UI: `http://localhost:8080/swagger-ui.html`
+- OpenAPI UI: `http://localhost:8080/swagger-ui.html` (exige sessão autenticada na mesma origem)
 - Health mínimo: `http://localhost:8080/actuator/health`
 
 ## Iniciar frontend
@@ -86,6 +86,21 @@ O bootstrap local cria o administrador configurado no `.env`, vinculado ao papel
 - `GET/POST /api/admin/products`, `GET/PUT/DELETE /api/admin/products/{id}`. `DELETE` inativa sem apagar o registro.
 - Custo e preço existem somente no contrato administrativo. Valores monetários são enviados/retornados como strings decimais com ponto e duas casas (`"199.90"`), sem arredondamento implícito; valores com mais de duas casas são rejeitados.
 
+## Usar o estoque
+
+Após cadastrar um produto, abra **Estoque** no menu administrativo. O local principal é criado pela migração V2, sem saldo fictício. Registre um saldo inicial de 50 e uma saída manual de 15: o físico e o disponível passam a 35. Uma entrada posterior de 20 leva o saldo a 55. Toda operação exige um motivo e guarda responsável, instante e valores anteriores/posteriores.
+
+- `UN` aceita inteiros; `M` aceita incrementos de `0.01`; `KG` e `L`, de `0.001`. Quantidades via API são strings decimais, sem cálculo em ponto flutuante no navegador.
+- Dono/gerente/estoquista registram saldo inicial, entrada, saída, perda e mínimo. Contagem e estorno são restritos ao dono/gerente. A API também permite consulta para vendedor/caixa; a navegação administrativa atual continua restrita aos três papéis administrativos.
+- Saldo inicial só pode preceder movimentos físicos. Contagem informa o total contado, inclusive zero, e exige a revisão consultada; se outro movimento ocorrer, confira novamente antes de confirmar.
+- Saídas e estornos que deixariam o disponível negativo são recusados integralmente. Correções não apagam o original. O mínimo gera evento com variação física zero e filtro visual para reposição; e-mail de alerta ainda não está implementado.
+- Reservado e indisponível começam em zero. Seus fluxos de alteração ainda dependem dos módulos de pedidos e bloqueios.
+- A unidade de um produto com histórico de estoque não pode ser alterada. Cadastre outro produto para trabalhar com uma unidade diferente.
+
+API: `GET /api/admin/inventory/locations`, `GET /api/admin/inventory/balances?locationId=...`, `GET /api/admin/inventory/movements?locationId=...` e `POST /api/admin/inventory/movements`. O POST exige CSRF e cabeçalho `Idempotency-Key` com UUID. Reenvie a mesma chave e corpo para confirmar uma operação incerta: ela não será aplicada novamente. Uma chave reutilizada com outro conteúdo retorna 409.
+
+O contrato completo e exemplos estão em [docs/ESTOQUE.md](docs/ESTOQUE.md).
+
 ## Migrações e testes
 
 Migrações versionadas em `backend/src/main/resources/db/migration`. O Hibernate apenas valida (`ddl-auto=validate`); nunca gera schema.
@@ -97,7 +112,7 @@ npm --prefix /workspaces/SistemaMercearia/frontend test -- --watch=false
 npm --prefix /workspaces/SistemaMercearia/frontend run build
 ```
 
-Os testes Testcontainers precisam do daemon Docker e verificam PostgreSQL real, autenticação/autorização, CSRF, validação, persistência, logout e entrega SMTP ao Mailpit. A suíte também inclui teste unitário do serviço de produtos com Mockito.
+Os testes Testcontainers precisam do daemon Docker e verificam PostgreSQL real, autenticação/autorização, CSRF, validação, persistência, logout, proteção do OpenAPI, estoque concorrente, rollback, idempotência, precisão por unidade e entrega SMTP ao Mailpit. Cada classe usa um schema aleatório isolado. A suíte também inclui teste unitário do serviço de produtos com Mockito e testes de componentes/HTTP Angular. O workflow `CI` executa testes e builds em pushes e pull requests.
 
 Para enviar uma mensagem de smoke pela própria aplicação (somente perfil `local`), inicie o backend assim:
 

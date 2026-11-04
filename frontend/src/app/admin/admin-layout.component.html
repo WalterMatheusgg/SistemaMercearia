@@ -6,9 +6,10 @@
     </a>
     <div class="topbar-user">
       <span class="user-name">{{ auth.currentUser()?.username }}</span>
-      <button mat-button type="button" (click)="logout()">Sair</button>
+      <button mat-button type="button" [disabled]="logoutPending()" (click)="logout()">{{ logoutPending() ? 'Saindo...' : 'Sair' }}</button>
     </div>
   </header>
+  @if (logoutError()) { <p class="logout-error" role="alert">{{ logoutError() }}</p> }
 
   <div class="admin-body">
     <nav class="side-nav" aria-label="Navegação administrativa">
@@ -16,6 +17,8 @@
       <a routerLink="/admin/products" routerLinkActive="active" ariaCurrentWhenActive="page">
         <span class="nav-marker" aria-hidden="true"></span>Produtos
       </a>
+      <p class="nav-caption">OPERAÇÃO</p>
+      <a routerLink="/admin/inventory" routerLinkActive="active" ariaCurrentWhenActive="page"><span class="nav-marker" aria-hidden="true"></span>Estoque</a>
     </nav>
     <main class="workspace"><router-outlet /></main>
   </div>

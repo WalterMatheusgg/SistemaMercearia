@@ -5,6 +5,7 @@ import br.com.ferragens.shared.NotFoundException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
@@ -19,11 +20,13 @@ public class ProductService {
     private final ProductRepository products;
     private final CategoryRepository categories;
     private final UnitRepository units;
+    private final JdbcTemplate jdbc;
 
-    public ProductService(ProductRepository products, CategoryRepository categories, UnitRepository units) {
+    public ProductService(ProductRepository products, CategoryRepository categories, UnitRepository units, JdbcTemplate jdbc) {
         this.products = products;
         this.categories = categories;
         this.units = units;
+        this.jdbc = jdbc;
     }
 
     @Transactional(readOnly = true)
@@ -60,13 +63,20 @@ public class ProductService {
     }
 
     public ProductResponse update(UUID id, ProductRequest request) {
+        var locked = jdbc.query("SELECT id FROM product WHERE id = ? FOR UPDATE", (rs, row) -> rs.getObject(1, UUID.class), id);
+        if (locked.isEmpty()) throw new NotFoundException("Produto não encontrado.");
         Product product = find(id);
+        Unit unit = findUnit(request.baseUnitCode());
+        if (!product.getBaseUnit().getCode().equals(unit.getCode()) && Boolean.TRUE.equals(jdbc.queryForObject(
+                "SELECT EXISTS (SELECT 1 FROM inventory_movement WHERE product_id = ?)", Boolean.class, id))) {
+            throw new ConflictException("A unidade não pode mudar após movimentações. Cadastre outro item para a nova medida.");
+        }
         String code = normalizeCode(request.code());
         if (products.existsByCodeIgnoreCaseAndIdNot(code, id)) {
             throw new ConflictException("Já existe um produto com este código.");
         }
         product.update(code, request.name().trim(), request.description(), findCategory(request.categoryId()),
-                findUnit(request.baseUnitCode()), request.cost(), request.price());
+                unit, request.cost(), request.price());
         return ProductResponse.from(product);
     }
 

@@ -10,6 +10,7 @@ export const routes: Routes = [
 		children: [
 			{ path: '', pathMatch: 'full', redirectTo: 'products' },
 			{ path: 'products', loadComponent: () => import('./products/product-list.component').then((module) => module.ProductListComponent) },
+			{ path: 'inventory', loadComponent: () => import('./inventory/inventory.component').then((module) => module.InventoryComponent) },
 		],
 	},
 	{ path: '', pathMatch: 'full', redirectTo: 'admin/products' },

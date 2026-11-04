@@ -4,10 +4,10 @@
 
 - Monólito modular Spring Boot; não há microsserviços nem mensageria distribuída nesta etapa.
 - Pacote raiz `br.com.ferragens`; cada domínio contém API, serviço, persistência e modelo próprios. `shared` contém apenas erros HTTP comuns.
-- Angular standalone com áreas reservadas para público, cliente e administração. Nesta entrega só a área administrativa de produtos está navegável.
+- Angular standalone com áreas reservadas para público, cliente e administração. Produtos e estoque estão navegáveis na área administrativa.
 - PostgreSQL é a fonte de verdade. Flyway versiona o schema e `ddl-auto=validate` detecta divergência sem criar/alterar tabelas.
 - A autorização é aplicada no backend. Guards Angular melhoram navegação e não substituem regras da API.
-- Sessão HTTP no servidor, cookie HttpOnly, `SameSite=Lax`, CSRF habilitado e renovado no login. Secure é configurável por ambiente. Frontend/API devem compartilhar a origem em produção; desenvolvimento usa proxy local.
+- Sessão HTTP no servidor, cookie HttpOnly, `SameSite=Lax`, CSRF habilitado, renovado no login e removido no logout. Secure é configurável por ambiente. Frontend/API devem compartilhar a origem em produção; desenvolvimento usa proxy local.
 - Valores monetários são `BigDecimal` e `NUMERIC(14,2)`. A API administrativa serializa decimais como strings JSON com duas casas; não arredonda valores de entrada acima de duas casas.
 
 ## Módulos
@@ -17,7 +17,7 @@
 | `auth` | Inicial | Usuário persistido, senha BCrypt, papéis, sessão/login/logout e consulta do usuário atual |
 | `product` | Inicial | Produto, categoria, unidade e consultas administrativas paginadas |
 | `customer` | Planejado | Cadastro, identidade, privacidade e histórico de compras |
-| `inventory` | Planejado | Razão de movimentações, reservas, disponibilidade, inventário e alertas |
+| `inventory` | Inicial implementado | Saldos, movimentos imutáveis, concorrência, contagem, mínimo e estorno; reservas e alertas por e-mail planejados |
 | `purchasing` | Planejado | Fornecedores, pedidos de compra e recebimento físico |
 | `sales` / `checkout` | Planejado | Orçamentos, pedidos, venda presencial/online, caixa e transições auditáveis |
 | `finance` | Planejado | Títulos, pagamentos, recebíveis e conciliação |
@@ -29,7 +29,9 @@ Evitar criar tabelas futuras sem contratos e invariantes definidos. Os diretóri
 
 ## Dados e API
 
-As tabelas iniciais e suas relações estão em [MODELO_DADOS.md](MODELO_DADOS.md). Categorias/unidades iniciais são referências editáveis posteriormente por endpoints próprios ainda não implementados. Produto não contém quantidade nem saldo de estoque.
+As tabelas e suas relações estão em [MODELO_DADOS.md](MODELO_DADOS.md). Categorias/unidades iniciais são referências editáveis posteriormente por endpoints próprios ainda não implementados. Produto não contém quantidade: `inventory_balance` mantém os saldos por local e o histórico fica em `inventory_movement`.
+
+O estoque usa JDBC dentro da transação Spring compartilhada com JPA. Cada comando bloqueia sua chave de idempotência, o produto e o saldo; saldo e histórico são gravados juntos. A contagem também verifica a revisão consultada. Mudanças de unidade usam o mesmo bloqueio de produto e são recusadas se já houver histórico. Detalhes em [ESTOQUE.md](ESTOQUE.md).
 
 Erros de validação, parsing, domínio e segurança são `ProblemDetail`. A API administrativa de produto inclui custo; não existe endpoint público de produto nesta etapa. Em endpoints públicos futuros, criar DTO de catálogo que omita custo e dados operacionais.
 

@@ -6,6 +6,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.jdbc.core.JdbcTemplate;
 
 import java.math.BigDecimal;
 import java.util.UUID;
@@ -26,6 +27,9 @@ class ProductServiceTest {
 
     @Mock
     private UnitRepository units;
+
+    @Mock
+    private JdbcTemplate jdbc;
 
     @InjectMocks
     private ProductService service;
