@@ -1,6 +1,6 @@
 <div class="admin-shell">
   <header class="topbar">
-    <a class="brand" routerLink="/admin/products" aria-label="Ferragens, início">
+    <a class="brand" routerLink="/admin/home" aria-label="Ferragens, início">
       <span class="brand-mark">F</span>
       <span>FERRAGENS <small>GESTÃO</small></span>
     </a>
@@ -13,12 +13,18 @@
 
   <div class="admin-body">
     <nav class="side-nav" aria-label="Navegação administrativa">
-      <p class="nav-caption">CADASTROS</p>
-      <a routerLink="/admin/products" routerLinkActive="active" ariaCurrentWhenActive="page">
-        <span class="nav-marker" aria-hidden="true"></span>Produtos
-      </a>
+      <a routerLink="/admin/home" routerLinkActive="active">Início</a>
+      <p class="nav-caption">ATENDIMENTO</p>
+      @if (has('OWNER','MANAGER','SELLER','CASHIER')) {<a routerLink="/admin/sales" routerLinkActive="active">Vendas e pedidos</a><a routerLink="/admin/cash" routerLinkActive="active">Caixa</a>}
+      @if (has('OWNER','MANAGER','SELLER','CASHIER','FINANCE')) {<a routerLink="/admin/customers" routerLinkActive="active">Clientes</a>}
       <p class="nav-caption">OPERAÇÃO</p>
-      <a routerLink="/admin/inventory" routerLinkActive="active" ariaCurrentWhenActive="page"><span class="nav-marker" aria-hidden="true"></span>Estoque</a>
+      @if (has('OWNER','MANAGER','STOCKKEEPER')) {<a routerLink="/admin/products" routerLinkActive="active">Produtos</a><a routerLink="/admin/purchases" routerLinkActive="active">Compras</a>}
+      @if (has('OWNER','MANAGER','STOCKKEEPER','SELLER','CASHIER')) {<a routerLink="/admin/inventory" routerLinkActive="active">Estoque</a>}
+      @if (has('OWNER','MANAGER','STOCKKEEPER','FINANCE')) {<a routerLink="/admin/suppliers" routerLinkActive="active">Fornecedores</a>}
+      @if (has('OWNER','MANAGER','FINANCE')) {<p class="nav-caption">GESTÃO</p><a routerLink="/admin/finance" routerLinkActive="active">Financeiro</a><a routerLink="/admin/reports" routerLinkActive="active">Relatórios</a>}
+      @if (has('OWNER','MANAGER','STOCKKEEPER')) {<p class="nav-caption">CONFIGURAÇÕES</p><a routerLink="/admin/notifications" routerLinkActive="active">Alertas por e-mail</a>}
+      @if (has('OWNER','MANAGER')) {<a routerLink="/admin/users" routerLinkActive="active">Usuários</a><a routerLink="/admin/settings" routerLinkActive="active">Loja e auditoria</a>}
+      <a routerLink="/store">Abrir loja virtual</a>
     </nav>
     <main class="workspace"><router-outlet /></main>
   </div>

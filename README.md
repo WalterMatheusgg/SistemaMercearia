@@ -1,12 +1,22 @@
 # Ferragens
 
-Base executável para gestão interna e loja virtual de uma loja de ferragens. Esta etapa entrega autenticação por sessão, cadastro administrativo de produtos e controle de estoque com histórico; os demais módulos seguem no roadmap.
+Sistema para gestão de uma loja de ferragens, com área interna e portal do cliente. Inclui produtos/estoque, clientes/fornecedores, vendas/orçamentos, caixa, compras/recebimentos, contas, relatórios, pedidos online e notificações configuráveis.
 
-## Estado desta entrega
+## Começar no Codespace
 
-Implementado: backend Java/Spring Boot, PostgreSQL com Flyway e `ddl-auto=validate`, login persistido, papéis, renovação de CSRF no login/logout, sessão por cookie HttpOnly, erros RFC Problem Details, OpenAPI autenticado, health check, CRUD administrativo paginado de produtos, categorias/unidades iniciais, interface Angular em pt-BR, proxy de desenvolvimento e Mailpit local. O estoque inclui saldos por produto/local, entrada, saída, perda, contagem, mínimo, estorno integral e histórico imutável com motivo e responsável.
+```bash
+cd /workspaces/SistemaMercearia
+git fetch origin
+git switch codex/ferragens-estoque-20261104
+git pull --ff-only origin codex/ferragens-estoque-20261104
+bash scripts/start.sh
+```
 
-Planejado: reservas de pedidos, compras/recebimentos vinculados a fornecedor, clientes, vendas/orçamentos/caixa, pagamentos, contas, devoluções comerciais, catálogo público, carrinho/checkout, entrega/retirada, relatórios e notificações comerciais. A saída manual de estoque não registra venda nem pagamento. Não há envio externo de e-mail.
+Abra a porta **8080** na aba **Ports**. O script compila e sobe o app completo no Docker, preservando o banco e o `.env` existentes. Em ambiente novo cria senhas locais aleatórias: consulte o login administrativo no `.env`. O catálogo é público; contas administrativas entram na gestão, e clientes entram em Minha conta. E-mails de desenvolvimento aparecem no Mailpit, porta **8025**.
+
+Instruções completas: [docs/CODESPACE.md](docs/CODESPACE.md). Fluxos, papéis e limites: [docs/OPERACAO.md](docs/OPERACAO.md).
+
+**Pagamentos são registrados e conferidos manualmente pela loja.** Cobrança/reembolso bancário automático, emissão fiscal e publicação em domínio real dependem de integrações e credenciais externas. Não há credenciais de produção embutidas nem emissão fiscal simulada. A versão atende uma loja/local principal e um caixa físico.
 
 ## Matriz de versões
 
@@ -79,7 +89,7 @@ Abra `http://localhost:4200`. No Codespaces, abra a aba **Ports**, encaminhe a p
 
 ## Usuários, papéis e endpoints
 
-O bootstrap local cria o administrador configurado no `.env`, vinculado ao papel dono. Papéis planejados já cadastrados: `OWNER`, `MANAGER`, `SELLER`, `CASHIER`, `STOCKKEEPER`, `FINANCE` e `CUSTOMER`. O cadastro inicial de produtos exige `OWNER`, `MANAGER` ou `STOCKKEEPER`; o backend aplica a autorização.
+O bootstrap local cria o administrador configurado no `.env`, vinculado ao papel dono. Papéis cadastrados: `OWNER`, `MANAGER`, `SELLER`, `CASHIER`, `STOCKKEEPER`, `FINANCE` e `CUSTOMER`. O cadastro inicial de produtos exige `OWNER`, `MANAGER` ou `STOCKKEEPER`; o backend aplica a autorização.
 
 - `GET /api/auth/csrf`, `POST /api/auth/login`, `GET /api/auth/me`, `POST /api/auth/logout`.
 - `GET /api/admin/categories`, `GET /api/admin/units`.
@@ -91,10 +101,10 @@ O bootstrap local cria o administrador configurado no `.env`, vinculado ao papel
 Após cadastrar um produto, abra **Estoque** no menu administrativo. O local principal é criado pela migração V2, sem saldo fictício. Registre um saldo inicial de 50 e uma saída manual de 15: o físico e o disponível passam a 35. Uma entrada posterior de 20 leva o saldo a 55. Toda operação exige um motivo e guarda responsável, instante e valores anteriores/posteriores.
 
 - `UN` aceita inteiros; `M` aceita incrementos de `0.01`; `KG` e `L`, de `0.001`. Quantidades via API são strings decimais, sem cálculo em ponto flutuante no navegador.
-- Dono/gerente/estoquista registram saldo inicial, entrada, saída, perda e mínimo. Contagem e estorno são restritos ao dono/gerente. A API também permite consulta para vendedor/caixa; a navegação administrativa atual continua restrita aos três papéis administrativos.
+- Dono/gerente/estoquista registram saldo inicial, entrada, saída, perda e mínimo. Contagem e estorno são restritos ao dono/gerente. Vendedor/caixa também têm consulta na interface e na API, sem botões de movimentação manual.
 - Saldo inicial só pode preceder movimentos físicos. Contagem informa o total contado, inclusive zero, e exige a revisão consultada; se outro movimento ocorrer, confira novamente antes de confirmar.
-- Saídas e estornos que deixariam o disponível negativo são recusados integralmente. Correções não apagam o original. O mínimo gera evento com variação física zero e filtro visual para reposição; e-mail de alerta ainda não está implementado.
-- Reservado e indisponível começam em zero. Seus fluxos de alteração ainda dependem dos módulos de pedidos e bloqueios.
+- Saídas e estornos que deixariam o disponível negativo são recusados integralmente. Correções não apagam o original. O mínimo gera evento com variação física zero e filtro visual para reposição; alertas por e-mail seguem as preferências de destinatários verificados.
+- Pedidos online alteram o reservado e o consomem/liberam na confirmação, cancelamento ou expiração. O fluxo de bloqueio/indisponível ainda não está exposto.
 - A unidade de um produto com histórico de estoque não pode ser alterada. Cadastre outro produto para trabalhar com uma unidade diferente.
 
 API: `GET /api/admin/inventory/locations`, `GET /api/admin/inventory/balances?locationId=...`, `GET /api/admin/inventory/movements?locationId=...` e `POST /api/admin/inventory/movements`. O POST exige CSRF e cabeçalho `Idempotency-Key` com UUID. Reenvie a mesma chave e corpo para confirmar uma operação incerta: ela não será aplicada novamente. Uma chave reutilizada com outro conteúdo retorna 409.
@@ -135,4 +145,4 @@ O volume `postgres-data` não é removido por esse comando. Confirme a persistê
 
 ## Próximas etapas
 
-Consulte [docs/ROADMAP.md](docs/ROADMAP.md), [docs/ARQUITETURA.md](docs/ARQUITETURA.md), [docs/MODELO_DADOS.md](docs/MODELO_DADOS.md) e [docs/REGRAS_NEGOCIO.md](docs/REGRAS_NEGOCIO.md). O desenho futuro de e-mail com outbox está em [docs/ARQUITETURA.md](docs/ARQUITETURA.md#notificacoes-por-email).
+Consulte [docs/ROADMAP.md](docs/ROADMAP.md), [docs/ARQUITETURA.md](docs/ARQUITETURA.md), [docs/MODELO_DADOS.md](docs/MODELO_DADOS.md) e [docs/REGRAS_NEGOCIO.md](docs/REGRAS_NEGOCIO.md). O desenho de e-mail com outbox está em [docs/ARQUITETURA.md](docs/ARQUITETURA.md#notificacoes-por-email).

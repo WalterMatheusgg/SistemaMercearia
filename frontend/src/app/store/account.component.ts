@@ -1,0 +1,12 @@
+import { Component,inject,signal } from '@angular/core';import { FormsModule } from '@angular/forms';import { Router,ActivatedRoute } from '@angular/router';import { HttpClient } from '@angular/common/http';import { AuthService } from '../auth/auth.service';import { StoreNavComponent } from './store-nav.component';import { ActionStatusComponent } from '../commerce/action-status.component';import { Row,createAction,money,quantity,date,label,detail } from '../commerce/ui';
+@Component({standalone:true,imports:[FormsModule,StoreNavComponent,ActionStatusComponent],templateUrl:'./account.component.html',styleUrls:['../commerce/ui.scss','./store.scss']})
+export class CustomerAccountComponent {
+  private readonly http=inject(HttpClient);private readonly router=inject(Router);private readonly route=inject(ActivatedRoute);readonly auth=inject(AuthService);readonly action=createAction();readonly orders=signal<Row[]>([]);readonly profile=signal<any|null>(null);readonly selected=signal<Row|null>(null);readonly error=signal('');readonly money=money;readonly quantity=quantity;readonly date=date;readonly label=label;form={name:'',phone:'',address:''};reason='';loggingOut=false;
+  constructor(){this.load();const id=this.route.snapshot.queryParamMap.get('order');if(id)this.show(id);}
+  load(){this.http.get<Row[]>('/api/account/orders').subscribe({next:r=>this.orders.set(r),error:e=>this.error.set(detail(e))});this.http.get<any>('/api/account/profile').subscribe({next:r=>{this.profile.set(r);this.form={name:r.name,phone:r.phone??'',address:r.address??''};},error:e=>this.error.set(detail(e))});}
+  save(){this.action.submit('/api/account/profile',this.form,()=>this.load(),'PUT');}
+  verify(){this.action.submit('/api/account/email/request-verification',{},()=>this.action.message.set('Confira seu e-mail. Em desenvolvimento, abra o Mailpit para acessar a mensagem.'));}
+  show(id:string){this.http.get<Row>('/api/account/orders/'+id).subscribe({next:r=>{this.selected.set(r);this.reason='';},error:e=>this.error.set(detail(e))});}
+  cancel(){const sale=this.selected();if(sale&&window.confirm('Cancelar este pedido e liberar a reserva?'))this.action.submit('/api/account/orders/'+sale.id+'/cancel',{reason:this.reason},r=>{this.selected.set(r);this.load();});}
+  logout(){if(!this.action.canLeave())return;this.loggingOut=true;this.auth.logout().subscribe({next:()=>void this.router.navigateByUrl('/store'),error:e=>{this.error.set(detail(e));this.loggingOut=false;}});}
+}

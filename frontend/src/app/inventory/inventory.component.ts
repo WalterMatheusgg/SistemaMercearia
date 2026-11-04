@@ -60,6 +60,8 @@ export class InventoryComponent implements OnInit {
     reason: ['', [Validators.required, Validators.minLength(3), Validators.maxLength(500)]],
   });
 
+  canWrite(): boolean { return this.auth.currentUser()?.roles.some(r => ['OWNER', 'MANAGER', 'STOCKKEEPER'].includes(r)) ?? false; }
+
   canAdjust(): boolean { return this.auth.currentUser()?.roles.some(r => ['OWNER', 'MANAGER'].includes(r)) ?? false; }
 
   ngOnInit(): void {

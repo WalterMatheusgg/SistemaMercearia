@@ -1,6 +1,9 @@
 package br.com.ferragens.config;
 
 import br.com.ferragens.auth.UserAccountRepository;
+import br.com.ferragens.commerce.Db;
+import org.springframework.security.web.access.intercept.AuthorizationFilter;
+import org.springframework.security.web.csrf.CsrfFilter;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
@@ -90,7 +93,7 @@ public class SecurityConfiguration {
     SecurityFilterChain securityFilterChain(HttpSecurity http,
                                                     SecurityContextRepository securityContextRepository,
                                                     CookieCsrfTokenRepository csrfTokens,
-                                                    ObjectMapper objectMapper) throws Exception {
+                                                    ObjectMapper objectMapper, Db db) throws Exception {
                 AccessDeniedHandler accessDeniedHandler = (request, response, exception) -> {
                     response.setStatus(HttpStatus.FORBIDDEN.value());
                     response.setContentType(MediaType.APPLICATION_PROBLEM_JSON_VALUE);
@@ -107,6 +110,8 @@ public class SecurityConfiguration {
                 };
 
         http
+                .addFilterBefore(new AuthRateLimitFilter(), CsrfFilter.class)
+                .addFilterBefore(new SessionValidationFilter(db), AuthorizationFilter.class)
                 .csrf(csrf -> csrf
                         .csrfTokenRepository(csrfTokens)
                         .csrfTokenRequestHandler(new SpaCsrfTokenRequestHandler()))
@@ -116,8 +121,9 @@ public class SecurityConfiguration {
                                 .authenticationEntryPoint(authenticationEntryPoint)
                                 .accessDeniedHandler(accessDeniedHandler))
                 .authorizeHttpRequests(authorize -> authorize
-                        .requestMatchers("/api/auth/csrf", "/api/auth/login", "/api/auth/logout", "/actuator/health")
+                        .requestMatchers("/api/auth/csrf", "/api/auth/login", "/api/auth/logout", "/api/auth/register", "/api/auth/password/**", "/api/auth/email/verify", "/api/catalog/preview", "/actuator/health")
                         .permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/catalog", "/api/catalog/**", "/", "/index.html", "/*.js", "/*.css", "/*.ico", "/assets/**", "/media/**", "/store", "/cart", "/login", "/register", "/forgot-password", "/reset-password", "/verify-email", "/account", "/admin", "/admin/**").permitAll()
                         .requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").authenticated()
                         .requestMatchers(HttpMethod.OPTIONS, "/**").denyAll()
                         .anyRequest().authenticated())

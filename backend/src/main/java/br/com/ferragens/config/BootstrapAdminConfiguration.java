@@ -12,7 +12,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.util.StringUtils;
 
 @Configuration
-@Profile("local")
+@Profile({"local", "bootstrap"})
 public class BootstrapAdminConfiguration {
 
     @Bean

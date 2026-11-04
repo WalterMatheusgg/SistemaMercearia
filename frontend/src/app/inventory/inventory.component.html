@@ -59,7 +59,7 @@
           <td class="numeric">{{ number(row.physical) }}</td><td class="numeric">{{ number(row.reserved) }}</td><td class="numeric">{{ number(row.unavailable) }}</td>
           <td class="numeric"><strong>{{ number(row.available) }}</strong></td><td class="numeric">{{ number(row.minimumQuantity) }}</td>
           <td><span class="status" [class.low]="row.status !== 'NORMAL'">{{ status(row.status) }}</span></td>
-          <td class="row-actions"><button mat-button type="button" [disabled]="saving()" (click)="open(row)">Movimentar</button><button mat-button type="button" (click)="showHistory(row)">Histórico</button><button mat-button type="button" [disabled]="saving()" (click)="open(row, 'MINIMUM')">Mínimo</button></td>
+          <td class="row-actions">@if (canWrite()) {<button mat-button type="button" [disabled]="saving()" (click)="open(row)">Movimentar</button>}<button mat-button type="button" (click)="showHistory(row)">Histórico</button>@if (canWrite()) {<button mat-button type="button" [disabled]="saving()" (click)="open(row, 'MINIMUM')">Mínimo</button>}</td>
         </tr>
       }</tbody></table></div>
     @if (!loading() && rows().length === 0) { <p class="empty">Nenhum produto encontrado. Cadastre produtos ou ajuste os filtros.</p> }

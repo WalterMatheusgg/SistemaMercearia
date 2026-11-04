@@ -17,8 +17,10 @@ import static br.com.ferragens.inventory.InventoryModels.*;
 public class InventoryController {
     private final InventoryService inventory;
     private final CurrentActorService actors;
+    private final br.com.ferragens.commerce.Db db;
 
-    public InventoryController(InventoryService inventory, CurrentActorService actors) {
+    public InventoryController(InventoryService inventory, CurrentActorService actors, br.com.ferragens.commerce.Db db) {
+        this.db = db;
         this.inventory = inventory; this.actors = actors;
     }
 
@@ -51,6 +53,7 @@ public class InventoryController {
                 || a.getAuthority().equals("ROLE_MANAGER"))) {
             throw new org.springframework.security.access.AccessDeniedException("Ajustes e estornos exigem autorização da gerência.");
         }
+        if (command.kind() == Kind.REVERSAL && Boolean.TRUE.equals(db.jdbc.queryForObject("SELECT EXISTS(SELECT 1 FROM sale_item WHERE movement_id=?) OR EXISTS(SELECT 1 FROM purchase_receipt_item WHERE movement_id=?)", Boolean.class, command.reversesMovementId(), command.reversesMovementId()))) throw new br.com.ferragens.shared.ConflictException("Use o cancelamento/devolução da venda para corrigir movimento comercial. Recebimentos precisam de devolução ao fornecedor.");
         return inventory.execute(actors.require(authentication), key, command);
     }
 }

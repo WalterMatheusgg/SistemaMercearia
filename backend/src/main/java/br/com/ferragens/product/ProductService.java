@@ -68,7 +68,7 @@ public class ProductService {
         Product product = find(id);
         Unit unit = findUnit(request.baseUnitCode());
         if (!product.getBaseUnit().getCode().equals(unit.getCode()) && Boolean.TRUE.equals(jdbc.queryForObject(
-                "SELECT EXISTS (SELECT 1 FROM inventory_movement WHERE product_id = ?)", Boolean.class, id))) {
+                "SELECT EXISTS (SELECT 1 FROM inventory_movement WHERE product_id = ?) OR EXISTS(SELECT 1 FROM sale_item WHERE product_id=?) OR EXISTS(SELECT 1 FROM purchase_item WHERE product_id=?)", Boolean.class, id, id, id))) {
             throw new ConflictException("A unidade não pode mudar após movimentações. Cadastre outro item para a nova medida.");
         }
         String code = normalizeCode(request.code());

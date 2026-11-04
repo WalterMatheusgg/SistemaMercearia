@@ -17,6 +17,8 @@ export class AdminLayoutComponent {
   readonly logoutPending = signal(false);
   readonly logoutError = signal('');
 
+  has(...roles: string[]): boolean { return this.auth.currentUser()?.roles.some(role => roles.includes(role)) ?? false; }
+
   logout(): void {
     if (this.logoutPending()) return;
     this.logoutPending.set(true);

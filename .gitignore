@@ -16,3 +16,6 @@
 /frontend/coverage/
 /frontend/.env*
 !.env.example
+/backups/
+/frontend/test-results/
+/frontend/playwright-report/

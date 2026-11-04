@@ -30,11 +30,13 @@ public class AuthController {
     private final SecurityContextRepository securityContextRepository;
     private final SessionAuthenticationStrategy sessionAuthenticationStrategy;
     private final LogoutHandler logoutHandler;
+    private final br.com.ferragens.commerce.Db db;
 
     public AuthController(AuthenticationManager authenticationManager,
                           SecurityContextRepository securityContextRepository,
                           SessionAuthenticationStrategy sessionAuthenticationStrategy,
-                          LogoutHandler applicationLogoutHandler) {
+                          LogoutHandler applicationLogoutHandler, br.com.ferragens.commerce.Db db) {
+        this.db = db;
         this.authenticationManager = authenticationManager;
         this.securityContextRepository = securityContextRepository;
         this.sessionAuthenticationStrategy = sessionAuthenticationStrategy;
@@ -57,6 +59,7 @@ public class AuthController {
         context.setAuthentication(authentication);
         SecurityContextHolder.setContext(context);
         securityContextRepository.saveContext(context, servletRequest, response);
+        servletRequest.getSession().setAttribute("accountRevision", db.one("SELECT auth_revision FROM app_user WHERE username=?", authentication.getName()).get("authRevision"));
         return currentUser(authentication);
     }
 

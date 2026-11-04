@@ -27,8 +27,9 @@ import static br.com.ferragens.inventory.InventoryModels.*;
 @Transactional
 public class InventoryService {
     private final JdbcTemplate jdbc;
+    private final br.com.ferragens.notification.Notifications notices;
 
-    public InventoryService(JdbcTemplate jdbc) { this.jdbc = jdbc; }
+    public InventoryService(JdbcTemplate jdbc, br.com.ferragens.notification.Notifications notices) { this.jdbc = jdbc; this.notices = notices; }
 
     @Transactional(readOnly = true)
     public List<Location> locations(Actor actor) {
@@ -163,6 +164,7 @@ public class InventoryService {
                 command.kind().name(), product.code(), product.name(), product.unit(), command.quantity(), delta,
                 before.physical(), physical, before.minimum(), minimum, command.reason().trim(), actor.userId(), actor.username(),
                 idempotencyKey, fingerprint, command.reversesMovementId());
+        notices.stock(actor.storeId(), command.productId(), product.name(), product.unit(), before.physical().subtract(before.reserved()).subtract(before.unavailable()), physical.subtract(before.reserved()).subtract(before.unavailable()), before.minimum(), minimum, command.kind().name(), id);
         return findMovement(actor, id);
     }
 
