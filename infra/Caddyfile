@@ -1,0 +1,11 @@
+# TLS automático e mesma origem para Angular, sessão, CSRF e API Spring.
+# APP_DOMAIN deve apontar para o IP público da máquina.
+{$APP_DOMAIN} {
+    encode zstd gzip
+    reverse_proxy app:8080
+    header {
+        X-Content-Type-Options "nosniff"
+        Referrer-Policy "strict-origin-when-cross-origin"
+        Strict-Transport-Security "max-age=31536000"
+    }
+}
