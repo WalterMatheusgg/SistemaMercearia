@@ -40,6 +40,10 @@ public class BootstrapAdminConfiguration {
                         "Defina BOOTSTRAP_ADMIN_USERNAME e BOOTSTRAP_ADMIN_PASSWORD no .env"
                                 + " local.");
             }
+            if (password.length() < 12
+                    || password.getBytes(java.nio.charset.StandardCharsets.UTF_8).length > 72)
+                throw new IllegalStateException(
+                        "A senha inicial deve ter ao menos 12 caracteres e no máximo 72 bytes.");
             var owner =
                     roles.findById("ROLE_OWNER")
                             .orElseThrow(

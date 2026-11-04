@@ -128,31 +128,33 @@
           </table>
         </div>
       }
-      <h3>Contas vinculadas (últimas 100)</h3>
-      <div class="scroll">
-        <table>
-          <thead>
-            <tr>
-              <th>Descrição</th>
-              <th>Tipo</th>
-              <th>Total / pago</th>
-              <th>Vencimento</th>
-              <th>Status</th>
-            </tr>
-          </thead>
-          <tbody>
-            @for (account of person['accounts']; track account.id) {
+      @if (person['accounts']) {
+        <h3>Contas vinculadas (últimas 100)</h3>
+        <div class="scroll">
+          <table>
+            <thead>
               <tr>
-                <td>{{ account.description }}</td>
-                <td>{{ label(account.direction) }}</td>
-                <td>{{ money(account.amount) }} / {{ money(account.paid) }}</td>
-                <td>{{ date(account.dueDate) }}</td>
-                <td>{{ label(account.status) }}</td>
+                <th>Descrição</th>
+                <th>Tipo</th>
+                <th>Total / pago</th>
+                <th>Vencimento</th>
+                <th>Status</th>
               </tr>
-            }
-          </tbody>
-        </table>
-      </div>
+            </thead>
+            <tbody>
+              @for (account of person['accounts']; track account.id) {
+                <tr>
+                  <td>{{ account.description }}</td>
+                  <td>{{ label(account.direction) }}</td>
+                  <td>{{ money(account.amount) }} / {{ money(account.paid) }}</td>
+                  <td>{{ date(account.dueDate) }}</td>
+                  <td>{{ label(account.status) }}</td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      }
     </section>
   }
 </section>

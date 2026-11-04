@@ -62,7 +62,7 @@ public class CommerceController {
     public Map<String, Object> contact(
             Authentication auth, @PathVariable String kind, @PathVariable UUID id) {
         contactRole(auth, kind);
-        return contacts.detail(actor(auth), id, kind);
+        return contactView(auth, contacts.detail(actor(auth), id, kind));
     }
 
     @PostMapping("/contacts/{kind}")
@@ -72,7 +72,7 @@ public class CommerceController {
             @RequestHeader("Idempotency-Key") UUID key,
             @Valid @RequestBody ContactsService.Contact body) {
         contactRole(auth, kind);
-        return contacts.save(actor(auth), key, kind, null, body);
+        return contactView(auth, contacts.save(actor(auth), key, kind, null, body));
     }
 
     @PutMapping("/contacts/{kind}/{id}")
@@ -83,7 +83,7 @@ public class CommerceController {
             @RequestHeader("Idempotency-Key") UUID key,
             @Valid @RequestBody ContactsService.Contact body) {
         contactRole(auth, kind);
-        return contacts.save(actor(auth), key, kind, id, body);
+        return contactView(auth, contacts.save(actor(auth), key, kind, id, body));
     }
 
     @GetMapping("/sales")
@@ -316,6 +316,12 @@ public class CommerceController {
                         "attachment; filename=relatorio-vendas.csv")
                 .contentType(MediaType.parseMediaType("text/csv;charset=UTF-8"))
                 .body(reports.csv(actor(auth), start, end));
+    }
+
+    private Map<String, Object> contactView(Authentication auth, Map<String, Object> result) {
+        if (!has(auth, "OWNER", "MANAGER", "SELLER", "CASHIER", "FINANCE"))
+            result.remove("accounts");
+        return result;
     }
 
     private Actor actor(Authentication auth) {

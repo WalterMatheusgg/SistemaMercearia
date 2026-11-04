@@ -189,8 +189,23 @@ test('estoquista não acessa financeiro nem gestão de usuários', async ({ page
     roles: ['STOCKKEEPER'],
     enabled: true,
   });
+  const supplier = await command(context, '/api/admin/contacts/SUPPLIER', {
+    name: 'Fornecedor ' + username,
+    active: true,
+  });
+  await command(context, '/api/admin/finance', {
+    direction: 'PAYABLE',
+    description: 'Conta interna de teste',
+    partyId: supplier.id,
+    amount: '10.00',
+    dueDate: new Date().toISOString().slice(0, 10),
+  });
   await page.getByRole('button', { name: 'Sair', exact: true }).click();
   await login(page, username);
+  const supplierView = await (
+    await context.request.get('/api/admin/contacts/SUPPLIER/' + supplier.id)
+  ).json();
+  expect(supplierView).not.toHaveProperty('accounts');
   await expect(page.getByRole('link', { name: 'Financeiro', exact: true })).toHaveCount(0);
   expect((await context.request.get('/api/admin/finance')).status()).toBe(403);
   expect((await context.request.get('/api/admin/users')).status()).toBe(403);
