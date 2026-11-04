@@ -29,13 +29,16 @@ public class OutboxWorker {
 
     @Scheduled(fixedDelayString = "${app.mail.poll-ms:5000}")
     public void deliver() {
+        // O envio SMTP é sequencial e pode consumir os timeouts configurados.
+        // Limitar o lote mantém seu processamento dentro do lease de dois minutos,
+        // evitando que outra instância reclame e reenvie um e-mail ainda em curso.
         UUID lease = UUID.randomUUID();
         var jobs =
                 db.rows(
                         "WITH picked AS (SELECT id FROM notification_outbox WHERE (status='PENDING'"
                                 + " AND next_attempt_at<=now()) OR (status='PROCESSING' AND"
                                 + " locked_until<now()) ORDER BY created_at FOR UPDATE SKIP LOCKED"
-                                + " LIMIT 10) UPDATE notification_outbox o SET"
+                                + " LIMIT 2) UPDATE notification_outbox o SET"
                                 + " status='PROCESSING',lease_id=?,locked_until=now()+interval '2"
                                 + " minutes',attempts=attempts+1 FROM picked WHERE o.id=picked.id"
                                 + " RETURNING o.*",
