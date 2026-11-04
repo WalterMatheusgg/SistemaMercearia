@@ -22,7 +22,7 @@ As versões abaixo foram conferidas em documentação oficial e registros oficia
 | springdoc-openapi | 3.2.0, linha compatível com Spring Boot 4 | [springdoc-openapi](https://springdoc.org/) |
 | Angular Core / TypeScript | 22.2.4 / 6.0.3 | [Angular version compatibility](https://angular.dev/reference/versions) |
 | Angular CLI / Material / CDK | 22.2.5 | [Angular releases](https://github.com/angular/angular/releases) |
-| Node.js / npm | 24.22.2 / 11.19.1; Angular 22.0.x aceita `^24.15.0` | [Angular version compatibility](https://angular.dev/reference/versions) |
+| Node.js / npm | 24.22.2 / 11.19.1; Node 24 está na matriz suportada pelo Angular 22 | [Angular version compatibility](https://angular.dev/reference/versions) |
 | Mailpit | `axllent/mailpit:v1.27.11` | [Mailpit](https://github.com/axllent/mailpit) |
 
 As dependências Java usam o gerenciamento do Spring Boot; Testcontainers não declara versão própria no projeto. Angular, Material e CDK ficam exatos no `package.json` e `package-lock.json`.
@@ -37,14 +37,14 @@ As dependências Java usam o gerenciamento do Spring Boot; Testcontainers não d
 ## Iniciar banco e Mailpit
 
 ```bash
-cp .env.example .env
+cp /workspaces/SistemaMercearia/.env.example /workspaces/SistemaMercearia/.env
 ```
 
 Edite `.env` e substitua `POSTGRES_PASSWORD`, `DB_PASSWORD` (devem coincidir) e `BOOTSTRAP_ADMIN_PASSWORD` por valores locais fortes. O arquivo fica ignorado pelo Git.
 
 ```bash
-docker compose up -d postgres mailpit
-docker compose ps
+docker compose --env-file /workspaces/SistemaMercearia/.env -f /workspaces/SistemaMercearia/compose.yaml up -d postgres mailpit
+docker compose --env-file /workspaces/SistemaMercearia/.env -f /workspaces/SistemaMercearia/compose.yaml ps
 ```
 
 Portas locais: PostgreSQL `5432`, SMTP do Mailpit `1025`, interface/API web do Mailpit `8025`. Os serviços estão vinculados a `127.0.0.1`; o volume `postgres-data` preserva o banco. `docker compose down` mantém o volume; não use `-v` se quiser conservar os dados.
@@ -55,9 +55,9 @@ Na raiz, exporte as variáveis do arquivo local e execute o wrapper:
 
 ```bash
 set -a
-. ./.env
+. /workspaces/SistemaMercearia/.env
 set +a
-./mvnw -pl backend spring-boot:run
+/workspaces/SistemaMercearia/mvnw -f /workspaces/SistemaMercearia/pom.xml -pl backend spring-boot:run
 ```
 
 O perfil padrão é `local`. Na primeira execução, Flyway cria o schema e os dados iniciais. Com `BOOTSTRAP_ADMIN_ENABLED=true`, cria um usuário `ROLE_OWNER` apenas quando ainda não existe usuário; username e senha vêm do ambiente. Não há senha de produção embutida. Em ambiente seguro, defina `SESSION_COOKIE_SECURE=true` e termine HTTPS no proxy de mesma origem.
@@ -71,12 +71,11 @@ O perfil padrão é `local`. Na primeira execução, Flyway cria o schema e os d
 Em outro terminal:
 
 ```bash
-cd frontend
-npm ci
-npm start
+npm --prefix /workspaces/SistemaMercearia/frontend ci
+npm --prefix /workspaces/SistemaMercearia/frontend start -- --host 0.0.0.0
 ```
 
-Abra `http://localhost:4200`. O proxy envia `/api` para `http://localhost:8080`; em produção, publique frontend e API na mesma origem. A autenticação usa cookie de sessão e CSRF; credenciais e tokens não são persistidos no `localStorage`.
+Abra `http://localhost:4200`. No Codespaces, abra a aba **Ports**, encaminhe a porta `4200` e selecione **Open in Browser**; o proxy do Angular encaminha `/api` para `localhost:8080` no container. Encaminhe `8025` para abrir o Mailpit. Em produção, publique frontend e API na mesma origem. A autenticação usa cookie de sessão e CSRF; credenciais e tokens não são persistidos no `localStorage`.
 
 ## Usuários, papéis e endpoints
 
@@ -92,11 +91,32 @@ O bootstrap local cria o administrador configurado no `.env`, vinculado ao papel
 Migrações versionadas em `backend/src/main/resources/db/migration`. O Hibernate apenas valida (`ddl-auto=validate`); nunca gera schema.
 
 ```bash
-./mvnw test
-cd frontend && npm ci && npm test -- --watch=false && npm run build
+/workspaces/SistemaMercearia/mvnw -f /workspaces/SistemaMercearia/pom.xml test
+npm --prefix /workspaces/SistemaMercearia/frontend ci
+npm --prefix /workspaces/SistemaMercearia/frontend test -- --watch=false
+npm --prefix /workspaces/SistemaMercearia/frontend run build
 ```
 
 Os testes Testcontainers precisam do daemon Docker e verificam PostgreSQL real, autenticação/autorização, CSRF, validação, persistência, logout e entrega SMTP ao Mailpit. A suíte também inclui teste unitário do serviço de produtos com Mockito.
+
+Para enviar uma mensagem de smoke pela própria aplicação (somente perfil `local`), inicie o backend assim:
+
+```bash
+set -a
+. /workspaces/SistemaMercearia/.env
+set +a
+APP_MAIL_SMOKE_TEST=true APP_MAIL_SMOKE_TEST_RECIPIENT=operacao@ferragens.local /workspaces/SistemaMercearia/mvnw -f /workspaces/SistemaMercearia/pom.xml -pl backend spring-boot:run
+```
+
+Confirme a mensagem em `http://localhost:8025`. Esse envio pela aplicação é separado do teste de integração, que usa instâncias próprias de PostgreSQL/Mailpit via Testcontainers.
+
+Para recriar somente o container PostgreSQL e manter o mesmo volume, não execute `down -v`:
+
+```bash
+docker compose --env-file /workspaces/SistemaMercearia/.env -f /workspaces/SistemaMercearia/compose.yaml up -d --force-recreate postgres
+```
+
+O volume `postgres-data` não é removido por esse comando. Confirme a persistência consultando `product` depois que o container ficar saudável.
 
 ## Próximas etapas
 
