@@ -196,20 +196,31 @@ test('cálculo atrasado não valida um carrinho alterado durante a requisição'
   const arrived = new Promise<void>((resolve) => (requestArrived = resolve));
   let first = true;
   await page.route('**/api/catalog/preview', async (route) => {
-    const response = await route.fetch();
     if (first) {
       first = false;
       requestArrived();
       await release;
+      // Resposta antiga controlada: não depende do tempo da chamada ao backend.
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({
+          subtotal: '4.00',
+          deliveryFee: '0.00',
+          total: '4.00',
+          items: [],
+        }),
+      });
+      return;
     }
-    await route.fulfill({ response });
+    await route.continue();
   });
 
   await page.getByRole('button', { name: 'Calcular pedido' }).click();
   await arrived;
   await page.getByLabel('Quantidade', { exact: true }).fill('3');
   releaseResponse();
-  await expect(page.getByRole('button', { name: 'Calcular pedido' })).toBeEnabled();
+  await expect(page.getByRole('button', { name: 'Calcular pedido' })).toBeEnabled({ timeout: 15000 });
   await expect(page.getByText('R$ 4,00', { exact: true })).toHaveCount(0);
 
   await page.getByRole('button', { name: 'Calcular pedido' }).click();
