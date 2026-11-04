@@ -21,6 +21,20 @@ bash scripts/admin-access.sh
 
 **Não use `admin/admin`**: o projeto é destinado à operação real, e senhas de quatro caracteres não atendem à validação mínima do backend. O bootstrap não redefine senhas já gravadas no PostgreSQL. Para trocar a senha de um usuário existente, use a área **Usuários** com uma conta de dono ou a recuperação por e-mail verificado.
 
+### Criar ou recuperar o dono com senha temporária
+
+No terminal **privado** do Codespace (não em produção), execute:
+
+```bash
+cd /workspaces/SistemaMercearia
+git pull --ff-only origin main
+python3 scripts/owner-setup.py
+```
+
+Digite `CONFIRMAR`. O procedimento confere que está usando o Compose `local`, faz backup automático, cria o usuário `admin` com `ROLE_OWNER` se não existir ou redefine a senha se essa conta já for dona. A nova senha aleatória aparece **uma única vez** no terminal, não no Git nem no `.env`. Se `admin` pertencer a outro papel, o procedimento é bloqueado sem promovê-lo.
+
+Depois de entrar na porta 8080, abra **Usuários → Editar admin → Nova senha** para substituir a temporária. O procedimento invalida sessões anteriores da conta admin e registra a recuperação no histórico administrativo. Não execute novamente se não quiser trocar a senha outra vez.
+
 ## Preservação
 
 Nenhuma migração histórica do Flyway, saldo de estoque, pedido, conta, senha ou volume do PostgreSQL foi alterado por esta refatoração. O nome da loja comercial permanece configurável em **Loja e auditoria**, independentemente do nome do software.

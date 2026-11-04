@@ -14,7 +14,7 @@ bash scripts/start.sh
 
 Abra a porta **8080** na aba **Ports**. O script compila e sobe o app completo no Docker, preservando o banco e o `.env` existentes. Em ambiente novo cria senhas locais aleatórias: consulte o login administrativo no `.env`. O catálogo é público; contas administrativas entram na gestão, e clientes entram em Minha conta. E-mails de desenvolvimento aparecem no Mailpit, porta **8025**.
 
-Para conferir o usuário e a senha **inicial** no terminal privado do Codespace use `bash scripts/admin-access.sh`. O usuário padrão é `admin`; por segurança não existe senha universal `admin/admin`. Veja a experiência visual em [docs/DESIGN_LOJA.md](docs/DESIGN_LOJA.md).
+**Precisa criar ou recuperar acesso de dono?** Use `python3 scripts/owner-setup.py` no terminal privado do Codespace. O comando salva backup, verifica o perfil Docker local, cria `admin` (OWNER) se faltar ou redefine a senha de um `admin` já dono, com nova senha forte gerada e mostrada somente no terminal. Não altera outros usuários, vendas, estoque ou volumes. Para apenas conferir a senha inicial, use `bash scripts/admin-access.sh`. O usuário padrão é `admin`; por segurança não existe senha universal `admin/admin`. Veja a experiência visual em [docs/DESIGN_LOJA.md](docs/DESIGN_LOJA.md).
 
 Instruções completas: [docs/CODESPACE.md](docs/CODESPACE.md). Conferência segura de funcionamento: `bash scripts/smoke.sh`. Antes da hospedagem, execute `python3 scripts/preflight-production.py .env`. Entrega e pendências: [docs/ENTREGA_FINAL.md](docs/ENTREGA_FINAL.md). Fluxos, papéis e limites: [docs/OPERACAO.md](docs/OPERACAO.md).
 

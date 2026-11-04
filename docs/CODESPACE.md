@@ -75,3 +75,7 @@ npm run e2e
 ```
 
 Os testes de navegador exigem uma aplicação local **dedicada a testes**, com usuário/senha correspondentes a `E2E_ADMIN_USER`/`E2E_ADMIN_PASSWORD`. Eles criam produtos, contas e vendas. O CI inicia seu próprio ambiente isolado, testa desktop/celular, captura e-mail local e verifica a restauração de backup.
+
+## Primeiro acesso ou recuperação do dono
+
+Se não consegue entrar, não apague o banco. No terminal privado do Codespace, execute `python3 scripts/owner-setup.py`. Depois de confirmar, o utilitário executa backup, cria ou recupera a conta `admin` com papel de dono e mostra uma senha temporária forte. Entre na porta 8080 e altere a senha em **Usuários**. Não funciona contra um ambiente `prod` e nunca usa `admin/admin`.
