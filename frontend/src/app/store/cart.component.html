@@ -60,10 +60,7 @@
                 aria-label="Recebimento"
                 name="fulfillment"
                 [(ngModel)]="fulfillment"
-                (ngModelChange)="
-                  preview.set(null);
-                  paymentChoice = fulfillment === 'DELIVERY' ? 'MANUAL_PIX' : 'PAY_ON_PICKUP'
-                "
+                (ngModelChange)="onFulfillmentChange()"
               >
                 <option value="PICKUP">Retirar na loja</option>
                 @if (config()?.deliveryEnabled) {
@@ -76,6 +73,7 @@
                 >Endereço completo<textarea
                   name="address"
                   [(ngModel)]="address"
+                  (ngModelChange)="invalidatePreview()"
                   required
                   maxlength="500"
                 ></textarea>
@@ -86,6 +84,7 @@
                 aria-label="Pagamento combinado"
                 name="payment"
                 [(ngModel)]="paymentChoice"
+                (ngModelChange)="invalidatePreview()"
               >
                 @if (fulfillment === 'PICKUP') {
                   <option value="PAY_ON_PICKUP">Pagar ao retirar</option>
@@ -94,7 +93,7 @@
                 <option value="TRANSFER">Transferência, conferida pela loja</option>
               </select></label
             ><label
-              >Observação<textarea name="note" [(ngModel)]="note" maxlength="500"></textarea>
+              >Observação<textarea name="note" [(ngModel)]="note" (ngModelChange)="invalidatePreview()" maxlength="500"></textarea>
             </label>
           </div>
           <p class="note">
@@ -104,10 +103,15 @@
           <button
             type="button"
             (click)="calculate()"
-            [disabled]="calculating || checkoutForm.invalid"
+            [disabled]="calculating || action.locked() || checkoutForm.invalid"
           >
             {{ calculating ? 'Calculando...' : 'Calcular pedido' }}
           </button>
+          @if (calculating) {
+            <p class="muted" role="status" aria-live="polite">
+              Conferindo preços, entrega e disponibilidade…
+            </p>
+          }
           @if (preview(); as values) {
             <div class="cards gap">
               <div class="card">
@@ -142,7 +146,7 @@
             </div>
           }
           @if (auth.currentUser()?.roles?.includes('CUSTOMER')) {
-            <button class="primary gap" [disabled]="!preview() || checkoutForm.invalid">
+            <button class="primary gap" [disabled]="!preview() || calculating || checkoutForm.invalid">
               Confirmar pedido e reservar estoque
             </button>
             <p class="muted">Confirme seu e-mail em Minha conta antes do primeiro pedido.</p>
