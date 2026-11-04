@@ -21,3 +21,14 @@ button { min-height: 48px; margin-top: 6px; }
   .login-aside > span { max-width: 480px; font-size: 24px; }
   .login-aside > small { margin-top: 24px; }
 }
+/* Login da Loja */
+.login-page { grid-template-columns: minmax(350px,47%) 1fr; background: #fff; }
+.login-panel { width: min(100%,470px); padding: 44px 28px; }
+.brand-mark { width: 56px; height: 56px; font: 900 25px/1 Inter,system-ui,sans-serif; background: #162c43; border-radius: 15px; box-shadow: 5px 5px 0 #24b0a2; }
+h1 { font: 850 clamp(37px,4vw,48px)/1.15 Inter,system-ui,sans-serif; letter-spacing: -.055em; }
+.intro { line-height: 1.7; max-width: 380px; }
+.login-aside { background: radial-gradient(circle at 80% 25%,#28576e,transparent 38%),linear-gradient(135deg,#112237,#19435a); border-left: 8px solid #1d9188; }
+.login-aside > span { font: 770 clamp(29px,3.5vw,48px)/1.17 Inter,system-ui,sans-serif; letter-spacing: -.055em; max-width: 540px; }
+.aside-rule { width: 56px; background: #efb65c; }
+.login-aside > small { letter-spacing: .15em; font-weight: 750; }
+@media(max-width:760px) { .login-page { grid-template-columns: 1fr; } .login-panel { min-height: 70vh; } .login-aside { border-left: 0; border-top: 5px solid #1d9188; } }

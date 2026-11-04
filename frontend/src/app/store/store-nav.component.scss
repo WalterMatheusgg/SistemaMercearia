@@ -1,0 +1,18 @@
+:host { display: block; }
+.store-header { display: flex; align-items: center; justify-content: space-between; gap: 22px; min-height: 78px; padding: 13px clamp(17px,5vw,75px); background: #14263b; color: #fff; border-bottom: 3px solid #1f665f; }
+.store-brand { display: inline-flex; align-items: center; gap: 12px; text-decoration: none; color: #fff; flex: 0 0 auto; }
+.store-brand-symbol { display: grid; place-items: center; width: 39px; height: 39px; border-radius: 11px; color: #17273b; background: #f4c175; font-weight: 900; font-size: 22px; }
+.store-brand-copy strong { display: block; font-size: 21px; font-weight: 850; letter-spacing: -.05em; line-height: 1.1; }
+.store-brand-copy small { display: block; font-size: 9px; letter-spacing: .16em; margin-top: 4px; color: #adc2d2; font-weight: 750; }
+.store-links { display: flex; align-items: center; flex-wrap: wrap; gap: 7px; }
+.store-links a { display: inline-flex; align-items: center; min-height: 38px; padding: 8px 13px; color: #d9e5ee; font-size: 13px; font-weight: 650; text-decoration: none; border-radius: 8px; transition: background .18s ease; }
+.store-links a:hover,.store-links a.active { color: #fff; background: #ffffff19; }
+.store-links .store-register { background: #f0b45a; color: #14263b; margin-left: 3px; font-weight: 800; }
+.store-links .store-register:hover { background: #ffcb7e; color: #14263b; }
+@media(max-width:650px) {
+  .store-header { padding: 12px 14px; flex-wrap: wrap; gap: 11px; }
+  .store-links { gap: 2px; width: 100%; justify-content: space-between; }
+  .store-links a { font-size: 12px; padding: 7px 10px; }
+  .store-brand-copy strong { font-size: 19px; }
+  .store-brand-symbol { width: 35px; height: 35px; }
+}

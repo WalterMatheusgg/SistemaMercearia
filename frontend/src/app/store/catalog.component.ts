@@ -25,6 +25,10 @@ export class CatalogComponent {
   total = 0;
   loading = false;
   quantities: Record<string, string> = {};
+  private requestNumber = 0;
+  isUnavailable(product: Row): boolean {
+    return Number(product['available']) <= 0;
+  }
   constructor() {
     this.load();
     this.http
@@ -32,17 +36,21 @@ export class CatalogComponent {
       .subscribe({ next: (r) => this.store.set(r), error: (e) => this.error.set(detail(e)) });
   }
   load() {
+    const request = ++this.requestNumber;
     this.loading = true;
+    this.error.set('');
     this.http
       .get<Page>('/api/catalog', { params: { query: this.query, page: this.page } })
       .subscribe({
         next: (r) => {
+          if (request !== this.requestNumber) return;
           this.products.set(r.content);
           this.total = r.totalElements;
           this.loading = false;
           for (const p of r.content) this.quantities[p.id] ??= String(p['quantityStep']);
         },
         error: (e) => {
+          if (request !== this.requestNumber) return;
           this.error.set(detail(e));
           this.loading = false;
         },

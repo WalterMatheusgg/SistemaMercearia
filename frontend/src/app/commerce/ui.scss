@@ -259,3 +259,34 @@ td button {
     font-size: 20px;
   }
 }
+
+/* Elementos comuns dos módulos */
+.page { max-width: 1380px; }
+.page > header { padding-bottom: 5px; }
+.page > header h1 { font-weight: 820; font-size: clamp(25px,2.7vw,34px); letter-spacing: -.047em; line-height: 1.2; }
+.page > header small { font-size: 13px; line-height: 1.6; }
+.eyebrow { color: #188478; font-size: 10px; font-weight: 850; letter-spacing: .16em; }
+h2 { letter-spacing: -.03em; font-weight: 790; }
+.panel { border-radius: 16px; border-color: #e1e8ee; padding: 24px; box-shadow: var(--shadow-sm); }
+.card { border-radius: 14px; box-shadow: var(--shadow-sm); padding: 20px; }
+.card strong { letter-spacing: -.04em; }
+input,select,textarea { border-color: #c8d6e0; border-radius: 9px; background: #fff; transition: border-color .15s ease,box-shadow .15s ease; }
+input:hover,select:hover,textarea:hover { border-color: #a9c3cb; }
+input:focus,select:focus,textarea:focus { border-color: #2b9d91; box-shadow: 0 0 0 3px #2b9d9120; outline: 0; }
+button,.button { border-radius: 9px; transition: background .16s ease,border-color .16s ease,transform .16s ease; }
+button:hover:not(:disabled),.button:hover { border-color: var(--teal); }
+button.primary,.button.primary { background: var(--blue); border-color: var(--blue); }
+button.primary:hover:not(:disabled),.button.primary:hover { background: #214963; border-color: #214963; }
+button:active:not(:disabled),.button:active { transform: translateY(1px); }
+button:disabled { opacity: .55; cursor: not-allowed; }
+.note { border-radius: 10px; line-height: 1.65; }
+.scroll { border-radius: 9px; }
+table { border-collapse: separate; border-spacing: 0; }
+thead { background: #f6f9fa; }
+th { color: #596e7f; font-weight: 850; letter-spacing: .07em; }
+td { color: #253d50; }
+tbody tr:hover { background: #f6faf9; }
+.badge { border-radius: 999px; padding: 5px 10px; background: #e7f4f1; color: #287567; font-weight: 750; }
+.empty { padding: 30px 17px; background: #f8fafb; border: 1px dashed #d7e5e7; border-radius: 12px; line-height: 1.6; }
+.pagination { color: var(--ink-soft); font-size: 13px; }
+@media(max-width:650px) { .panel { padding: 17px; border-radius: 13px; } .card { padding: 15px; } .page > header { gap: 16px; } .page > header h1 { font-size: 27px; } .scroll { overflow-x: auto; } table { min-width: 480px; } .actions > button { min-width: 0; } }

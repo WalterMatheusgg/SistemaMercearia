@@ -1,0 +1,18 @@
+<nav class="store-header" aria-label="Navegação da loja">
+  <a class="store-brand" routerLink="/store" aria-label="Loja, página inicial">
+    <span class="store-brand-symbol" aria-hidden="true">L</span>
+    <span class="store-brand-copy"><strong>Loja</strong><small>CATÁLOGO ONLINE</small></span>
+  </a>
+  <div class="store-links">
+    <a routerLink="/store" routerLinkActive="active">Produtos</a>
+    <a routerLink="/cart" routerLinkActive="active">Carrinho ({{ cart.items().length }})</a>
+    @if (auth.currentUser(); as user) {
+      <a [routerLink]="user.roles.includes('CUSTOMER') ? '/account' : '/admin'">
+        {{ user.roles.includes('CUSTOMER') ? 'Minha conta' : 'Gestão' }}
+      </a>
+    } @else {
+      <a routerLink="/login" routerLinkActive="active">Entrar</a>
+      <a class="store-register" routerLink="/register">Criar conta</a>
+    }
+  </div>
+</nav>
