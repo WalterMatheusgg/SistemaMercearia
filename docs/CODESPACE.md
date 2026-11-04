@@ -5,12 +5,12 @@ O caminho mais simples usa Docker para compilar o Angular, empacotar o backend e
 ```bash
 cd /workspaces/SistemaMercearia
 git fetch origin
-git switch codex/ferragens-estoque-20261104
-git pull --ff-only origin codex/ferragens-estoque-20261104
+git switch main
+git pull --ff-only origin main
 bash scripts/start.sh
 ```
 
-O `git switch` cria o acompanhamento da branch remota quando ela ainda não existe localmente. Se você já integrou o PR na `main`, use `git switch main` e `git pull --ff-only origin main` no lugar dos comandos da branch. Guarde alterações locais antes de trocar de branch; não use reset/clean para atualizar.
+A `main` é a branch definitiva do projeto. Guarde alterações locais antes de atualizar; não use reset/clean para atualizar.
 
 O script preserva `.env` e volumes existentes. Se `.env` não existir, cria senhas aleatórias; consulte `BOOTSTRAP_ADMIN_USERNAME` e `BOOTSTRAP_ADMIN_PASSWORD` nesse arquivo para entrar. Senhas não são exibidas nos logs nem enviadas ao GitHub. Usuários existentes mantêm suas senhas; mudar o bootstrap não troca a senha gravada no banco.
 
@@ -38,11 +38,14 @@ Não rode o antigo backend na mesma porta 8080 ao usar o container completo. O f
 ## Atualizar e verificar
 
 ```bash
-git pull --ff-only origin codex/ferragens-estoque-20261104
+git pull --ff-only origin main
 bash scripts/start.sh
 docker compose --profile app ps
 docker compose --profile app logs --tail=100 app
+bash scripts/smoke.sh
 ```
+
+A verificação `smoke.sh` **somente lê** saúde, página inicial, catálogo, CSRF e proteção da API, sem criar produtos ou vendas. Se a imagem compilar mas o Docker falhar com `RWLayer ... unexpectedly nil`, preserve o volume: `docker compose --profile app down` (sem `-v`) e depois `docker compose --profile app up -d --no-build`. Se persistir, reinicie o Codespace normalmente e tente novamente. Não use **Full Rebuild** nem `docker volume prune` como primeira medida.
 
 Flyway aplica as migrações pendentes sem apagar os cadastros. Faça backup antes de atualizar um banco que contenha dados importantes. Nunca altere uma migração já aplicada.
 

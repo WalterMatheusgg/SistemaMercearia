@@ -18,10 +18,10 @@ Este procedimento mantém o monólito Spring Boot/Angular e o PostgreSQL existen
 
 1. Provisione uma VM com armazenamento persistente e capacidade adequada, instale Docker Engine + Compose v2 e restrinja firewall. Permita entrada TCP 80 e 443 para Caddy; SSH apenas a administradores. **Não publique portas 5432, 8025 ou 8080**.
 2. Configure o domínio com DNS A/AAAA para o IP público da VM. HTTPS automático exige um nome válido alcançável pelas autoridades certificadoras.
-3. Na VM, obtenha **esta branch** (não a `main` inicial):
+3. Na VM, obtenha a **`main` definitiva**:
 
    ```bash
-   git clone --branch codex/ferragens-estoque-20261104 --single-branch https://github.com/WalterMatheusgg/SistemaMercearia.git
+   git clone --branch main --single-branch https://github.com/WalterMatheusgg/SistemaMercearia.git
    cd SistemaMercearia
    cp .env.example .env
    chmod 600 .env
@@ -41,6 +41,14 @@ Este procedimento mantém o monólito Spring Boot/Angular e o PostgreSQL existen
    | `MAIL_USERNAME`, `MAIL_PASSWORD` | credenciais SMTP privadas |
    | `MAIL_AUTH`, `MAIL_STARTTLS`, `MAIL_SSL` | compatíveis com o provedor, normalmente `true`, `true`, `false` |
 
+   **Primeiro administrador em banco novo:** além de `BOOTSTRAP_ADMIN_ENABLED=true`, defina temporariamente `SPRING_PROFILES_ACTIVE=prod,bootstrap` no `.env` antes da primeira execução. Só o perfil `prod` não executa a criação do dono. Depois do primeiro login, configure `SPRING_PROFILES_ACTIVE=prod` e `BOOTSTRAP_ADMIN_ENABLED=false`, remova o segredo de bootstrap e recrie o contêiner `app`. Se você estiver restaurando um banco já existente, **não** use o perfil `bootstrap`.
+
+   Antes de qualquer `up` em produção, verifique as variáveis sem expor senhas:
+
+   ```bash
+   python3 scripts/preflight-production.py .env
+   ```
+
    O `infra/compose.https.yaml` define `APP_PUBLIC_URL` como HTTPS e habilita os jobs. O perfil `prod` força cookie Secure e desabilita a documentação de API pública. Para Brevo SMTP, use o servidor `smtp-relay.brevo.com` e a **chave SMTP**, não a chave da API; confirme elegibilidade e limites do plano gratuito no provedor (300 mensagens/dia segundo a documentação consultada).
 
 5. Se o banco é **novo**, inicialize o conjunto após revisar os segredos:
@@ -51,7 +59,7 @@ Este procedimento mantém o monólito Spring Boot/Angular e o PostgreSQL existen
    docker compose --env-file .env -f infra/compose.production.yaml -f infra/compose.https.yaml ps
    ```
 
-   Após criação do administrador, defina `BOOTSTRAP_ADMIN_ENABLED=false` e recrie somente o app para retirar o bootstrap das configurações ativas:
+   Após criação do administrador, defina `BOOTSTRAP_ADMIN_ENABLED=false`, `SPRING_PROFILES_ACTIVE=prod`, **retire `BOOTSTRAP_ADMIN_PASSWORD` do `.env`** e recrie somente o app para retirar o bootstrap das configurações ativas:
 
    ```bash
    docker compose --env-file .env -f infra/compose.production.yaml -f infra/compose.https.yaml up -d --force-recreate app
@@ -65,7 +73,7 @@ Este procedimento mantém o monólito Spring Boot/Angular e o PostgreSQL existen
    docker compose --env-file .env -f infra/compose.production.yaml -f infra/compose.https.yaml up -d --build
    ```
 
-   As variáveis `POSTGRES_USER`/`POSTGRES_DB` do último bloco precisam estar disponíveis no shell atual (por exemplo `set -a; . ./.env; set +a`). **Não execute a restauração em um banco já inicializado por Flyway** sem elaborar e ensaiar um plano de migração. Execute e confira uma restauração isolada antes de transferir dados reais.
+   Antes de iniciar o app com dados restaurados, confirme `SPRING_PROFILES_ACTIVE=prod` e `BOOTSTRAP_ADMIN_ENABLED=false`. As variáveis `POSTGRES_USER`/`POSTGRES_DB` do último bloco precisam estar disponíveis no shell atual (por exemplo `set -a; . ./.env; set +a`). **Não execute a restauração em um banco já inicializado por Flyway** sem elaborar e ensaiar um plano de migração. Execute e confira uma restauração isolada antes de transferir dados reais.
 
 ## Backups e operação
 

@@ -65,6 +65,8 @@ jobs:
           s=p.read_text().replace('replace-with-a-long-local-password','local-e2e-password-123456')
           p.write_text(s)
           PY
+      - name: Testar proteção da configuração de produção
+        run: python3 -m unittest discover -s scripts/tests -p 'test_*.py' -v
       - name: Validar manifests de publicação comercial sem acessar segredos
         run: |
           APP_DOMAIN=example.test docker compose --env-file .env \
@@ -72,6 +74,8 @@ jobs:
             -f infra/compose.https.yaml config --quiet
       - name: Construir e iniciar a aplicação completa
         run: bash scripts/start.sh
+      - name: Verificar saúde, catálogo e controle de acesso sem alterar dados
+        run: SMOKE_MAILPIT_URL=http://localhost:8025 bash scripts/smoke.sh
       - run: npm ci
         working-directory: frontend
       - run: npx playwright install --with-deps chromium

@@ -7,14 +7,14 @@ Sistema para gestão de uma loja de ferragens, com área interna e portal do cli
 ```bash
 cd /workspaces/SistemaMercearia
 git fetch origin
-git switch codex/ferragens-estoque-20261104
-git pull --ff-only origin codex/ferragens-estoque-20261104
+git switch main
+git pull --ff-only origin main
 bash scripts/start.sh
 ```
 
 Abra a porta **8080** na aba **Ports**. O script compila e sobe o app completo no Docker, preservando o banco e o `.env` existentes. Em ambiente novo cria senhas locais aleatórias: consulte o login administrativo no `.env`. O catálogo é público; contas administrativas entram na gestão, e clientes entram em Minha conta. E-mails de desenvolvimento aparecem no Mailpit, porta **8025**.
 
-Instruções completas: [docs/CODESPACE.md](docs/CODESPACE.md). Fluxos, papéis e limites: [docs/OPERACAO.md](docs/OPERACAO.md).
+Instruções completas: [docs/CODESPACE.md](docs/CODESPACE.md). Conferência segura de funcionamento: `bash scripts/smoke.sh`. Antes da hospedagem, execute `python3 scripts/preflight-production.py .env`. Entrega e pendências: [docs/ENTREGA_FINAL.md](docs/ENTREGA_FINAL.md). Fluxos, papéis e limites: [docs/OPERACAO.md](docs/OPERACAO.md).
 
 **Hospedagem comercial e HTTPS:** antes de publicar, consulte [docs/HOSPEDAGEM.md](docs/HOSPEDAGEM.md). A Vercel Hobby gratuita não autoriza uso comercial; a implantação Docker com Caddy mantém API e interface na mesma origem. Nenhuma URL externa foi homologada.
 
