@@ -1,8 +1,11 @@
 import { pageTitle } from './page-title.strategy';
-describe('Identidade das abas', () => {
-  it('substitui o título genérico do navegador', () => {
-    expect(pageTitle()).toBe('ForjaHub | Gestão e loja');
-    expect(pageTitle('Estoque')).toBe('Estoque | ForjaHub');
-    expect(pageTitle('Vendas e pedidos')).toBe('Vendas e pedidos | ForjaHub');
+describe('Títulos das abas da Loja', () => {
+  it('usa apenas Loja na raiz, sem o nome técnico frontend', () => {
+    expect(pageTitle()).toBe('Loja');
+  });
+  it('identifica cada módulo do aplicativo', () => {
+    expect(pageTitle('Estoque')).toBe('Estoque | Loja');
+    expect(pageTitle('Vendas e pedidos')).toBe('Vendas e pedidos | Loja');
+    expect(pageTitle('Minha conta')).toBe('Minha conta | Loja');
   });
 });
