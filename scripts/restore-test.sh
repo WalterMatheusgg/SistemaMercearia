@@ -10,8 +10,15 @@ TASK_TARGET=$2
 set -a
 . "$TASK_ROOT/.env"
 set +a
+# Sem seletor, continua usando o Compose local. Em produção, selecione explicitamente
+# infra/compose.production.yaml; nunca misture os dois volumes de banco.
+COMPOSE_CONFIG=${COMPOSE_CONFIG:-compose.yaml}
+case "$COMPOSE_CONFIG" in
+  compose.yaml|infra/compose.production.yaml) ;;
+  *) echo 'COMPOSE_CONFIG inválido; use compose.yaml ou infra/compose.production.yaml.' >&2; exit 1 ;;
+esac
 [[ "$TASK_TARGET" != "$POSTGRES_DB" && "$TASK_TARGET" != postgres && "$TASK_TARGET" != template0 && "$TASK_TARGET" != template1 ]] || { echo 'Escolha um banco novo, separado do banco em uso.' >&2; exit 1; }
-docker compose --env-file .env exec -T postgres createdb -U "$POSTGRES_USER" "$TASK_TARGET"
-docker compose --env-file .env exec -T postgres pg_restore -U "$POSTGRES_USER" --dbname="$TASK_TARGET" --exit-on-error --no-owner < "$TASK_DUMP"
-docker compose --env-file .env exec -T postgres psql -X -U "$POSTGRES_USER" -d "$TASK_TARGET" -v ON_ERROR_STOP=1 -c 'SELECT version,success FROM flyway_schema_history ORDER BY installed_rank; SELECT count(*) AS products FROM product; SELECT count(*) AS sales FROM sale;'
+docker compose --env-file .env -f "$COMPOSE_CONFIG" exec -T postgres createdb -U "$POSTGRES_USER" "$TASK_TARGET"
+docker compose --env-file .env -f "$COMPOSE_CONFIG" exec -T postgres pg_restore -U "$POSTGRES_USER" --dbname="$TASK_TARGET" --exit-on-error --no-owner < "$TASK_DUMP"
+docker compose --env-file .env -f "$COMPOSE_CONFIG" exec -T postgres psql -X -U "$POSTGRES_USER" -d "$TASK_TARGET" -v ON_ERROR_STOP=1 -c 'SELECT version,success FROM flyway_schema_history ORDER BY installed_rank; SELECT count(*) AS products FROM product; SELECT count(*) AS sales FROM sale;'
 echo "Restauração concluída em $TASK_TARGET. O banco da aplicação foi preservado."
