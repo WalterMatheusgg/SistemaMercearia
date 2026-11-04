@@ -1,4 +1,5 @@
 :host { display: block; min-height: 100vh; }
+.logout-error { margin: 0; padding: 12px 24px; color: var(--danger); background: #f9eeec; }
 .admin-shell { min-height: 100vh; }
 .topbar { display: flex; align-items: center; justify-content: space-between; height: 66px; padding: 0 28px; border-bottom: 1px solid var(--line); background: #fff; }
 .brand { display: flex; align-items: center; gap: 12px; color: var(--ink); font-size: 13px; font-weight: 800; letter-spacing: .8px; text-decoration: none; }
@@ -17,9 +18,29 @@
 @media (max-width: 680px) {
   .topbar { height: 58px; padding: 0 16px; }
   .admin-body { grid-template-columns: 1fr; min-height: calc(100vh - 58px); }
-  .side-nav { padding: 10px 12px; border-right: 0; border-bottom: 1px solid var(--line); }
+  /* Em telas pequenas, a navegação permanece em uma faixa acessível por rolagem
+     horizontal, sem empurrar a área de trabalho para baixo ou alargar a página. */
+  .side-nav {
+    display: flex;
+    flex-wrap: nowrap;
+    gap: 6px;
+    padding: 10px 12px;
+    border-right: 0;
+    border-bottom: 1px solid var(--line);
+    overflow-x: auto;
+    overscroll-behavior-x: contain;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: thin;
+  }
   .nav-caption { display: none; }
-  .side-nav a { min-height: 38px; }
+  .side-nav a {
+    flex: 0 0 auto;
+    min-height: 38px;
+    white-space: nowrap;
+    border: 1px solid transparent;
+    border-radius: 999px;
+  }
+  .side-nav a.active { border-color: #bfd1df; }
   .workspace { padding: 24px 16px 42px; }
   .user-name { max-width: 120px; overflow: hidden; text-overflow: ellipsis; }
 }

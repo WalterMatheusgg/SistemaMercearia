@@ -1,0 +1,24 @@
+# Complemento opcional do Compose de produção: proxy público com HTTPS.
+# Use junto de infra/compose.production.yaml, nesta ordem.
+services:
+  app:
+    environment:
+      APP_PUBLIC_URL: https://${APP_DOMAIN:?Configure APP_DOMAIN no ambiente privado}
+      APP_JOBS_ENABLED: "true"
+  proxy:
+    image: caddy:2.10.2-alpine
+    restart: unless-stopped
+    environment:
+      APP_DOMAIN: ${APP_DOMAIN:?Configure APP_DOMAIN no ambiente privado}
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - https-caddy-data:/data
+      - https-caddy-config:/config
+    depends_on:
+      - app
+volumes:
+  https-caddy-data:
+  https-caddy-config:

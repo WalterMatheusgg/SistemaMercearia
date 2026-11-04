@@ -1,59 +1,41 @@
 # Arquitetura
 
-## Princípios
+Monólito modular Java 21/Spring Boot com Angular standalone e PostgreSQL. O backend usa JPA no cadastro/autenticação e JDBC nos fluxos comerciais; ambos participam da mesma transação Spring. Flyway versiona o banco; Hibernate somente valida.
 
-- Monólito modular Spring Boot; não há microsserviços nem mensageria distribuída nesta etapa.
-- Pacote raiz `br.com.ferragens`; cada domínio contém API, serviço, persistência e modelo próprios. `shared` contém apenas erros HTTP comuns.
-- Angular standalone com áreas reservadas para público, cliente e administração. Nesta entrega só a área administrativa de produtos está navegável.
-- PostgreSQL é a fonte de verdade. Flyway versiona o schema e `ddl-auto=validate` detecta divergência sem criar/alterar tabelas.
-- A autorização é aplicada no backend. Guards Angular melhoram navegação e não substituem regras da API.
-- Sessão HTTP no servidor, cookie HttpOnly, `SameSite=Lax`, CSRF habilitado e renovado no login. Secure é configurável por ambiente. Frontend/API devem compartilhar a origem em produção; desenvolvimento usa proxy local.
-- Valores monetários são `BigDecimal` e `NUMERIC(14,2)`. A API administrativa serializa decimais como strings JSON com duas casas; não arredonda valores de entrada acima de duas casas.
+| Módulo | Responsabilidade |
+| --- | --- |
+| `auth` | Sessão, usuário/papéis, recuperação/verificação, cadastro do cliente e preferências |
+| `product` | Cadastro administrativo e referências de produto |
+| `inventory` | Saldo por local, razão imutável, precisão de medidas e movimentação física |
+| `commerce` | Contatos, vendas/orçamentos, compras/recebimentos, caixa, financeiro, catálogo, pedidos, reservas e relatórios |
+| `notification` | Outbox, preferências aplicadas ao envio, retries, resumo diário e alertas |
+| `operations` | Configuração da loja, cadastros auxiliares e consulta de auditoria |
+| `config` | Segurança, validação de sessão, limitação de tentativas, bootstrap e fallback da SPA |
 
-## Módulos
+## Consistência
 
-| Domínio | Situação | Responsabilidade prevista |
-| --- | --- | --- |
-| `auth` | Inicial | Usuário persistido, senha BCrypt, papéis, sessão/login/logout e consulta do usuário atual |
-| `product` | Inicial | Produto, categoria, unidade e consultas administrativas paginadas |
-| `customer` | Planejado | Cadastro, identidade, privacidade e histórico de compras |
-| `inventory` | Planejado | Razão de movimentações, reservas, disponibilidade, inventário e alertas |
-| `purchasing` | Planejado | Fornecedores, pedidos de compra e recebimento físico |
-| `sales` / `checkout` | Planejado | Orçamentos, pedidos, venda presencial/online, caixa e transições auditáveis |
-| `finance` | Planejado | Títulos, pagamentos, recebíveis e conciliação |
-| `catalog` / `fulfillment` | Planejado | Catálogo público, carrinho, preço publicado, entrega e retirada |
-| `notification` | Planejado | Preferências de alerta, outbox, tentativas e histórico |
-| `reporting` / `audit` | Planejado | Relatórios, trilha de auditoria e consultas operacionais |
+Cada comando comercial abre transação, reivindica uma chave idempotente e grava seus documentos/efeitos juntos. A chave é serializada por advisory lock e vinculada a ator/operação/conteúdo. Falha reverte saldo, pagamento, documento, auditoria e outbox.
 
-Evitar criar tabelas futuras sem contratos e invariantes definidos. Os diretórios públicos/cliente poderão compartilhar os DTOs de catálogo explicitamente publicados; nunca devem reutilizar DTO administrativo de produto.
+Produtos são bloqueados em ordem de UUID; depois vêm saldos e registros de caixa/financeiro necessários. Venda confirmada baixa o físico exatamente uma vez. Pedido online pendente aumenta o reservado; confirmação consome a reserva antes da baixa na mesma transação. Cancelamento/expiração liberam reservas. Contagem verifica revisão; movimentos simultâneos não podem deixar disponibilidade negativa.
 
-## Dados e API
+Snapshots dos itens preservam cadastro e valores comerciais. Originais não são apagados em devoluções: geram movimentos e lançamentos compensatórios. Movimentos físicos, eventos de auditoria, entradas de caixa e linhas de recebimento/devolução têm proteção de imutabilidade no banco. Estados atuais de documentos permanecem consultáveis junto do histórico.
 
-As tabelas iniciais e suas relações estão em [MODELO_DADOS.md](MODELO_DADOS.md). Categorias/unidades iniciais são referências editáveis posteriormente por endpoints próprios ainda não implementados. Produto não contém quantidade nem saldo de estoque.
+## Segurança e privacidade
 
-Erros de validação, parsing, domínio e segurança são `ProblemDetail`. A API administrativa de produto inclui custo; não existe endpoint público de produto nesta etapa. Em endpoints públicos futuros, criar DTO de catálogo que omita custo e dados operacionais.
+Sessão no servidor, cookie HttpOnly/SameSite=Lax e CSRF para SPA, renovado no login e removido no logout. Alteração de usuário/senha/papéis incrementa sua revisão e invalida sessões antigas na próxima requisição. A API aplica permissões independentemente de guards. Cliente só consulta seu próprio cadastro/pedidos; catálogo público tem DTO sem custos.
 
-## E-mail
+Senhas usam BCrypt. Links têm token aleatório de 256 bits, hash SHA-256 no banco, validade de 30 minutos e uso único. O corpo do e-mail transacional contém o link para entrega; não entra em logs. Contas com acesso sensível devem ter e-mail verificado para alertas. A limitação de autenticação é por processo/IP; produção com várias instâncias precisa de proteção compartilhada e estratégia de sessão.
 
-O `spring-boot-starter-mail` usa o SMTP local em `localhost:1025`, capturado pelo Mailpit na porta web `8025`. Não há destinatário externo nem fluxo de notificação comercial ativo. O teste de fumaça usa um endereço `.local`.
+## Notificações por email
 
-### Notificações por e-mail
+O evento é inserido na outbox dentro da transação comercial. Um processador usa `FOR UPDATE SKIP LOCKED` e lease para reivindicar mensagens sem manter transação durante SMTP. Confere novamente e-mail, verificação, acesso ativo, papel e preferências antes de enviar.
 
-Quando o domínio de vendas existir:
+Há até cinco tentativas, backoff limitado e histórico de status/erro sanitizado. SMTP não garante entrega exatamente uma vez: uma falha entre aceite e confirmação pode repetir uma mensagem. A chave evento/destinatário impede duplicação na criação da outbox. Falha de e-mail não desfaz a venda.
 
-1. Armazenar destinatários verificados e preferências por tipo de evento/filtro, com consentimento e capacidade de desativação.
-2. Na mesma transação que confirma a venda, inserir um evento imutável na tabela outbox com chave de deduplicação, payload mínimo e instante do evento.
-3. Um processador em segundo plano reivindica eventos com lease/lock, envia em lote configurável ou por venda, registra tentativas, próximo retry e resultado.
-4. Usar backoff limitado, quantidade máxima de tentativas e fila de falhas para inspeção/reenvio controlado. Deduplicação protege contra reprocessamento; e-mail é entrega pelo menos uma vez, não exatamente uma vez.
-5. Falha de SMTP nunca reverte venda confirmada. O histórico registra evento, destinatário, template/versão, status e erro sanitizado; segredos e conteúdo sensível não entram nos logs.
-6. Configurar remetente, destinatários, filtros, resumo versus aviso individual e limites por loja; validar destinatários antes de habilitar o canal.
+O resumo diário roda às 21h de Brasília. Alertas de reposição são gerados ao atingir o limite; vendas concluídas e seus cancelamentos seguem a preferência correspondente. Desenvolvimento usa Mailpit sem relay externo; produção exige SMTP/remetente configurados.
 
-Esta outbox e as configurações não foram criadas nesta fundação; serão definidas com a confirmação de vendas.
+## Execução
 
-## Operação e segurança
+No Docker integrado, o Angular compilado entra no JAR e a SPA/API usam a mesma origem na porta 8080. No desenvolvimento separado, Angular 4200 usa proxy `/api` para o backend 8080. Veja [CODESPACE.md](CODESPACE.md).
 
-- Desenvolvimento local em `http://localhost:4200` com proxy para `http://localhost:8080`; não habilitar CORS amplo.
-- Produção planejada na mesma origem HTTPS, com `SESSION_COOKIE_SECURE=true`, segredo de bootstrap ausente/desabilitado e credenciais em secret manager.
-- Não persistir senhas ou tokens no browser. BCrypt é usado para hash; papéis armazenados no PostgreSQL.
-- Health endpoint não expõe detalhes internos. Endpoints de administração e Swagger exigem autenticação conforme a configuração.
-- O Compose vincula portas a loopback e mantém dados num volume Docker local.
+O perfil `prod` exige conexão de banco configurada, usa cookie Secure e desliga OpenAPI. Banco/SMTP não são expostos pelo Compose de produção. Um proxy HTTPS deve publicar a aplicação. Backup e restauração em banco separado estão nos scripts; operação real precisa de cópias externas e monitoramento. Pagamento automático e emissão fiscal dependem de provedores e não estão implementados.

@@ -1,5 +1,10 @@
-# Infraestrutura local
+# Infraestrutura
 
-O `compose.yaml` na raiz inicia somente PostgreSQL 18.6 e Mailpit v1.27.11. As portas são publicadas em loopback, as credenciais vêm do ambiente/`.env` e os dados do PostgreSQL persistem no volume `postgres-data`.
+- `compose.yaml` na raiz: PostgreSQL + Mailpit no Codespace; dados no volume local.
+- `infra/compose.production.yaml`: monólito Spring/Angular e PostgreSQL persistente, app somente no loopback.
+- `infra/compose.https.yaml` + `infra/Caddyfile`: Caddy com TLS automático, domínios configurados por variável de ambiente e proxy da mesma origem.
+- `scripts/backup.sh` e `scripts/restore-test.sh`: por padrão banco local; em produção use `COMPOSE_CONFIG=infra/compose.production.yaml`.
 
-Não há imagens de aplicação, cluster, provedor SMTP externo ou configuração de produção nesta etapa. A implantação de produção deve adicionar TLS, gestão de segredos, backup/restauração, monitoramento e migrações controladas.
+A configuração pública exige domínio, VM com Docker, .env privado e SMTP legítimo. Não há recursos cloud provisionados por esses arquivos. Antes de iniciar uma loja real, siga a implantação e a homologação em [docs/HOSPEDAGEM.md](../docs/HOSPEDAGEM.md).
+
+**Atenção:** não exponha PostgreSQL, SMTP local ou porta 8080 à Internet; não apague volumes para resolver erros de container.

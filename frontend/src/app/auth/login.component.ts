@@ -1,6 +1,6 @@
 import { Component, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
-import { Router } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
@@ -10,7 +10,14 @@ import { AuthService } from './auth.service';
 @Component({
   selector: 'app-login',
   standalone: true,
-  imports: [ReactiveFormsModule, MatButtonModule, MatFormFieldModule, MatInputModule, MatProgressBarModule],
+  imports: [
+    RouterLink,
+    ReactiveFormsModule,
+    MatButtonModule,
+    MatFormFieldModule,
+    MatInputModule,
+    MatProgressBarModule,
+  ],
   templateUrl: './login.component.html',
   styleUrl: './login.component.scss',
 })
@@ -35,9 +42,14 @@ export class LoginComponent {
 
     this.busy.set(true);
     this.auth.login(this.form.getRawValue()).subscribe({
-      next: () => void this.router.navigateByUrl('/admin/products'),
+      next: (user) =>
+        void this.router.navigateByUrl(
+          user.roles.includes('CUSTOMER') ? '/account' : '/admin/home',
+        ),
       error: (error: { error?: { detail?: string } }) => {
-        this.errorMessage.set(error.error?.detail ?? 'Não foi possível entrar. Verifique a conexão e tente novamente.');
+        this.errorMessage.set(
+          error.error?.detail ?? 'Não foi possível entrar. Verifique a conexão e tente novamente.',
+        );
         this.busy.set(false);
       },
       complete: () => this.busy.set(false),

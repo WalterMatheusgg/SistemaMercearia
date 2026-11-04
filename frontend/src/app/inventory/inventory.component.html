@@ -1,0 +1,331 @@
+<section class="inventory-page">
+  <header class="heading">
+    <div>
+      <p class="eyebrow">OPERAÇÃO DA LOJA</p>
+      <h1>Estoque</h1>
+      <p>Quantidades e movimentações com histórico.</p>
+    </div>
+    <button mat-stroked-button type="button" (click)="refresh()" [disabled]="loading() || saving()">
+      Atualizar
+    </button>
+  </header>
+  @if (message()) {
+    <p class="notice success" role="status">{{ message() }}</p>
+  }
+  @if (error()) {
+    <p class="notice error" role="alert">{{ error() }}</p>
+  }
+
+  <div class="filters">
+    <mat-form-field appearance="outline"
+      ><mat-label>Local de estoque</mat-label>
+      <mat-select
+        [value]="locationId()"
+        [disabled]="saving() || uncertain()"
+        (selectionChange)="changeLocation($event.value)"
+      >
+        @for (location of locations(); track location.id) {
+          <mat-option [value]="location.id">{{ location.name }}</mat-option>
+        }
+      </mat-select>
+    </mat-form-field>
+    <mat-form-field appearance="outline" class="search"
+      ><mat-label>Produto ou código</mat-label
+      ><input #searchInput matInput (keyup.enter)="search(searchInput.value)"
+    /></mat-form-field>
+    <button mat-button type="button" (click)="search(searchInput.value)">Buscar</button>
+  </div>
+  <div class="check-filters">
+    <mat-checkbox
+      [checked]="onlyLow()"
+      (change)="onlyLow.set($event.checked); page.set(0); loadBalances()"
+      >Somente itens para reposição</mat-checkbox
+    >
+    <mat-checkbox
+      [checked]="includeInactive()"
+      (change)="includeInactive.set($event.checked); page.set(0); loadBalances()"
+      >Incluir inativos</mat-checkbox
+    >
+  </div>
+
+  @if (formOpen() && selected(); as item) {
+    <section class="movement-form" aria-labelledby="movement-title">
+      <div class="form-heading">
+        <div>
+          <h2 id="movement-title">
+            {{ reverse() ? 'Estornar movimentação' : 'Registrar movimentação' }}
+          </h2>
+          <p>
+            {{ item.code }} · {{ item.name }} · Disponível: {{ number(item.available) }}
+            {{ item.unit }}
+          </p>
+        </div>
+        <button mat-button type="button" [disabled]="saving()" (click)="close()">Fechar</button>
+      </div>
+      <p class="hint">
+        Movimentações manuais não registram vendas nem pagamentos. Incremento permitido:
+        {{ number(item.quantityStep) }} {{ item.unit }}.
+      </p>
+      <form [formGroup]="form" (ngSubmit)="save()">
+        @if (reverse()) {
+          <p>
+            Correção integral de {{ labels[reverse()!.kind] }}: {{ number(reverse()!.quantity) }}
+            {{ item.unit }}. O registro original será preservado.
+          </p>
+        }
+        <div class="form-grid">
+          @if (!reverse()) {
+            <mat-form-field appearance="outline"
+              ><mat-label>Operação</mat-label>
+              <mat-select formControlName="kind">
+                @for (kind of kinds; track kind) {
+                  @if (kind !== 'COUNT' || canAdjust()) {
+                    <mat-option [value]="kind">{{ labels[kind] }}</mat-option>
+                  }
+                }
+              </mat-select>
+            </mat-form-field>
+          }
+          <mat-form-field appearance="outline"
+            ><mat-label
+              >{{
+                form.controls.kind.value === 'COUNT'
+                  ? 'Quantidade contada'
+                  : form.controls.kind.value === 'MINIMUM'
+                    ? 'Estoque mínimo'
+                    : 'Quantidade'
+              }}
+              ({{ item.unit }})</mat-label
+            >
+            <input
+              matInput
+              inputmode="decimal"
+              formControlName="quantity"
+              [readonly]="!!reverse()"
+            />
+            @if (form.controls.quantity.invalid && form.controls.quantity.touched) {
+              <mat-error>Informe uma quantidade válida, com até 4 casas.</mat-error>
+            }
+          </mat-form-field>
+          <mat-form-field appearance="outline" class="wide"
+            ><mat-label>Motivo</mat-label
+            ><textarea matInput rows="2" formControlName="reason" maxlength="500"></textarea>
+            @if (form.controls.reason.invalid && form.controls.reason.touched) {
+              <mat-error>Informe um motivo com pelo menos 3 caracteres.</mat-error>
+            }
+          </mat-form-field>
+        </div>
+        @if (formError()) {
+          <p class="notice error" role="alert">{{ formError() }}</p>
+        }
+        <div class="actions">
+          <button mat-button type="button" [disabled]="saving()" (click)="close()">Cancelar</button>
+          <button mat-flat-button type="submit" [disabled]="saving()">
+            {{
+              saving()
+                ? 'Confirmando...'
+                : uncertain()
+                  ? 'Confirmar a mesma operação'
+                  : 'Confirmar movimentação'
+            }}
+          </button>
+        </div>
+      </form>
+    </section>
+  }
+
+  <section class="data-section" aria-label="Saldos do estoque">
+    @if (loading()) {
+      <mat-progress-bar mode="indeterminate" />
+    }
+    <div class="table-scroll">
+      <table>
+        <thead>
+          <tr>
+            <th>Produto</th>
+            <th>Físico</th>
+            <th>Reservado</th>
+            <th>Indisponível</th>
+            <th>Disponível</th>
+            <th>Mínimo</th>
+            <th>Situação</th>
+            <th>Ações</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (row of rows(); track row.productId) {
+            <tr>
+              <td>
+                <strong>{{ row.name }}</strong
+                ><small>{{ row.code }} · {{ row.unit }}{{ row.active ? '' : ' · Inativo' }}</small>
+              </td>
+              <td class="numeric">{{ number(row.physical) }}</td>
+              <td class="numeric">{{ number(row.reserved) }}</td>
+              <td class="numeric">{{ number(row.unavailable) }}</td>
+              <td class="numeric">
+                <strong>{{ number(row.available) }}</strong>
+              </td>
+              <td class="numeric">{{ number(row.minimumQuantity) }}</td>
+              <td>
+                <span class="status" [class.low]="row.status !== 'NORMAL'">{{
+                  status(row.status)
+                }}</span>
+              </td>
+              <td class="row-actions">
+                @if (canWrite()) {
+                  <button mat-button type="button" [disabled]="saving()" (click)="open(row)">
+                    Movimentar
+                  </button>
+                }
+                <button mat-button type="button" (click)="showHistory(row)">Histórico</button>
+                @if (canWrite()) {
+                  <button
+                    mat-button
+                    type="button"
+                    [disabled]="saving()"
+                    (click)="open(row, 'MINIMUM')"
+                  >
+                    Mínimo
+                  </button>
+                }
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+    @if (!loading() && rows().length === 0) {
+      <p class="empty">Nenhum produto encontrado. Cadastre produtos ou ajuste os filtros.</p>
+    }
+    <div class="pagination">
+      <span>{{ total() }} itens · Página {{ page() + 1 }}</span>
+      <div>
+        <button
+          mat-button
+          type="button"
+          [disabled]="page() === 0 || loading()"
+          (click)="nextPage(-1)"
+        >
+          Anterior</button
+        ><button
+          mat-button
+          type="button"
+          [disabled]="(page() + 1) * 20 >= total() || loading()"
+          (click)="nextPage(1)"
+        >
+          Próxima
+        </button>
+      </div>
+    </div>
+  </section>
+
+  <section class="history" aria-labelledby="history-title">
+    <div class="form-heading">
+      <div>
+        <h2 id="history-title">
+          Histórico{{ historyProduct() ? ' · ' + historyProduct()!.name : ' do local' }}
+        </h2>
+        <p>Entradas, saídas e correções preservadas com data e responsável.</p>
+      </div>
+      @if (historyProduct()) {
+        <button mat-button type="button" (click)="showHistory(null)">Ver todos</button>
+      }
+    </div>
+    <mat-form-field appearance="outline"
+      ><mat-label>Tipo de movimentação</mat-label
+      ><mat-select
+        [value]="historyKind()"
+        (selectionChange)="historyKind.set($event.value); historyPage.set(0); loadHistory()"
+        ><mat-option value="">Todos</mat-option>
+        @for (kind of allKinds; track kind) {
+          <mat-option [value]="kind">{{ labels[kind] }}</mat-option>
+        }
+      </mat-select></mat-form-field
+    >
+    @if (loadingHistory()) {
+      <mat-progress-bar mode="indeterminate" />
+    }
+    <div class="data-section">
+      <div class="table-scroll">
+        <table>
+          <thead>
+            <tr>
+              <th>Data</th>
+              <th>Produto / operação</th>
+              <th>Variação</th>
+              <th>Saldo físico</th>
+              <th>Responsável e motivo</th>
+              <th>Correção</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (movement of movements(); track movement.id) {
+              <tr>
+                <td>{{ date(movement.occurredAt) }}</td>
+                <td>
+                  <strong>{{ movement.productName }}</strong
+                  ><small>{{ movement.code }} · {{ labels[movement.kind] }}</small>
+                  @if (movement.kind === 'MINIMUM') {
+                    <small
+                      >Novo mínimo: {{ number(movement.minimumAfter) }} {{ movement.unit }}</small
+                    >
+                  }
+                </td>
+                <td class="numeric">
+                  {{ movement.delta.startsWith('-') ? '' : '+' }}{{ number(movement.delta) }}
+                  {{ movement.unit }}
+                </td>
+                <td class="numeric">
+                  {{ number(movement.balanceBefore) }} → {{ number(movement.balanceAfter) }}
+                </td>
+                <td>
+                  <strong>{{ movement.actorName }}</strong
+                  ><small>{{ movement.reason }}</small>
+                </td>
+                <td>
+                  @if (movement.reversed) {
+                    <span>Estornada</span>
+                  } @else if (canReverse(movement)) {
+                    <button
+                      mat-button
+                      type="button"
+                      [disabled]="saving()"
+                      (click)="startReversal(movement)"
+                    >
+                      Estornar
+                    </button>
+                  } @else {
+                    <span>—</span>
+                  }
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+      @if (!loadingHistory() && movements().length === 0) {
+        <p class="empty">Nenhuma movimentação para este filtro.</p>
+      }
+      <div class="pagination">
+        <span>{{ historyTotal() }} registros · Página {{ historyPage() + 1 }}</span>
+        <div>
+          <button
+            mat-button
+            type="button"
+            [disabled]="historyPage() === 0 || loadingHistory()"
+            (click)="nextHistoryPage(-1)"
+          >
+            Anterior</button
+          ><button
+            mat-button
+            type="button"
+            [disabled]="(historyPage() + 1) * 20 >= historyTotal() || loadingHistory()"
+            (click)="nextHistoryPage(1)"
+          >
+            Próxima
+          </button>
+        </div>
+      </div>
+    </div>
+  </section>
+</section>

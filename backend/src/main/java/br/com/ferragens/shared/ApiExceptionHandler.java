@@ -18,6 +18,18 @@ import java.util.TreeMap;
 @RestControllerAdvice
 public class ApiExceptionHandler {
 
+    @ExceptionHandler(BusinessRuleException.class)
+    ResponseEntity<ProblemDetail> businessRule(BusinessRuleException exception) {
+        return problem(HttpStatus.BAD_REQUEST, "Operação inválida", exception.getMessage());
+    }
+
+    @ExceptionHandler({org.springframework.web.method.annotation.MethodArgumentTypeMismatchException.class,
+            org.springframework.web.bind.MissingRequestHeaderException.class,
+            org.springframework.web.bind.MissingServletRequestParameterException.class})
+    ResponseEntity<ProblemDetail> invalidParameters() {
+        return problem(HttpStatus.BAD_REQUEST, "Parâmetros inválidos", "Confira os identificadores e os parâmetros obrigatórios da operação.");
+    }
+
     @ExceptionHandler(MethodArgumentNotValidException.class)
     ResponseEntity<ProblemDetail> validation(MethodArgumentNotValidException exception) {
         ProblemDetail problem = ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST,

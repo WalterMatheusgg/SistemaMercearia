@@ -18,11 +18,6 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
-import org.testcontainers.containers.GenericContainer;
-import org.testcontainers.containers.PostgreSQLContainer;
-import org.testcontainers.junit.jupiter.Container;
-import org.testcontainers.junit.jupiter.Testcontainers;
-import org.testcontainers.utility.DockerImageName;
 
 import java.net.CookieManager;
 import java.net.CookiePolicy;
@@ -37,23 +32,13 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @ActiveProfiles("test")
-@Testcontainers
 class PlatformIntegrationTest {
 
-    @Container
-    static final PostgreSQLContainer postgres = new PostgreSQLContainer(DockerImageName.parse("postgres:18.6-alpine"));
-
-    @Container
-    static final GenericContainer<?> mailpit = new GenericContainer<>(DockerImageName.parse("axllent/mailpit:v1.27.11"))
-            .withExposedPorts(1025, 8025);
+    private static final String SCHEMA = "platform_" + java.util.UUID.randomUUID().toString().replace("-", "");
 
     @DynamicPropertySource
     static void serviceProperties(DynamicPropertyRegistry properties) {
-        properties.add("spring.datasource.url", postgres::getJdbcUrl);
-        properties.add("spring.datasource.username", postgres::getUsername);
-        properties.add("spring.datasource.password", postgres::getPassword);
-        properties.add("spring.mail.host", mailpit::getHost);
-        properties.add("spring.mail.port", () -> mailpit.getMappedPort(1025));
+        IntegrationServices.configure(properties, SCHEMA);
     }
 
     @LocalServerPort
@@ -76,9 +61,8 @@ class PlatformIntegrationTest {
 
     @BeforeEach
     void createPersistedUsers() {
-        jdbc.update("delete from product");
-        jdbc.update("delete from user_role");
-        jdbc.update("delete from app_user");
+        // O schema é exclusivo e aleatório para esta classe de integração.
+        jdbc.execute("TRUNCATE inventory_movement, inventory_balance, product, user_role, app_user CASCADE");
         saveUser("owner-it", "owner-password", "ROLE_OWNER");
         saveUser("seller-it", "seller-password", "ROLE_SELLER");
     }
@@ -92,12 +76,15 @@ class PlatformIntegrationTest {
 
         HttpClient owner = client();
         String ownerCsrf = csrf(owner);
+        String anonymousCsrf = ownerCsrf;
         HttpResponse<String> login = send(owner, "POST", "/api/auth/login",
                 "{\"username\":\"owner-it\",\"password\":\"owner-password\"}", ownerCsrf);
         assertThat(login.statusCode()).isEqualTo(200);
         assertThat(login.headers().allValues("Set-Cookie").stream().anyMatch(cookie ->
             cookie.contains("HttpOnly") && cookie.contains("SameSite=Lax"))).isTrue();
         ownerCsrf = csrf(owner);
+        assertThat(ownerCsrf).isNotEqualTo(anonymousCsrf);
+        assertThat(send(owner, "POST", "/api/admin/products", "{}", anonymousCsrf).statusCode()).isEqualTo(403);
 
         HttpResponse<String> invalid = send(owner, "POST", "/api/admin/products",
             "{\"code\":\"\",\"name\":\"\",\"baseUnitCode\":\"\",\"cost\":-1,\"price\":-1}", ownerCsrf);
@@ -158,9 +145,57 @@ class PlatformIntegrationTest {
         assertThat(deactivated.body()).contains("\"active\":false");
 
         ownerCsrf = csrf(owner);
+        String csrfBeforeLogout = ownerCsrf;
         assertThat(send(owner, "POST", "/api/auth/logout", "{}", ownerCsrf).statusCode()).isEqualTo(204);
         assertThat(send(owner, "GET", "/api/auth/me", null, null).statusCode()).isIn(401, 403);
+        assertThat(csrf(owner)).isNotEqualTo(csrfBeforeLogout);
         assertThat(users.findByUsername("owner-it")).isPresent();
+    }
+
+    @Test
+    void protectsApiDocumentation() throws Exception {
+        assertThat(send(client(), "GET", "/v3/api-docs", null, null).statusCode()).isEqualTo(401);
+        HttpClient owner = client();
+        String token = csrf(owner);
+        assertThat(send(owner, "POST", "/api/auth/login",
+                "{\"username\":\"owner-it\",\"password\":\"owner-password\"}", token).statusCode()).isEqualTo(200);
+        assertThat(send(owner, "GET", "/v3/api-docs", null, null).statusCode()).isEqualTo(200);
+    }
+
+    @Test
+    void inventoryApiEnforcesRolesIdempotencyAndProductMeasurement() throws Exception {
+        HttpClient owner = client();
+        String token = csrf(owner);
+        assertThat(send(owner, "POST", "/api/auth/login",
+                "{\"username\":\"owner-it\",\"password\":\"owner-password\"}", token).statusCode()).isEqualTo(200);
+        token = csrf(owner);
+        String body = "{\"code\":\"INV-01\",\"name\":\"Parafuso\",\"categoryId\":\"00000000-0000-0000-0000-000000000104\","
+                + "\"baseUnitCode\":\"UN\",\"cost\":\"1.00\",\"price\":\"2.00\"}";
+        var created = send(owner, "POST", "/api/admin/products", body, token);
+        assertThat(created.statusCode()).isEqualTo(201);
+        String id = extractJsonString(created.body(), "id");
+        String location = "00000000-0000-0000-0000-000000000201";
+        String movement = "{\"productId\":\"" + id + "\",\"locationId\":\"" + location
+                + "\",\"kind\":\"INITIAL\",\"quantity\":\"50\",\"reason\":\"Saldo conferido\"}";
+        String key = java.util.UUID.randomUUID().toString();
+        var first = sendMovement(owner, movement, token, key);
+        assertThat(first.statusCode()).as(first.body()).isEqualTo(200);
+        var retry = sendMovement(owner, movement, token, key);
+        assertThat(extractJsonString(retry.body(), "id")).isEqualTo(extractJsonString(first.body(), "id"));
+        assertThat(send(owner, "POST", "/api/admin/inventory/movements", movement, token).statusCode()).isEqualTo(400);
+        assertThat(send(owner, "PUT", "/api/admin/products/" + id, body.replace("\"UN\"", "\"M\""), token).statusCode()).isEqualTo(409);
+
+        HttpClient seller = client(); String sellerToken = csrf(seller);
+        assertThat(send(seller, "POST", "/api/auth/login", "{\"username\":\"seller-it\",\"password\":\"seller-password\"}", sellerToken).statusCode()).isEqualTo(200);
+        sellerToken = csrf(seller);
+        assertThat(send(seller, "GET", "/api/admin/inventory/balances?locationId=" + location, null, null).statusCode()).isEqualTo(200);
+        assertThat(sendMovement(seller, movement, sellerToken, java.util.UUID.randomUUID().toString()).statusCode()).isEqualTo(403);
+
+        saveUser("stock-it", "stock-password", "ROLE_STOCKKEEPER");
+        HttpClient stock = client(); String stockToken = csrf(stock);
+        assertThat(send(stock, "POST", "/api/auth/login", "{\"username\":\"stock-it\",\"password\":\"stock-password\"}", stockToken).statusCode()).isEqualTo(200);
+        stockToken = csrf(stock);
+        assertThat(sendMovement(stock, movement.replace("INITIAL", "COUNT"), stockToken, java.util.UUID.randomUUID().toString()).statusCode()).isEqualTo(403);
     }
 
     @Test
@@ -172,8 +207,7 @@ class PlatformIntegrationTest {
         message.setText("Mensagem local de verificação do Spring Mail.");
         mailSender.send(message);
 
-        URI messagesUri = URI.create("http://" + mailpit.getHost() + ":" + mailpit.getMappedPort(8025)
-                + "/api/v1/messages");
+        URI messagesUri = URI.create(IntegrationServices.mailpitUrl() + "/api/v1/messages");
         HttpResponse<String> messages = HttpClient.newHttpClient().send(
                 HttpRequest.newBuilder(messagesUri).GET().build(), HttpResponse.BodyHandlers.ofString());
         assertThat(messages.statusCode()).isEqualTo(200);
@@ -188,6 +222,12 @@ class PlatformIntegrationTest {
     private HttpClient client() {
         CookieManager cookies = new CookieManager(null, CookiePolicy.ACCEPT_ALL);
         return HttpClient.newBuilder().cookieHandler(cookies).build();
+    }
+
+    private HttpResponse<String> sendMovement(HttpClient client, String body, String token, String key) throws Exception {
+        return client.send(HttpRequest.newBuilder(URI.create("http://localhost:" + port + "/api/admin/inventory/movements"))
+                .header("Content-Type", "application/json").header("X-XSRF-TOKEN", token).header("Idempotency-Key", key)
+                .POST(HttpRequest.BodyPublishers.ofString(body, StandardCharsets.UTF_8)).build(), HttpResponse.BodyHandlers.ofString());
     }
 
     private String csrf(HttpClient client) throws Exception {

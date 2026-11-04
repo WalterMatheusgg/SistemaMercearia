@@ -1,29 +1,23 @@
-# Roadmap
+# Situação da entrega
 
-## Implementado nesta preparação
+Os fluxos implementados, regras, papéis e limitações estão em [OPERACAO.md](OPERACAO.md). Para executar/atualizar no Codespace, consulte [CODESPACE.md](CODESPACE.md).
 
-- Monorepo, Maven Wrapper, lockfile npm, Compose local para PostgreSQL/Mailpit e perfis Spring.
-- Migração inicial com loja, usuário, papel, categoria, unidade e produto.
-- Login persistido com BCrypt, sessão servidor, CSRF, consulta atual, logout e autorização por papel.
-- CRUD administrativo paginado de produtos, erros ProblemDetail, OpenAPI e health mínimo.
-- Angular Material standalone: login, navegação administrativa, pesquisa/paginação, cadastro, edição e inativação conectados ao backend.
-- Testes JUnit/Mockito e integração Testcontainers com PostgreSQL/Mailpit.
+## Implementado
 
-## Próximas entregas
+- Fundação Java/Spring/Angular/PostgreSQL, migrações V1/V2/V3/V4/V5, sessão/CSRF, papéis, erro estruturado e CI.
+- Cadastro de produtos, unidades/categorias, estoque auditado e controle concorrente.
+- Clientes/fornecedores, usuários, desativação com revogação de sessão, recuperação e verificação de e-mail.
+- Vendas de balcão/orçamento, caixa com troco, pagamento manual dividido/a prazo e devolução integral.
+- Compras, recebimentos parciais e devolução integral de recebimentos vinculados ao estoque e a contas a pagar.
+- Contas, liquidação parcial, estorno, relatórios e CSV.
+- Catálogo, carrinho, conta do cliente, pedido com reserva/expiração e entrega/retirada.
+- Alertas configuráveis, outbox, retries e histórico, resumo diário.
+- Docker integrado, perfil de produção, scripts de backup/restauração e testes de navegador no CI.
 
-1. Política de usuários/permissões, auditoria administrativa, recuperação de senha e configuração de loja.
-2. Fornecedores e compras, recebimento parcial e registro imutável de movimentos de estoque.
-3. Reservas concorrentes, disponibilidade, contagens, inventário e alertas operacionais.
-4. Clientes, orçamento, venda de balcão, snapshots comerciais e caixa por meio de pagamento.
-5. Contas a pagar/receber, liquidação, estorno e relatórios financeiros reconciliáveis.
-6. Catálogo público sem custo, cliente, carrinho, pedido, retirada e entrega.
-7. Preferências de notificação e outbox transacional com processamento, deduplicação, retries limitados e histórico.
-8. Endurecimento de produção: HTTPS, cookie Secure, segredos gerenciados, backup/restore testado, observabilidade, auditoria, rate limiting, CI e testes de navegador.
+## Dependências para produção
 
-## Critérios antes de avançar um domínio
+Hospedagem/domínio/HTTPS, SMTP real, dados reais do cliente e backup externo. Cobrança automática e emissão fiscal dependem de provedores/credenciais e homologação; não fazem parte do registro manual entregue.
 
-- Regras e estados documentados, incluindo cancelamento, concorrência, idempotência e histórico.
-- Migração reversível/compatível com dados existentes e política de retenção/privacidade definida.
-- Casos concorrentes e de autorização exercitados em PostgreSQL real.
-- API explícita para público/admin; DTOs não compartilham campos internos por conveniência.
-- UI não representa como concluída uma integração inexistente.
+## Ampliações
+
+Filiais/múltiplos caixas, transferência entre locais, operação offline, bloqueios/lotes, devoluções parciais, frete por transportadora, conciliação bancária automática, gateway de pagamento e integração fiscal. Priorizar conforme a operação do cliente.

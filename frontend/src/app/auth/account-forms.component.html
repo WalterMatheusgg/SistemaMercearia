@@ -1,0 +1,103 @@
+<app-store-nav />
+<main class="auth-wrap page">
+  <section class="panel">
+    <h1>{{ title }}</h1>
+    <app-action-status [action]="action" />
+    @if (!finished()) {
+      <form (ngSubmit)="submit()" #accountForm="ngForm">
+        <fieldset [disabled]="action.locked()">
+          <div class="grid">
+            @if (mode === 'register') {
+              <label
+                >Nome completo<input
+                  name="name"
+                  [(ngModel)]="name"
+                  required
+                  maxlength="160"
+                  autocomplete="name" /></label
+              ><label
+                >E-mail<input
+                  name="email"
+                  [(ngModel)]="email"
+                  required
+                  type="email"
+                  maxlength="254"
+                  autocomplete="email" /></label
+              ><label
+                >Telefone (opcional)<input
+                  name="phone"
+                  [(ngModel)]="phone"
+                  maxlength="40"
+                  autocomplete="tel"
+              /></label>
+            }
+            @if (mode === 'register' || mode === 'forgot') {
+              <label
+                >{{ mode === 'forgot' ? 'Usuário ou e-mail' : 'Usuário'
+                }}<input
+                  name="username"
+                  [(ngModel)]="username"
+                  required
+                  maxlength="120"
+                  [pattern]="mode === 'register' ? '[A-Za-z0-9._@-]{3,120}' : '.+'"
+                  autocomplete="username"
+              /></label>
+            }
+            @if (mode === 'reset' || mode === 'verify') {
+              <label
+                >Código do link<input
+                  name="token"
+                  [(ngModel)]="token"
+                  required
+                  maxlength="200"
+                  autocomplete="off"
+              /></label>
+            }
+            @if (mode === 'register' || mode === 'reset') {
+              <label
+                >Senha (mínimo 12 caracteres)<input
+                  name="password"
+                  type="password"
+                  [(ngModel)]="password"
+                  required
+                  minlength="12"
+                  maxlength="72"
+                  autocomplete="new-password" /></label
+              ><label
+                >Confirmar senha<input
+                  name="confirmPassword"
+                  type="password"
+                  [(ngModel)]="confirmPassword"
+                  required
+                  minlength="12"
+                  maxlength="72"
+                  autocomplete="new-password"
+              /></label>
+            }
+          </div>
+          @if (mode === 'register') {
+            <p class="muted">
+              Você receberá um link para confirmar o e-mail antes do primeiro pedido. Use uma senha
+              exclusiva.
+            </p>
+          }
+          <button class="primary gap" [disabled]="accountForm.invalid">
+            {{
+              mode === 'register'
+                ? 'Criar minha conta'
+                : mode === 'forgot'
+                  ? 'Enviar instruções'
+                  : mode === 'reset'
+                    ? 'Salvar nova senha'
+                    : 'Confirmar e-mail'
+            }}
+          </button>
+        </fieldset>
+      </form>
+    }
+    <p>
+      <a routerLink="/login">Entrar</a> · <a routerLink="/store">Voltar à loja</a> ·
+      <a routerLink="/account">Minha conta</a>
+    </p>
+  </section>
+</main>

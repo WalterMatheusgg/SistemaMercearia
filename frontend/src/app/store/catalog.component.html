@@ -1,0 +1,84 @@
+<app-store-nav />
+<main class="store-wrap">
+  <section class="hero">
+    <p class="eyebrow">FERRAMENTAS · MATERIAIS · SOLUÇÕES</p>
+    <h1>{{ store()?.name || 'Sua loja de ferragens' }}</h1>
+    <p>Escolha seus produtos e combine o pagamento com a loja.</p>
+    <div class="actions">
+      <a class="button primary" routerLink="/cart">Ver carrinho</a>
+      @if (store()?.phone) {
+        <span>Atendimento: {{ store()?.phone }}</span>
+      }
+    </div>
+  </section>
+  <section class="page">
+    <form class="toolbar" (ngSubmit)="page = 0; load()">
+      <label class="grow"
+        >Buscar produto ou código<input
+          name="query"
+          [(ngModel)]="query"
+          placeholder="Ex.: parafuso, cabo, furadeira" /></label
+      ><button class="primary">Buscar</button>
+    </form>
+    @if (error()) {
+      <p class="note error" role="alert">{{ error() }}</p>
+    }
+    @if (added()) {
+      <p class="note success" role="status">
+        {{ added() }} <a routerLink="/cart">Abrir carrinho</a>
+      </p>
+    }
+    <div class="product-grid gap">
+      @for (product of products(); track product.id) {
+        <article class="product-card">
+          <div class="product-code">{{ product['code'] }}</div>
+          <h2>{{ product['name'] }}</h2>
+          <p>{{ product['description'] || 'Consulte a loja para detalhes deste material.' }}</p>
+          <strong class="price"
+            >{{ money(product['price']) }} <small>por {{ product['unit'] }}</small></strong
+          >
+          <p class="stock">
+            Disponível: {{ quantity(product['available']) }} {{ product['unit'] }}
+          </p>
+          <form (ngSubmit)="add(product)">
+            <label
+              >Quantidade em {{ product['unit']
+              }}<input
+                [name]="product.id"
+                [(ngModel)]="quantities[product.id]"
+                required
+                pattern="[0-9]+([.,][0-9]{1,4})?"
+                inputmode="decimal" /></label
+            ><small
+              >Incrementos de {{ quantity(product['quantityStep']) }} {{ product['unit'] }}</small
+            ><button
+              class="primary gap"
+              [disabled]="product['available'] === '0' || product['available'] === '0.0000'"
+            >
+              Adicionar ao carrinho
+            </button>
+          </form>
+        </article>
+      }
+    </div>
+    @if (!products().length) {
+      <p class="empty">
+        {{ loading ? 'Carregando produtos...' : 'Nenhum produto disponível com essa busca.' }}
+      </p>
+    }
+    <div class="pagination">
+      <span>{{ total }} produtos · Página {{ page + 1 }}</span>
+      <div>
+        <button [disabled]="page === 0" (click)="page = page - 1; load()">Anterior</button
+        ><button [disabled]="(page + 1) * 20 >= total" (click)="page = page + 1; load()">
+          Próxima
+        </button>
+      </div>
+    </div>
+    <footer class="panel">
+      <strong>{{ store()?.name }}</strong>
+      <p>{{ store()?.address }}</p>
+      <p>{{ store()?.paymentInstructions }}</p>
+    </footer>
+  </section>
+</main>

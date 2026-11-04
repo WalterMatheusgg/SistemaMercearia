@@ -1,0 +1,95 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  backend:
+    name: Backend · Java 21 e PostgreSQL 18
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: '21'
+          cache: maven
+      - name: Testar e empacotar com PostgreSQL e Mailpit reais
+        run: ./mvnw --batch-mode verify
+
+  frontend:
+    name: Frontend · testes e build
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: frontend/.nvmrc
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - run: npm ci
+      - run: npm test -- --watch=false
+      - run: npm run build
+
+  end-to-end:
+    name: Loja completa · navegador, API, banco e e-mail
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: frontend/.nvmrc
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - name: Preparar ambiente isolado do teste
+        run: |
+          cp .env.example .env
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('.env')
+          s=p.read_text().replace('replace-with-a-long-local-password','local-e2e-password-123456')
+          p.write_text(s)
+          PY
+      - name: Validar manifests de publicação comercial sem acessar segredos
+        run: |
+          APP_DOMAIN=example.test docker compose --env-file .env \
+            -f infra/compose.production.yaml \
+            -f infra/compose.https.yaml config --quiet
+      - name: Construir e iniciar a aplicação completa
+        run: bash scripts/start.sh
+      - run: npm ci
+        working-directory: frontend
+      - run: npx playwright install --with-deps chromium
+        working-directory: frontend
+      - name: Testar desktop e celular com serviços reais
+        run: npm run e2e
+        working-directory: frontend
+        env:
+          E2E_BASE_URL: http://localhost:8080
+          E2E_ADMIN_USER: admin
+          E2E_ADMIN_PASSWORD: local-e2e-password-123456
+      - name: Conferir backup e restauração em banco separado
+        run: |
+          backup=$(bash scripts/backup.sh)
+          bash scripts/restore-test.sh "$backup" ferragens_restore_check
+      - name: Logs em caso de falha
+        if: failure()
+        run: docker compose --profile app logs --tail=120 app
+      - name: Encerrar o ambiente isolado do CI
+        if: always()
+        run: docker compose --profile app down --volumes

@@ -1,0 +1,169 @@
+<app-store-nav />
+<main class="store-wrap page">
+  <header class="gap">
+    <div>
+      <p class="eyebrow">SEU PEDIDO</p>
+      <h1>Carrinho</h1>
+    </div>
+    <a class="button" routerLink="/store">Continuar comprando</a>
+  </header>
+  <app-action-status [action]="action" />
+  @if (error()) {
+    <p class="note error" role="alert">{{ error() }}</p>
+  }
+  @if (cart.items().length) {
+    <section class="panel">
+      <fieldset [disabled]="action.locked()">
+        <div class="scroll">
+          <table>
+            <thead>
+              <tr>
+                <th>Produto</th>
+                <th>Preço de referência</th>
+                <th>Quantidade</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (item of cart.items(); track item.productId) {
+                <tr>
+                  <td>
+                    {{ item.name }}<small>{{ item.code }} · {{ item.unit }}</small>
+                  </td>
+                  <td>{{ money(item.price) }}</td>
+                  <td>
+                    <label class="muted"
+                      >Quantidade<input
+                        [ngModel]="item.quantity"
+                        (ngModelChange)="change(item.productId, $event)"
+                        inputmode="decimal"
+                    /></label>
+                  </td>
+                  <td><button (click)="remove(item.productId)">Remover</button></td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      </fieldset>
+      <p class="muted">
+        Os preços e a disponibilidade são conferidos novamente pelo sistema antes da reserva.
+      </p>
+    </section>
+    <section class="panel">
+      <h2>Retirada ou entrega</h2>
+      <form (ngSubmit)="checkout()" #checkoutForm="ngForm">
+        <fieldset [disabled]="action.locked()">
+          <div class="grid">
+            <label
+              >Recebimento<select
+                aria-label="Recebimento"
+                name="fulfillment"
+                [(ngModel)]="fulfillment"
+                (ngModelChange)="onFulfillmentChange()"
+              >
+                <option value="PICKUP">Retirar na loja</option>
+                @if (config()?.deliveryEnabled) {
+                  <option value="DELIVERY">Entrega · {{ money(config()?.deliveryFee) }}</option>
+                }
+              </select></label
+            >
+            @if (fulfillment === 'DELIVERY') {
+              <label
+                >Endereço completo<textarea
+                  name="address"
+                  [(ngModel)]="address"
+                  (ngModelChange)="invalidatePreview()"
+                  required
+                  maxlength="500"
+                ></textarea>
+              </label>
+            }
+            <label
+              >Pagamento combinado<select
+                aria-label="Pagamento combinado"
+                name="payment"
+                [(ngModel)]="paymentChoice"
+                (ngModelChange)="invalidatePreview()"
+              >
+                @if (fulfillment === 'PICKUP') {
+                  <option value="PAY_ON_PICKUP">Pagar ao retirar</option>
+                }
+                <option value="MANUAL_PIX">Pix fora do site, conferido pela loja</option>
+                <option value="TRANSFER">Transferência, conferida pela loja</option>
+              </select></label
+            ><label
+              >Observação<textarea name="note" [(ngModel)]="note" (ngModelChange)="invalidatePreview()" maxlength="500"></textarea>
+            </label>
+          </div>
+          <p class="note">
+            {{ config()?.paymentInstructions }} O pedido fica aguardando confirmação da loja; este
+            site não realiza cobrança automática nem confirma Pix/cartão.
+          </p>
+          <button
+            type="button"
+            (click)="calculate()"
+            [disabled]="calculating || action.locked() || checkoutForm.invalid"
+          >
+            {{ calculating ? 'Calculando...' : 'Calcular pedido' }}
+          </button>
+          @if (calculating) {
+            <p class="muted" role="status" aria-live="polite">
+              Conferindo preços, entrega e disponibilidade…
+            </p>
+          }
+          @if (preview(); as values) {
+            <div class="cards gap">
+              <div class="card">
+                <small>Produtos</small><strong>{{ money(values.subtotal) }}</strong>
+              </div>
+              <div class="card">
+                <small>Entrega</small><strong>{{ money(values.deliveryFee) }}</strong>
+              </div>
+              <div class="card">
+                <small>Total</small><strong>{{ money(values.total) }}</strong>
+              </div>
+            </div>
+            <div class="scroll gap">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Produto</th>
+                    <th>Quantidade</th>
+                    <th>Total</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  @for (line of values.items; track line.productId) {
+                    <tr>
+                      <td>{{ line.name }}</td>
+                      <td>{{ quantity(line.quantity) }}</td>
+                      <td>{{ money(line.total) }}</td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+          }
+          @if (auth.currentUser()?.roles?.includes('CUSTOMER')) {
+            <button class="primary gap" [disabled]="!preview() || calculating || checkoutForm.invalid">
+              Confirmar pedido e reservar estoque
+            </button>
+            <p class="muted">Confirme seu e-mail em Minha conta antes do primeiro pedido.</p>
+          } @else {
+            <p class="note">
+              <a routerLink="/login">Entre com uma conta de cliente</a> ou
+              <a routerLink="/register">cadastre-se</a> para enviar o pedido. Contas administrativas
+              são usadas na área de gestão.
+            </p>
+          }
+        </fieldset>
+      </form>
+    </section>
+  } @else {
+    <section class="panel">
+      <p class="empty">Seu carrinho está vazio.</p>
+      <a class="button primary" routerLink="/store">Escolher produtos</a>
+    </section>
+  }
+</main>

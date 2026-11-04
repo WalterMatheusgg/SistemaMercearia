@@ -1,12 +1,24 @@
 # Ferragens
 
-Base executável para gestão interna e loja virtual de uma loja de ferragens. O escopo desta etapa é autenticação por sessão e cadastro administrativo de produtos; os demais módulos estão planejados, não simulados.
+Sistema para gestão de uma loja de ferragens, com área interna e portal do cliente. Inclui produtos/estoque, clientes/fornecedores, vendas/orçamentos, caixa, compras/recebimentos, contas, relatórios, pedidos online e notificações configuráveis.
 
-## Estado desta entrega
+## Começar no Codespace
 
-Implementado: backend Java/Spring Boot, PostgreSQL com Flyway e `ddl-auto=validate`, login persistido, papéis, CSRF para SPA, sessão por cookie HttpOnly, erros RFC Problem Details, documentação OpenAPI, health check, CRUD administrativo paginado de produtos, categorias/unidades iniciais, interface Angular em pt-BR, proxy de desenvolvimento e Mailpit local.
+```bash
+cd /workspaces/SistemaMercearia
+git fetch origin
+git switch codex/ferragens-estoque-20261104
+git pull --ff-only origin codex/ferragens-estoque-20261104
+bash scripts/start.sh
+```
 
-Planejado: estoque e reservas, compras/recebimentos, clientes, vendas/orçamentos/caixa, pagamentos, contas, devoluções, catálogo público, carrinho/checkout, entrega/retirada, relatórios, auditoria e notificações comerciais. Não há saldo de estoque no produto, botões falsos, dados de demonstração de vendas nem envio externo de e-mail.
+Abra a porta **8080** na aba **Ports**. O script compila e sobe o app completo no Docker, preservando o banco e o `.env` existentes. Em ambiente novo cria senhas locais aleatórias: consulte o login administrativo no `.env`. O catálogo é público; contas administrativas entram na gestão, e clientes entram em Minha conta. E-mails de desenvolvimento aparecem no Mailpit, porta **8025**.
+
+Instruções completas: [docs/CODESPACE.md](docs/CODESPACE.md). Fluxos, papéis e limites: [docs/OPERACAO.md](docs/OPERACAO.md).
+
+**Hospedagem comercial e HTTPS:** antes de publicar, consulte [docs/HOSPEDAGEM.md](docs/HOSPEDAGEM.md). A Vercel Hobby gratuita não autoriza uso comercial; a implantação Docker com Caddy mantém API e interface na mesma origem. Nenhuma URL externa foi homologada.
+
+**Pagamentos são registrados e conferidos manualmente pela loja.** Cobrança/reembolso bancário automático, emissão fiscal e publicação em domínio real dependem de integrações e credenciais externas. Não há credenciais de produção embutidas nem emissão fiscal simulada. A versão atende uma loja/local principal e um caixa físico.
 
 ## Matriz de versões
 
@@ -14,7 +26,7 @@ As versões abaixo foram conferidas em documentação oficial e registros oficia
 
 | Componente | Versão fixada ou gerenciada | Referência |
 | --- | --- | --- |
-| Java | 21 (nível de compilação; execução local validada em JDK 25) | [Spring Boot system requirements](https://docs.spring.io/spring-boot/4.1/system-requirements.html) |
+| Java | 21 (nível de compilação; testes/execução no CI em JDK 21) | [Spring Boot system requirements](https://docs.spring.io/spring-boot/4.1/system-requirements.html) |
 | Spring Boot | 4.1.2 estável; dependências Spring gerenciadas pela BOM | [Spring Boot](https://spring.io/projects/spring-boot) |
 | Maven Wrapper / Maven | 3.3.4 / 3.9.12 | [Maven Wrapper](https://maven.apache.org/wrapper/) |
 | PostgreSQL | 18.6 (`postgres:18.6-alpine`) | [Versioning Policy](https://www.postgresql.org/support/versioning/) |
@@ -63,7 +75,7 @@ set +a
 O perfil padrão é `local`. Na primeira execução, Flyway cria o schema e os dados iniciais. Com `BOOTSTRAP_ADMIN_ENABLED=true`, cria um usuário `ROLE_OWNER` apenas quando ainda não existe usuário; username e senha vêm do ambiente. Não há senha de produção embutida. Em ambiente seguro, defina `SESSION_COOKIE_SECURE=true` e termine HTTPS no proxy de mesma origem.
 
 - API: `http://localhost:8080/api`
-- OpenAPI UI: `http://localhost:8080/swagger-ui.html`
+- OpenAPI UI: `http://localhost:8080/swagger-ui.html` (exige sessão autenticada na mesma origem)
 - Health mínimo: `http://localhost:8080/actuator/health`
 
 ## Iniciar frontend
@@ -79,12 +91,27 @@ Abra `http://localhost:4200`. No Codespaces, abra a aba **Ports**, encaminhe a p
 
 ## Usuários, papéis e endpoints
 
-O bootstrap local cria o administrador configurado no `.env`, vinculado ao papel dono. Papéis planejados já cadastrados: `OWNER`, `MANAGER`, `SELLER`, `CASHIER`, `STOCKKEEPER`, `FINANCE` e `CUSTOMER`. O cadastro inicial de produtos exige `OWNER`, `MANAGER` ou `STOCKKEEPER`; o backend aplica a autorização.
+O bootstrap local cria o administrador configurado no `.env`, vinculado ao papel dono. Papéis cadastrados: `OWNER`, `MANAGER`, `SELLER`, `CASHIER`, `STOCKKEEPER`, `FINANCE` e `CUSTOMER`. O cadastro inicial de produtos exige `OWNER`, `MANAGER` ou `STOCKKEEPER`; o backend aplica a autorização.
 
 - `GET /api/auth/csrf`, `POST /api/auth/login`, `GET /api/auth/me`, `POST /api/auth/logout`.
 - `GET /api/admin/categories`, `GET /api/admin/units`.
 - `GET/POST /api/admin/products`, `GET/PUT/DELETE /api/admin/products/{id}`. `DELETE` inativa sem apagar o registro.
 - Custo e preço existem somente no contrato administrativo. Valores monetários são enviados/retornados como strings decimais com ponto e duas casas (`"199.90"`), sem arredondamento implícito; valores com mais de duas casas são rejeitados.
+
+## Usar o estoque
+
+Após cadastrar um produto, abra **Estoque** no menu administrativo. O local principal é criado pela migração V2, sem saldo fictício. Registre um saldo inicial de 50 e uma saída manual de 15: o físico e o disponível passam a 35. Uma entrada posterior de 20 leva o saldo a 55. Toda operação exige um motivo e guarda responsável, instante e valores anteriores/posteriores.
+
+- `UN` aceita inteiros; `M` aceita incrementos de `0.01`; `KG` e `L`, de `0.001`. Quantidades via API são strings decimais, sem cálculo em ponto flutuante no navegador.
+- Dono/gerente/estoquista registram saldo inicial, entrada, saída, perda e mínimo. Contagem e estorno são restritos ao dono/gerente. Vendedor/caixa também têm consulta na interface e na API, sem botões de movimentação manual.
+- Saldo inicial só pode preceder movimentos físicos. Contagem informa o total contado, inclusive zero, e exige a revisão consultada; se outro movimento ocorrer, confira novamente antes de confirmar.
+- Saídas e estornos que deixariam o disponível negativo são recusados integralmente. Correções não apagam o original. O mínimo gera evento com variação física zero e filtro visual para reposição; alertas por e-mail seguem as preferências de destinatários verificados.
+- Pedidos online alteram o reservado e o consomem/liberam na confirmação, cancelamento ou expiração. O fluxo de bloqueio/indisponível ainda não está exposto.
+- A unidade de um produto com histórico de estoque não pode ser alterada. Cadastre outro produto para trabalhar com uma unidade diferente.
+
+API: `GET /api/admin/inventory/locations`, `GET /api/admin/inventory/balances?locationId=...`, `GET /api/admin/inventory/movements?locationId=...` e `POST /api/admin/inventory/movements`. O POST exige CSRF e cabeçalho `Idempotency-Key` com UUID. Reenvie a mesma chave e corpo para confirmar uma operação incerta: ela não será aplicada novamente. Uma chave reutilizada com outro conteúdo retorna 409.
+
+O contrato completo e exemplos estão em [docs/ESTOQUE.md](docs/ESTOQUE.md).
 
 ## Migrações e testes
 
@@ -97,7 +124,7 @@ npm --prefix /workspaces/SistemaMercearia/frontend test -- --watch=false
 npm --prefix /workspaces/SistemaMercearia/frontend run build
 ```
 
-Os testes Testcontainers precisam do daemon Docker e verificam PostgreSQL real, autenticação/autorização, CSRF, validação, persistência, logout e entrega SMTP ao Mailpit. A suíte também inclui teste unitário do serviço de produtos com Mockito.
+Os testes Testcontainers precisam do daemon Docker e verificam PostgreSQL real, autenticação/autorização, CSRF, validação, persistência, logout, proteção do OpenAPI, estoque concorrente, rollback, idempotência, precisão por unidade e entrega SMTP ao Mailpit. Cada classe usa um schema aleatório isolado. A suíte também inclui teste unitário do serviço de produtos com Mockito e testes de componentes/HTTP Angular. O workflow `CI` executa testes e builds em pushes e pull requests.
 
 Para enviar uma mensagem de smoke pela própria aplicação (somente perfil `local`), inicie o backend assim:
 
@@ -120,4 +147,4 @@ O volume `postgres-data` não é removido por esse comando. Confirme a persistê
 
 ## Próximas etapas
 
-Consulte [docs/ROADMAP.md](docs/ROADMAP.md), [docs/ARQUITETURA.md](docs/ARQUITETURA.md), [docs/MODELO_DADOS.md](docs/MODELO_DADOS.md) e [docs/REGRAS_NEGOCIO.md](docs/REGRAS_NEGOCIO.md). O desenho futuro de e-mail com outbox está em [docs/ARQUITETURA.md](docs/ARQUITETURA.md#notificacoes-por-email).
+Consulte [docs/ROADMAP.md](docs/ROADMAP.md), [docs/ARQUITETURA.md](docs/ARQUITETURA.md), [docs/MODELO_DADOS.md](docs/MODELO_DADOS.md) e [docs/REGRAS_NEGOCIO.md](docs/REGRAS_NEGOCIO.md). O desenho de e-mail com outbox está em [docs/ARQUITETURA.md](docs/ARQUITETURA.md#notificacoes-por-email).

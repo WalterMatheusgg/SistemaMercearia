@@ -1,0 +1,235 @@
+import { test, expect, Page, BrowserContext } from '@playwright/test';
+import { randomUUID } from 'node:crypto';
+const admin = process.env['E2E_ADMIN_USER'] ?? 'admin';
+const password = process.env['E2E_ADMIN_PASSWORD'] ?? 'local-e2e-password-123456';
+const mailpit = process.env['E2E_MAILPIT_URL'] ?? 'http://localhost:8025';
+async function login(page: Page, user = admin, pass = password) {
+  await page.goto('/login');
+  await page.getByLabel('Usuário', { exact: true }).fill(user);
+  await page.getByLabel('Senha', { exact: true }).fill(pass);
+  await page.getByRole('button', { name: 'Entrar', exact: true }).click();
+  await expect(page).toHaveURL(/\/(admin\/home|account)/);
+}
+async function command(context: BrowserContext, path: string, body: unknown, method = 'POST') {
+  await context.request.get('/api/auth/csrf');
+  const cookie = (await context.cookies()).find((c) => c.name === 'XSRF-TOKEN');
+  const response = await context.request.fetch(path, {
+    method,
+    data: body,
+    headers: {
+      'X-XSRF-TOKEN': decodeURIComponent(cookie?.value ?? ''),
+      'Idempotency-Key': randomUUID(),
+    },
+  });
+  expect(response.ok(), await response.text()).toBeTruthy();
+  return response.status() === 204 ? {} : response.json();
+}
+async function seed(context: BrowserContext) {
+  const code = 'E2E-' + randomUUID().slice(0, 12);
+  const p = await command(context, '/api/admin/products', {
+    code,
+    name: 'Material ' + code,
+    description: 'Material para teste completo',
+    categoryId: '00000000-0000-0000-0000-000000000104',
+    baseUnitCode: 'UN',
+    cost: '1.00',
+    price: '2.00',
+  });
+  await command(context, '/api/admin/inventory/movements', {
+    productId: p.id,
+    locationId: '00000000-0000-0000-0000-000000000201',
+    kind: 'INITIAL',
+    quantity: '50',
+    reason: 'Contagem de teste',
+  });
+  return { ...p, code };
+}
+async function mailLink(page: Page, email: string, route: string) {
+  let id = '';
+  await expect
+    .poll(
+      async () => {
+        const response = await page.request.get(mailpit + '/api/v1/messages');
+        const data = await response.json();
+        const found = (data.messages ?? data.Messages ?? []).find(
+          (m: any) =>
+            (m.To ?? m.to ?? []).some((to: any) => (to.Address ?? to.address) === email) &&
+            (route === 'verify-email'
+              ? /Verificar/.test(m.Subject ?? m.subject)
+              : /Recuperar/.test(m.Subject ?? m.subject)),
+        );
+        id = found?.ID ?? found?.id ?? '';
+        return Boolean(id);
+      },
+      { timeout: 35000, intervals: [1000, 2000] },
+    )
+    .toBeTruthy();
+  const response = await page.request.get(mailpit + '/view/' + id + '.txt');
+  const text = await response.text();
+  const url = text.match(new RegExp('https?://[^\\s]+/' + route + '\\?token=[A-Za-z0-9_-]+'))?.[0];
+  expect(url).toBeTruthy();
+  return url!;
+}
+
+test('venda pelo navegador baixa de 50 para 35 e aparece no estoque', async ({ page, context }) => {
+  await login(page);
+  const product = await seed(context);
+  const current = await (await context.request.get('/api/admin/cash')).json();
+  if (!current.current.id) await command(context, '/api/admin/cash/open', { amount: '100.00' });
+  await page.goto('/admin/sales');
+  await page.getByRole('button', { name: 'Nova venda / orçamento' }).click();
+  await page.getByLabel('Buscar produto', { exact: true }).fill(product.code);
+  await page.getByRole('button', { name: 'Buscar produto', exact: true }).click();
+  await expect(
+    page.getByLabel('Produto', { exact: true }).locator('option[value="' + product.id + '"]'),
+  ).toHaveCount(1);
+  await page.getByLabel('Produto', { exact: true }).selectOption(product.id);
+  await page.getByLabel('Quantidade', { exact: true }).fill('15');
+  await page.getByRole('button', { name: 'Adicionar item', exact: true }).click();
+  await page.getByRole('button', { name: 'Calcular valores' }).click();
+  await expect(page.getByText('Total calculado pelo sistema')).toBeVisible();
+  await page.getByRole('button', { name: 'Adicionar recebimento' }).click();
+  await page.getByRole('button', { name: 'Concluir venda e baixar estoque' }).click();
+  await expect(page.getByRole('status')).toContainText('Operação confirmada');
+  await page.goto('/admin/inventory');
+  await page.getByLabel('Produto ou código').fill(product.code);
+  await page.getByRole('button', { name: 'Buscar', exact: true }).click();
+  const row = page.locator('tbody tr').filter({ hasText: product.name });
+  await expect(row.first()).toContainText('35');
+  expect(
+    await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth + 2),
+  ).toBeTruthy();
+});
+
+test('cliente verifica e-mail, envia pedido, acompanha confirmação e vê apenas sua compra', async ({
+  page,
+  context,
+  browser,
+}) => {
+  await login(page);
+  const product = await seed(context);
+  await page.getByRole('button', { name: 'Sair', exact: true }).click();
+  await expect(page).toHaveURL(/\/login/);
+  const username = 'buyer-' + randomUUID().slice(0, 8),
+    email = username + '@ferragens.local';
+  await page.goto('/register');
+  await page.getByLabel('Nome completo').fill('Cliente ' + username);
+  await page.getByLabel('E-mail', { exact: true }).fill(email);
+  await page.getByLabel('Usuário', { exact: true }).fill(username);
+  await page.getByLabel('Senha (mínimo 12 caracteres)', { exact: true }).fill(password);
+  await page.getByLabel('Confirmar senha').fill(password);
+  await page.getByRole('button', { name: 'Criar minha conta' }).click();
+  await expect(page).toHaveURL(/\/account/);
+  const verify = await mailLink(page, email, 'verify-email');
+  await page.goto(verify);
+  await page.getByRole('button', { name: 'Confirmar e-mail' }).click();
+  await expect(page.getByRole('status')).toContainText('E-mail verificado');
+  await page.goto('/store');
+  await page.getByLabel('Buscar produto ou código').fill(product.code);
+  await page.getByRole('button', { name: 'Buscar', exact: true }).click();
+  const card = page.locator('article').filter({ hasText: product.code });
+  await card.getByLabel('Quantidade em UN').fill('2');
+  await card.getByRole('button', { name: 'Adicionar ao carrinho' }).click();
+  await page.goto('/cart');
+  await page.getByRole('button', { name: 'Calcular pedido' }).click();
+  await expect(page.getByText('R$ 4,00', { exact: true }).first()).toBeVisible();
+  await page.getByRole('button', { name: 'Confirmar pedido e reservar estoque' }).click();
+  await expect(page).toHaveURL(/\/account\?order=/);
+  await expect(page.getByText('Aguardando pagamento', { exact: true }).first()).toBeVisible();
+  const id = new URL(page.url()).searchParams.get('order')!;
+  const staff = await browser.newContext({ baseURL: test.info().project.use.baseURL });
+  const staffPage = await staff.newPage();
+  await login(staffPage);
+  await command(staff, '/api/admin/sales/' + id + '/confirm', {
+    payments: [{ method: 'PIX', amount: '4.00', note: 'Pix conferido no teste' }],
+  });
+  await staff.close();
+  await page.getByRole('button', { name: 'Atualizar', exact: true }).click();
+  await expect(page.getByText('Pago', { exact: true }).first()).toBeVisible();
+  const catalog = await (
+    await context.request.get('/api/catalog', { params: { query: product.code } })
+  ).json();
+  expect(catalog.content[0]).not.toHaveProperty('cost');
+  expect(catalog.content[0].available).toMatch(/^48([.]0+)?$/);
+});
+
+test('recuperação usa link recebido no Mailpit e invalida a senha antiga', async ({
+  page,
+  context,
+}) => {
+  const username = 'reset-' + randomUUID().slice(0, 8),
+    email = username + '@ferragens.local';
+  await command(context, '/api/auth/register', {
+    username,
+    email,
+    name: 'Recuperação',
+    password,
+    phone: '',
+  });
+  await page.goto('/forgot-password');
+  await page.getByLabel('Usuário ou e-mail').fill(username);
+  await page.getByRole('button', { name: 'Enviar instruções' }).click();
+  await expect(page.getByRole('status')).toContainText('Se houver conta ativa');
+  const link = await mailLink(page, email, 'reset-password');
+  await page.goto(link);
+  await page.getByLabel('Senha (mínimo 12 caracteres)', { exact: true }).fill(password + '-nova');
+  await page.getByLabel('Confirmar senha').fill(password + '-nova');
+  await page.getByRole('button', { name: 'Salvar nova senha' }).click();
+  await expect(page.getByRole('status')).toContainText('Senha atualizada');
+  await login(page, username, password + '-nova');
+});
+
+test('ao alterar quantidade o carrinho exige novo cálculo dos totais', async ({ page, context }) => {
+  await login(page);
+  const product = await seed(context);
+  await page.goto('/store');
+  await page.getByLabel('Buscar produto ou código').fill(product.code);
+  await page.getByRole('button', { name: 'Buscar', exact: true }).click();
+  const card = page.locator('article').filter({ hasText: product.code });
+  await card.getByLabel('Quantidade em UN').fill('2');
+  await card.getByRole('button', { name: 'Adicionar ao carrinho' }).click();
+  await page.goto('/cart');
+
+  await page.getByRole('button', { name: 'Calcular pedido' }).click();
+  await expect(page.getByText('R$ 4,00', { exact: true }).first()).toBeVisible();
+
+  await page.getByLabel('Quantidade', { exact: true }).fill('3');
+  await expect(page.getByText('R$ 4,00', { exact: true })).toHaveCount(0);
+
+  await page.getByRole('button', { name: 'Calcular pedido' }).click();
+  await expect(page.getByText('R$ 6,00', { exact: true }).first()).toBeVisible();
+});
+
+test('estoquista não acessa financeiro nem gestão de usuários', async ({ page, context }) => {
+  await login(page);
+  const username = 'stock-' + randomUUID().slice(0, 8);
+  await command(context, '/api/admin/users', {
+    username,
+    email: username + '@ferragens.local',
+    password,
+    roles: ['STOCKKEEPER'],
+    enabled: true,
+  });
+  const supplier = await command(context, '/api/admin/contacts/SUPPLIER', {
+    name: 'Fornecedor ' + username,
+    active: true,
+  });
+  await command(context, '/api/admin/finance', {
+    direction: 'PAYABLE',
+    description: 'Conta interna de teste',
+    partyId: supplier.id,
+    amount: '10.00',
+    dueDate: new Date().toISOString().slice(0, 10),
+  });
+  await page.getByRole('button', { name: 'Sair', exact: true }).click();
+  await login(page, username);
+  const supplierView = await (
+    await context.request.get('/api/admin/contacts/SUPPLIER/' + supplier.id)
+  ).json();
+  expect(supplierView).not.toHaveProperty('accounts');
+  await expect(page.getByRole('link', { name: 'Financeiro', exact: true })).toHaveCount(0);
+  expect((await context.request.get('/api/admin/finance')).status()).toBe(403);
+  expect((await context.request.get('/api/admin/users')).status()).toBe(403);
+  await page.goto('/admin/finance');
+  await expect(page).toHaveURL(/\/admin\/home/);
+});
