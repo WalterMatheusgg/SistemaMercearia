@@ -1,0 +1,25 @@
+@import '@angular/material/prebuilt-themes/azure-blue.css';
+
+:root {
+	color-scheme: light;
+	--ink: #132d46;
+	--ink-soft: #526579;
+	--line: #d9e1e8;
+	--paper: #f5f7f8;
+	--surface: #ffffff;
+	--blue: #123b5d;
+	--blue-bright: #1d5b87;
+	--amber: #e4a52c;
+	--danger: #a63b34;
+	font-family: 'DM Sans', 'Segoe UI', sans-serif;
+	font-synthesis: none;
+	text-rendering: optimizeLegibility;
+}
+
+* { box-sizing: border-box; }
+body { margin: 0; min-width: 320px; min-height: 100vh; background: var(--paper); color: var(--ink); }
+button, input, textarea, select { font: inherit; }
+.mat-mdc-form-field { width: 100%; }
+.mat-mdc-raised-button.mat-primary { --mdc-protected-button-container-color: var(--blue); --mdc-protected-button-label-text-color: #fff; }
+.mat-mdc-button.mat-primary { --mdc-text-button-label-text-color: var(--blue); }
+.mat-mdc-progress-bar { --mdc-linear-progress-active-indicator-color: var(--amber); }

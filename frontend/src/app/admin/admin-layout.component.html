@@ -1,0 +1,22 @@
+<div class="admin-shell">
+  <header class="topbar">
+    <a class="brand" routerLink="/admin/products" aria-label="Ferragens, início">
+      <span class="brand-mark">F</span>
+      <span>FERRAGENS <small>GESTÃO</small></span>
+    </a>
+    <div class="topbar-user">
+      <span class="user-name">{{ auth.currentUser()?.username }}</span>
+      <button mat-button type="button" (click)="logout()">Sair</button>
+    </div>
+  </header>
+
+  <div class="admin-body">
+    <nav class="side-nav" aria-label="Navegação administrativa">
+      <p class="nav-caption">CADASTROS</p>
+      <a routerLink="/admin/products" routerLinkActive="active" ariaCurrentWhenActive="page">
+        <span class="nav-marker" aria-hidden="true"></span>Produtos
+      </a>
+    </nav>
+    <main class="workspace"><router-outlet /></main>
+  </div>
+</div>

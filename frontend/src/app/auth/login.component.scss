@@ -1,0 +1,23 @@
+:host { display: block; min-height: 100vh; }
+.login-page { display: grid; grid-template-columns: minmax(340px, 480px) minmax(280px, 1fr); min-height: 100vh; background: var(--surface); }
+.login-panel { display: flex; flex-direction: column; justify-content: center; width: min(100%, 410px); margin: auto; padding: 48px 28px; animation: arrive 420ms ease-out both; }
+.brand-mark { display: grid; place-items: center; width: 48px; height: 48px; margin-bottom: 30px; border-radius: 12px 12px 12px 3px; background: var(--blue); color: #fff; font-family: Georgia, serif; font-size: 30px; font-weight: 700; box-shadow: 5px 5px 0 var(--amber); }
+.eyebrow, .login-aside > p { color: var(--blue-bright); font-size: 11px; font-weight: 700; letter-spacing: 1.4px; }
+h1 { margin: 7px 0 9px; color: var(--ink); font-family: Georgia, serif; font-size: 38px; font-weight: 600; }
+.intro { margin: 0 0 30px; color: var(--ink-soft); }
+form { display: grid; gap: 8px; }
+button { min-height: 48px; margin-top: 6px; }
+.form-error { margin: 0 0 8px; color: var(--danger); font-size: 13px; }
+.login-aside { display: flex; flex-direction: column; justify-content: flex-end; min-height: 100%; padding: 54px clamp(32px, 7vw, 112px); background-color: var(--blue); background-image: linear-gradient(90deg, transparent 49px, #ffffff0c 50px), linear-gradient(transparent 49px, #ffffff0c 50px); background-size: 50px 50px; color: #fff; }
+.aside-rule { width: 46px; height: 4px; margin-bottom: 20px; background: var(--amber); }
+.login-aside > p { color: #f4bd52; }
+.login-aside > span { max-width: 380px; font-family: Georgia, serif; font-size: clamp(24px, 3vw, 38px); line-height: 1.18; }
+.login-aside > small { margin-top: 60px; color: #c4d2df; font-size: 10px; letter-spacing: 1px; }
+@keyframes arrive { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+@media (max-width: 760px) {
+  .login-page { grid-template-columns: 1fr; }
+  .login-panel { width: min(100%, 460px); padding: 44px 25px; }
+  .login-aside { min-height: 180px; padding: 30px 25px; }
+  .login-aside > span { max-width: 480px; font-size: 24px; }
+  .login-aside > small { margin-top: 24px; }
+}
