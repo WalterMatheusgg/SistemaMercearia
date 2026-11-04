@@ -1,8 +1,263 @@
-<section class="page"><header><div><p class="eyebrow">ABASTECIMENTO</p><h1>Compras e recebimentos</h1><small>Estoque aumenta apenas com o material efetivamente recebido.</small></div>@if(management()){<button class="primary" [disabled]="action.locked()" (click)="open=!open">{{open?'Fechar formulário':'Novo pedido de compra'}}</button>}</header><app-action-status [action]="action"/>@if(error()){<p class="note error" role="alert">{{error()}}</p>}
-@if(open){<section class="panel"><h2>Pedido ao fornecedor</h2><form (ngSubmit)="save()" #purchaseForm="ngForm"><fieldset [disabled]="action.locked()"><div class="grid"><label>Pesquisar fornecedor<input name="sq" [(ngModel)]="supplierQuery"/></label><button type="button" (click)="searchSuppliers()">Buscar fornecedor</button><label>Fornecedor<select name="supplier" [(ngModel)]="supplierId" required><option value="">Selecione</option>@for(supplier of suppliers();track supplier.id){<option [value]="supplier.id">{{supplier['name']}}</option>}</select></label><label>Vencimento dos recebimentos<input type="date" name="due" [(ngModel)]="dueDate" required/></label><label>Pesquisar produto<input name="query" [(ngModel)]="query"/></label><button type="button" (click)="searchProducts()">Buscar produto</button><label>Produto<select name="product" [(ngModel)]="productId"><option value="">Selecione</option>@for(product of products();track product.id){<option [value]="product.id">{{product['code']}} · {{product['name']}} ({{product['unit']}})</option>}</select></label><label>Quantidade<input name="amount" [(ngModel)]="amount" inputmode="decimal"/></label><label>Custo por unidade<input name="cost" [(ngModel)]="cost" inputmode="decimal"/></label><button type="button" (click)="add()">Adicionar item</button></div><div class="scroll gap"><table><thead><tr><th>Produto</th><th>Quantidade</th><th>Custo unitário</th><th></th></tr></thead><tbody>@for(line of lines;track line.productId;let i=$index){<tr><td>{{line.name}}</td><td><input [name]="'q'+i" [(ngModel)]="line.quantity" required pattern="[0-9]+([.,][0-9]{1,4})?"/></td><td><input [name]="'c'+i" [(ngModel)]="line.unitCost" required pattern="[0-9]+([.,][0-9]{1,2})?"/></td><td><button type="button" (click)="lines.splice(i,1)">Remover</button></td></tr>}</tbody></table></div><label class="gap">Observação<textarea name="note" [(ngModel)]="note" maxlength="500"></textarea></label><button class="primary gap" [disabled]="purchaseForm.invalid||!lines.length">Registrar pedido de compra</button></fieldset></form></section>}
-<section class="panel"><div class="scroll"><table><thead><tr><th>Data / pedido</th><th>Fornecedor</th><th>Total pedido</th><th>Situação</th><th></th></tr></thead><tbody>@for(order of rows();track order.id){<tr><td>{{date(order['createdAt'])}}<small>{{order.id}}</small></td><td>{{order['supplierName']}}</td><td>{{money(order['total'])}}</td><td>{{label(order['status'])}}</td><td><button (click)="show(order.id)">Abrir</button></td></tr>}</tbody></table></div>@if(!rows().length){<p class="empty">Nenhum pedido de compra.</p>}<div class="pagination"><span>{{total}} pedidos · Página {{page+1}}</span><div><button [disabled]="page===0" (click)="page=page-1;load()">Anterior</button><button [disabled]="(page+1)*20>=total" (click)="page=page+1;load()">Próxima</button></div></div></section>
-@if(selected();as order){<section class="panel"><div class="toolbar"><h2>{{order['supplierName']}} · {{label(order['status'])}}</h2><button [disabled]="action.locked()" (click)="selected.set(null)">Fechar</button></div><p>{{order.id}} · Vencimento: {{date(order['dueDate'])}}</p><p>{{order['note']}}</p><div class="scroll"><table><thead><tr><th>Produto</th><th>Pedido</th><th>Recebido</th><th>Custo unitário / total</th></tr></thead><tbody>@for(item of order['items'];track item.id){<tr><td>{{item.name}}</td><td>{{quantity(item.quantity)}} {{item.unitCode}}</td><td>{{quantity(item.received)}} {{item.unitCode}}</td><td>{{money(item.unitCost)}} / {{money(item.lineTotal)}}</td></tr>}</tbody></table></div><h3>Total pedido: {{money(order['total'])}}</h3>
-@if(['OPEN','PARTIAL'].includes(order['status'])){<section class="panel"><h3>Registrar recebimento parcial ou completo</h3><p class="muted">Preencha somente as quantidades que chegaram agora. O recebimento cria a entrada de estoque e a conta a pagar desse material.</p><form (ngSubmit)="receive()" #receiptForm="ngForm"><fieldset [disabled]="action.locked()"><div class="grid">@for(line of receiveLines;track line.itemId){<label>{{line.name}} ({{line.unit}}) · recebido {{quantity(line.received)}} de {{quantity(line.ordered)}}<input [name]="line.itemId" [(ngModel)]="line.quantity" inputmode="decimal" pattern="[0-9]+([.,][0-9]{1,4})?" placeholder="Quantidade recebida agora"/></label>}</div><label class="gap">Documento de origem / motivo<input name="receiptNote" [(ngModel)]="receiptNote" required minlength="3" maxlength="400"/></label><button class="primary gap" [disabled]="receiptForm.invalid">Confirmar recebimento e atualizar estoque</button></fieldset></form></section>}
-@if(management()&&order['status']==='OPEN'){<form class="toolbar gap" (ngSubmit)="cancel()" #cancelForm="ngForm"><label>Motivo do cancelamento<input name="cancelReason" [(ngModel)]="cancelReason" required minlength="3" maxlength="500"/></label><button class="danger" [disabled]="cancelForm.invalid||action.locked()">Cancelar pedido sem recebimento</button></form>}
-<h3>Recebimentos</h3>@for(receipt of order['receipts'];track receipt.id){<p>{{date(receipt.receivedAt)}} · {{receipt.actorName}} · {{money(receipt.total)}}<small>{{receipt.note}} · {{receipt.id}}</small></p>}</section>}
+<section class="page">
+  <header>
+    <div>
+      <p class="eyebrow">ABASTECIMENTO</p>
+      <h1>Compras e recebimentos</h1>
+      <small>Estoque aumenta apenas com o material efetivamente recebido.</small>
+    </div>
+    @if (management()) {
+      <button class="primary" [disabled]="action.locked()" (click)="open = !open">
+        {{ open ? 'Fechar formulário' : 'Novo pedido de compra' }}
+      </button>
+    }
+  </header>
+  <app-action-status [action]="action" />
+  @if (error()) {
+    <p class="note error" role="alert">{{ error() }}</p>
+  }
+  @if (open) {
+    <section class="panel">
+      <h2>Pedido ao fornecedor</h2>
+      <form (ngSubmit)="save()" #purchaseForm="ngForm">
+        <fieldset [disabled]="action.locked()">
+          <div class="grid">
+            <label>Pesquisar fornecedor<input name="sq" [(ngModel)]="supplierQuery" /></label
+            ><button type="button" (click)="searchSuppliers()">Buscar fornecedor</button
+            ><label
+              >Fornecedor<select
+                aria-label="Fornecedor"
+                name="supplier"
+                [(ngModel)]="supplierId"
+                required
+              >
+                <option value="">Selecione</option>
+                @for (supplier of suppliers(); track supplier.id) {
+                  <option [value]="supplier.id">{{ supplier['name'] }}</option>
+                }
+              </select></label
+            ><label
+              >Vencimento dos recebimentos<input
+                type="date"
+                name="due"
+                [(ngModel)]="dueDate"
+                required /></label
+            ><label>Pesquisar produto<input name="query" [(ngModel)]="query" /></label
+            ><button type="button" (click)="searchProducts()">Buscar produto</button
+            ><label
+              >Produto<select aria-label="Produto" name="product" [(ngModel)]="productId">
+                <option value="">Selecione</option>
+                @for (product of products(); track product.id) {
+                  <option [value]="product.id">
+                    {{ product['code'] }} · {{ product['name'] }} ({{ product['unit'] }})
+                  </option>
+                }
+              </select></label
+            ><label
+              >Quantidade<input name="amount" [(ngModel)]="amount" inputmode="decimal" /></label
+            ><label
+              >Custo por unidade<input name="cost" [(ngModel)]="cost" inputmode="decimal" /></label
+            ><button type="button" (click)="add()">Adicionar item</button>
+          </div>
+          <div class="scroll gap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Produto</th>
+                  <th>Quantidade</th>
+                  <th>Custo unitário</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (line of lines; track line.productId; let i = $index) {
+                  <tr>
+                    <td>{{ line.name }}</td>
+                    <td>
+                      <input
+                        [name]="'q' + i"
+                        [(ngModel)]="line.quantity"
+                        required
+                        pattern="[0-9]+([.,][0-9]{1,4})?"
+                      />
+                    </td>
+                    <td>
+                      <input
+                        [name]="'c' + i"
+                        [(ngModel)]="line.unitCost"
+                        required
+                        pattern="[0-9]+([.,][0-9]{1,2})?"
+                      />
+                    </td>
+                    <td><button type="button" (click)="lines.splice(i, 1)">Remover</button></td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+          <label class="gap"
+            >Observação<textarea name="note" [(ngModel)]="note" maxlength="500"></textarea></label
+          ><button class="primary gap" [disabled]="purchaseForm.invalid || !lines.length">
+            Registrar pedido de compra
+          </button>
+        </fieldset>
+      </form>
+    </section>
+  }
+  <section class="panel">
+    <div class="scroll">
+      <table>
+        <thead>
+          <tr>
+            <th>Data / pedido</th>
+            <th>Fornecedor</th>
+            <th>Total pedido</th>
+            <th>Situação</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (order of rows(); track order.id) {
+            <tr>
+              <td>
+                {{ date(order['createdAt']) }}<small>{{ order.id }}</small>
+              </td>
+              <td>{{ order['supplierName'] }}</td>
+              <td>{{ money(order['total']) }}</td>
+              <td>{{ label(order['status']) }}</td>
+              <td><button (click)="show(order.id)">Abrir</button></td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+    @if (!rows().length) {
+      <p class="empty">Nenhum pedido de compra.</p>
+    }
+    <div class="pagination">
+      <span>{{ total }} pedidos · Página {{ page + 1 }}</span>
+      <div>
+        <button [disabled]="page === 0" (click)="page = page - 1; load()">Anterior</button
+        ><button [disabled]="(page + 1) * 20 >= total" (click)="page = page + 1; load()">
+          Próxima
+        </button>
+      </div>
+    </div>
+  </section>
+  @if (selected(); as order) {
+    <section class="panel">
+      <div class="toolbar">
+        <h2>{{ order['supplierName'] }} · {{ label(order['status']) }}</h2>
+        <button [disabled]="action.locked()" (click)="selected.set(null)">Fechar</button>
+      </div>
+      <p>{{ order.id }} · Vencimento: {{ date(order['dueDate']) }}</p>
+      <p>{{ order['note'] }}</p>
+      <div class="scroll">
+        <table>
+          <thead>
+            <tr>
+              <th>Produto</th>
+              <th>Pedido</th>
+              <th>Recebido</th>
+              <th>Custo unitário / total</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (item of order['items']; track item.id) {
+              <tr>
+                <td>{{ item.name }}</td>
+                <td>{{ quantity(item.quantity) }} {{ item.unitCode }}</td>
+                <td>{{ quantity(item.received) }} {{ item.unitCode }}</td>
+                <td>{{ money(item.unitCost) }} / {{ money(item.lineTotal) }}</td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+      <h3>Total pedido: {{ money(order['total']) }}</h3>
+      @if (['OPEN', 'PARTIAL'].includes(order['status'])) {
+        <section class="panel">
+          <h3>Registrar recebimento parcial ou completo</h3>
+          <p class="muted">
+            Preencha somente as quantidades que chegaram agora. O recebimento cria a entrada de
+            estoque e a conta a pagar desse material.
+          </p>
+          <form (ngSubmit)="receive()" #receiptForm="ngForm">
+            <fieldset [disabled]="action.locked()">
+              <div class="grid">
+                @for (line of receiveLines; track line.itemId) {
+                  <label
+                    >{{ line.name }} ({{ line.unit }}) · recebido {{ quantity(line.received) }} de
+                    {{ quantity(line.ordered)
+                    }}<input
+                      [name]="line.itemId"
+                      [(ngModel)]="line.quantity"
+                      inputmode="decimal"
+                      pattern="[0-9]+([.,][0-9]{1,4})?"
+                      placeholder="Quantidade recebida agora"
+                  /></label>
+                }
+              </div>
+              <label class="gap"
+                >Documento de origem / motivo<input
+                  name="receiptNote"
+                  [(ngModel)]="receiptNote"
+                  required
+                  minlength="3"
+                  maxlength="400" /></label
+              ><button class="primary gap" [disabled]="receiptForm.invalid">
+                Confirmar recebimento e atualizar estoque
+              </button>
+            </fieldset>
+          </form>
+        </section>
+      }
+      @if (management() && order['status'] === 'OPEN') {
+        <form class="toolbar gap" (ngSubmit)="cancel()" #cancelForm="ngForm">
+          <label
+            >Motivo do cancelamento<input
+              name="cancelReason"
+              [(ngModel)]="cancelReason"
+              required
+              minlength="3"
+              maxlength="500" /></label
+          ><button class="danger" [disabled]="cancelForm.invalid || action.locked()">
+            Cancelar pedido sem recebimento
+          </button>
+        </form>
+      }
+      <h3>Recebimentos</h3>
+      @if (management()) {
+        <label
+          >Motivo da devolução integral de um recebimento<input
+            [(ngModel)]="cancelReason"
+            maxlength="400"
+            [disabled]="action.locked()"
+        /></label>
+        <p class="muted">
+          Confira a devolução física e eventual reembolso do fornecedor. O registro compensa estoque
+          e conta vinculada.
+        </p>
+      }
+      @for (receipt of order['receipts']; track receipt.id) {
+        <p>
+          {{ date(receipt.receivedAt) }} · {{ receipt.actorName }} · {{ money(receipt.total)
+          }}<small>{{ receipt.note }} · {{ receipt.id }}</small>
+          @if (receipt.cancelledAt) {
+            <small
+              >Devolvido em {{ date(receipt.cancelledAt) }} ·
+              {{ receipt.cancellationReason }}</small
+            >
+          } @else if (management()) {
+            <button
+              class="danger"
+              [disabled]="action.locked() || cancelReason.trim().length < 3"
+              (click)="returnReceipt(receipt.id)"
+            >
+              Devolver recebimento integral
+            </button>
+          }
+        </p>
+      }
+    </section>
+  }
 </section>

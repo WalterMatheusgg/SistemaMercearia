@@ -2,8 +2,7 @@ package br.com.ferragens.config;
 
 import br.com.ferragens.auth.UserAccountRepository;
 import br.com.ferragens.commerce.Db;
-import org.springframework.security.web.access.intercept.AuthorizationFilter;
-import org.springframework.security.web.csrf.CsrfFilter;
+
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
@@ -19,20 +18,23 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.AuthenticationEntryPoint;
+import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.access.AccessDeniedHandler;
-import org.springframework.security.web.authentication.session.ChangeSessionIdAuthenticationStrategy;
-import org.springframework.security.web.authentication.session.CompositeSessionAuthenticationStrategy;
-import org.springframework.security.web.authentication.session.SessionAuthenticationStrategy;
+import org.springframework.security.web.access.intercept.AuthorizationFilter;
 import org.springframework.security.web.authentication.logout.CompositeLogoutHandler;
 import org.springframework.security.web.authentication.logout.LogoutHandler;
 import org.springframework.security.web.authentication.logout.SecurityContextLogoutHandler;
+import org.springframework.security.web.authentication.session.ChangeSessionIdAuthenticationStrategy;
+import org.springframework.security.web.authentication.session.CompositeSessionAuthenticationStrategy;
+import org.springframework.security.web.authentication.session.SessionAuthenticationStrategy;
 import org.springframework.security.web.context.HttpSessionSecurityContextRepository;
 import org.springframework.security.web.context.SecurityContextRepository;
 import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
 import org.springframework.security.web.csrf.CsrfAuthenticationStrategy;
+import org.springframework.security.web.csrf.CsrfFilter;
 import org.springframework.security.web.csrf.CsrfLogoutHandler;
+
 import tools.jackson.databind.ObjectMapper;
 
 import java.util.List;
@@ -47,20 +49,24 @@ public class SecurityConfiguration {
 
     @Bean
     UserDetailsService userDetailsService(UserAccountRepository users) {
-        return username -> users.findByUsername(username)
-                .map(account -> User.withUsername(account.getUsername())
-                        .password(account.getPasswordHash())
-                        .authorities(account.getRoles().stream()
-                                .map(role -> role.getCode())
-                                .toArray(String[]::new))
-                        .disabled(!account.isEnabled())
-                        .build())
-                .orElseThrow(() -> new UsernameNotFoundException("Usuário não encontrado"));
+        return username ->
+                users.findByUsername(username)
+                        .map(
+                                account ->
+                                        User.withUsername(account.getUsername())
+                                                .password(account.getPasswordHash())
+                                                .authorities(
+                                                        account.getRoles().stream()
+                                                                .map(role -> role.getCode())
+                                                                .toArray(String[]::new))
+                                                .disabled(!account.isEnabled())
+                                                .build())
+                        .orElseThrow(() -> new UsernameNotFoundException("Usuário não encontrado"));
     }
 
     @Bean
-    AuthenticationManager authenticationManager(UserDetailsService userDetailsService,
-                                                PasswordEncoder passwordEncoder) {
+    AuthenticationManager authenticationManager(
+            UserDetailsService userDetailsService, PasswordEncoder passwordEncoder) {
         DaoAuthenticationProvider provider = new DaoAuthenticationProvider(userDetailsService);
         provider.setPasswordEncoder(passwordEncoder);
         return provider::authenticate;
@@ -77,56 +83,106 @@ public class SecurityConfiguration {
     }
 
     @Bean
-    SessionAuthenticationStrategy sessionAuthenticationStrategy(CookieCsrfTokenRepository csrfTokens) {
+    SessionAuthenticationStrategy sessionAuthenticationStrategy(
+            CookieCsrfTokenRepository csrfTokens) {
         var csrf = new CsrfAuthenticationStrategy(csrfTokens);
         csrf.setRequestHandler(new SpaCsrfTokenRequestHandler());
-        return new CompositeSessionAuthenticationStrategy(List.of(
-                new ChangeSessionIdAuthenticationStrategy(), csrf));
+        return new CompositeSessionAuthenticationStrategy(
+                List.of(new ChangeSessionIdAuthenticationStrategy(), csrf));
     }
 
     @Bean
     LogoutHandler applicationLogoutHandler(CookieCsrfTokenRepository csrfTokens) {
-        return new CompositeLogoutHandler(new SecurityContextLogoutHandler(), new CsrfLogoutHandler(csrfTokens));
+        return new CompositeLogoutHandler(
+                new SecurityContextLogoutHandler(), new CsrfLogoutHandler(csrfTokens));
     }
 
     @Bean
-    SecurityFilterChain securityFilterChain(HttpSecurity http,
-                                                    SecurityContextRepository securityContextRepository,
-                                                    CookieCsrfTokenRepository csrfTokens,
-                                                    ObjectMapper objectMapper, Db db) throws Exception {
-                AccessDeniedHandler accessDeniedHandler = (request, response, exception) -> {
+    SecurityFilterChain securityFilterChain(
+            HttpSecurity http,
+            SecurityContextRepository securityContextRepository,
+            CookieCsrfTokenRepository csrfTokens,
+            ObjectMapper objectMapper,
+            Db db)
+            throws Exception {
+        AccessDeniedHandler accessDeniedHandler =
+                (request, response, exception) -> {
                     response.setStatus(HttpStatus.FORBIDDEN.value());
                     response.setContentType(MediaType.APPLICATION_PROBLEM_JSON_VALUE);
-                    objectMapper.writeValue(response.getOutputStream(),
-                            ProblemDetail.forStatusAndDetail(HttpStatus.FORBIDDEN,
+                    objectMapper.writeValue(
+                            response.getOutputStream(),
+                            ProblemDetail.forStatusAndDetail(
+                                    HttpStatus.FORBIDDEN,
                                     "Você não tem permissão para esta operação."));
                 };
-                AuthenticationEntryPoint authenticationEntryPoint = (request, response, exception) -> {
+        AuthenticationEntryPoint authenticationEntryPoint =
+                (request, response, exception) -> {
                     response.setStatus(HttpStatus.UNAUTHORIZED.value());
                     response.setContentType(MediaType.APPLICATION_PROBLEM_JSON_VALUE);
-                    objectMapper.writeValue(response.getOutputStream(),
-                            ProblemDetail.forStatusAndDetail(HttpStatus.UNAUTHORIZED,
-                                    "Autenticação necessária."));
+                    objectMapper.writeValue(
+                            response.getOutputStream(),
+                            ProblemDetail.forStatusAndDetail(
+                                    HttpStatus.UNAUTHORIZED, "Autenticação necessária."));
                 };
 
-        http
-                .addFilterBefore(new AuthRateLimitFilter(), CsrfFilter.class)
+        http.addFilterBefore(new AuthRateLimitFilter(), CsrfFilter.class)
                 .addFilterBefore(new SessionValidationFilter(db), AuthorizationFilter.class)
-                .csrf(csrf -> csrf
-                        .csrfTokenRepository(csrfTokens)
-                        .csrfTokenRequestHandler(new SpaCsrfTokenRequestHandler()))
-                .securityContext(context -> context.securityContextRepository(securityContextRepository))
-                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED))
-                .exceptionHandling(errors -> errors
-                                .authenticationEntryPoint(authenticationEntryPoint)
-                                .accessDeniedHandler(accessDeniedHandler))
-                .authorizeHttpRequests(authorize -> authorize
-                        .requestMatchers("/api/auth/csrf", "/api/auth/login", "/api/auth/logout", "/api/auth/register", "/api/auth/password/**", "/api/auth/email/verify", "/api/catalog/preview", "/actuator/health")
-                        .permitAll()
-                        .requestMatchers(HttpMethod.GET, "/api/catalog", "/api/catalog/**", "/", "/index.html", "/*.js", "/*.css", "/*.ico", "/assets/**", "/media/**", "/store", "/cart", "/login", "/register", "/forgot-password", "/reset-password", "/verify-email", "/account", "/admin", "/admin/**").permitAll()
-                        .requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").authenticated()
-                        .requestMatchers(HttpMethod.OPTIONS, "/**").denyAll()
-                        .anyRequest().authenticated())
+                .csrf(
+                        csrf ->
+                                csrf.csrfTokenRepository(csrfTokens)
+                                        .csrfTokenRequestHandler(new SpaCsrfTokenRequestHandler()))
+                .securityContext(
+                        context -> context.securityContextRepository(securityContextRepository))
+                .sessionManagement(
+                        session -> session.sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED))
+                .exceptionHandling(
+                        errors ->
+                                errors.authenticationEntryPoint(authenticationEntryPoint)
+                                        .accessDeniedHandler(accessDeniedHandler))
+                .authorizeHttpRequests(
+                        authorize ->
+                                authorize
+                                        .requestMatchers(
+                                                "/api/auth/csrf",
+                                                "/api/auth/login",
+                                                "/api/auth/logout",
+                                                "/api/auth/register",
+                                                "/api/auth/password/**",
+                                                "/api/auth/email/verify",
+                                                "/api/catalog/preview",
+                                                "/actuator/health")
+                                        .permitAll()
+                                        .requestMatchers(
+                                                HttpMethod.GET,
+                                                "/api/catalog",
+                                                "/api/catalog/**",
+                                                "/",
+                                                "/index.html",
+                                                "/*.js",
+                                                "/*.css",
+                                                "/*.ico",
+                                                "/assets/**",
+                                                "/media/**",
+                                                "/store",
+                                                "/cart",
+                                                "/login",
+                                                "/register",
+                                                "/forgot-password",
+                                                "/reset-password",
+                                                "/verify-email",
+                                                "/account",
+                                                "/admin",
+                                                "/admin/**")
+                                        .permitAll()
+                                        .requestMatchers(
+                                                "/v3/api-docs/**",
+                                                "/swagger-ui/**",
+                                                "/swagger-ui.html")
+                                        .authenticated()
+                                        .requestMatchers(HttpMethod.OPTIONS, "/**")
+                                        .denyAll()
+                                        .anyRequest()
+                                        .authenticated())
                 .formLogin(form -> form.disable())
                 .httpBasic(basic -> basic.disable())
                 .logout(logout -> logout.disable());

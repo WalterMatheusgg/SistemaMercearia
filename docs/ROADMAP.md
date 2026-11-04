@@ -4,11 +4,11 @@ Os fluxos implementados, regras, papéis e limitações estão em [OPERACAO.md](
 
 ## Implementado
 
-- Fundação Java/Spring/Angular/PostgreSQL, migrações V1/V2/V3, sessão/CSRF, papéis, erro estruturado e CI.
+- Fundação Java/Spring/Angular/PostgreSQL, migrações V1/V2/V3/V4/V5, sessão/CSRF, papéis, erro estruturado e CI.
 - Cadastro de produtos, unidades/categorias, estoque auditado e controle concorrente.
 - Clientes/fornecedores, usuários, desativação com revogação de sessão, recuperação e verificação de e-mail.
-- Vendas de balcão/orçamento, caixa, pagamento manual dividido/a prazo e devolução integral.
-- Compras e recebimentos parciais vinculados ao estoque e a contas a pagar.
+- Vendas de balcão/orçamento, caixa com troco, pagamento manual dividido/a prazo e devolução integral.
+- Compras, recebimentos parciais e devolução integral de recebimentos vinculados ao estoque e a contas a pagar.
 - Contas, liquidação parcial, estorno, relatórios e CSV.
 - Catálogo, carrinho, conta do cliente, pedido com reserva/expiração e entrega/retirada.
 - Alertas configuráveis, outbox, retries e histórico, resumo diário.

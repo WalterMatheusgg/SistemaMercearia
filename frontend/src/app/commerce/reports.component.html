@@ -1,4 +1,128 @@
-<section class="page"><header><div><p class="eyebrow">GESTÃO</p><h1>Resumo e relatórios</h1><small>Vendas confirmadas e posição das contas.</small></div><button (click)="export()">Exportar vendas por dia (CSV)</button></header>@if(error()){<p class="note error" role="alert">{{error()}}</p>}<form class="toolbar" (ngSubmit)="load()"><label>De<input type="date" name="start" [(ngModel)]="start" required/></label><label>Até<input type="date" name="end" [(ngModel)]="end" required/></label><button class="primary" [disabled]="loading">{{loading?'Consultando...':'Atualizar relatório'}}</button></form>
-@if(report();as data){<div class="cards gap"><div class="card"><small>Vendas no período</small><strong>{{data.sales}}</strong></div><div class="card"><small>Valor das vendas</small><strong>{{money(data.revenue)}}</strong></div><div class="card"><small>Ticket médio</small><strong>{{money(data.averageTicket)}}</strong></div><div class="card"><small>Descontos</small><strong>{{money(data.discounts)}}</strong></div><div class="card"><small>A receber (posição atual)</small><strong>{{money(data.receivables)}}</strong></div><div class="card"><small>A pagar (posição atual)</small><strong>{{money(data.payables)}}</strong></div></div><p class="note">Vendas são agrupadas pela confirmação, no horário de Brasília. Cancelamentos ficam fora dos totais. Pagamentos são agrupados pela data do lançamento e podem pertencer a vendas de outros períodos. As posições a pagar/receber consideram todas as contas abertas.</p>
-<div class="grid"><section class="panel"><h2>Vendas por dia</h2><table><thead><tr><th>Data</th><th>Vendas</th><th>Total</th></tr></thead><tbody>@for(day of data.days;track day.day){<tr><td>{{date(day.day)}}</td><td>{{day.sales}}</td><td>{{money(day.revenue)}}</td></tr>}</tbody></table>@if(!data.days.length){<p class="empty">Nenhuma venda confirmada no período.</p>}</section><section class="panel"><h2>Entradas menos saídas por meio</h2><table><thead><tr><th>Meio</th><th>Valor líquido</th></tr></thead><tbody>@for(payment of data.payments;track payment.method){<tr><td>{{label(payment.method)}}</td><td>{{money(payment.net)}}</td></tr>}</tbody></table><p class="muted">Inclui recebimentos, pagamentos de despesas e estornos registrados no financeiro. Não representa saldo bancário conciliado.</p></section></div><section class="panel"><h2>Produtos vendidos (30 maiores valores brutos)</h2><p class="muted">Valores dos itens antes do desconto global e da taxa de entrega. Quantidades são agrupadas pela unidade do produto.</p><div class="scroll"><table><thead><tr><th>Produto</th><th>Quantidade</th><th>Valor bruto</th></tr></thead><tbody>@for(product of data.products;track product.productId){<tr><td>{{product.name}}<small>{{product.code}}</small></td><td>{{quantity(product.quantity)}} {{product.unitCode}}</td><td>{{money(product.grossRevenue)}}</td></tr>}</tbody></table></div></section>}
+<section class="page">
+  <header>
+    <div>
+      <p class="eyebrow">GESTÃO</p>
+      <h1>Resumo e relatórios</h1>
+      <small>Vendas confirmadas e posição das contas.</small>
+    </div>
+    <button (click)="export()">Exportar vendas por dia (CSV)</button>
+  </header>
+  @if (error()) {
+    <p class="note error" role="alert">{{ error() }}</p>
+  }
+  <form class="toolbar" (ngSubmit)="load()">
+    <label>De<input type="date" name="start" [(ngModel)]="start" required /></label
+    ><label>Até<input type="date" name="end" [(ngModel)]="end" required /></label
+    ><button class="primary" [disabled]="loading">
+      {{ loading ? 'Consultando...' : 'Atualizar relatório' }}
+    </button>
+  </form>
+  @if (report(); as data) {
+    <div class="cards gap">
+      <div class="card">
+        <small>Vendas no período</small><strong>{{ data.sales }}</strong>
+      </div>
+      <div class="card">
+        <small>Valor das vendas</small><strong>{{ money(data.revenue) }}</strong>
+      </div>
+      <div class="card">
+        <small>Ticket médio</small><strong>{{ money(data.averageTicket) }}</strong>
+      </div>
+      <div class="card">
+        <small>Descontos</small><strong>{{ money(data.discounts) }}</strong>
+      </div>
+      <div class="card">
+        <small>A receber (posição atual)</small><strong>{{ money(data.receivables) }}</strong>
+      </div>
+      <div class="card">
+        <small>A pagar (posição atual)</small><strong>{{ money(data.payables) }}</strong>
+      </div>
+    </div>
+    <p class="note">
+      Vendas são agrupadas pela confirmação, no horário de Brasília. Cancelamentos ficam fora dos
+      totais. Pagamentos são agrupados pela data do lançamento e podem pertencer a vendas de outros
+      períodos. As posições a pagar/receber consideram todas as contas abertas.
+    </p>
+    <div class="grid">
+      <section class="panel">
+        <h2>Vendas por dia</h2>
+        <table>
+          <thead>
+            <tr>
+              <th>Data</th>
+              <th>Vendas</th>
+              <th>Total</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (day of data.days; track day.day) {
+              <tr>
+                <td>{{ date(day.day) }}</td>
+                <td>{{ day.sales }}</td>
+                <td>{{ money(day.revenue) }}</td>
+              </tr>
+            }
+          </tbody>
+        </table>
+        @if (!data.days.length) {
+          <p class="empty">Nenhuma venda confirmada no período.</p>
+        }
+      </section>
+      <section class="panel">
+        <h2>Entradas menos saídas por meio</h2>
+        <table>
+          <thead>
+            <tr>
+              <th>Meio</th>
+              <th>Valor líquido</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (payment of data.payments; track payment.method) {
+              <tr>
+                <td>{{ label(payment.method) }}</td>
+                <td>{{ money(payment.net) }}</td>
+              </tr>
+            }
+          </tbody>
+        </table>
+        <p class="muted">
+          Inclui recebimentos, pagamentos de despesas e estornos registrados no financeiro. Não
+          representa saldo bancário conciliado.
+        </p>
+      </section>
+    </div>
+    <section class="panel">
+      <h2>Produtos vendidos (30 maiores valores brutos)</h2>
+      <p class="muted">
+        Valores dos itens antes do desconto global e da taxa de entrega. Quantidades são agrupadas
+        pela unidade do produto.
+      </p>
+      <div class="scroll">
+        <table>
+          <thead>
+            <tr>
+              <th>Produto</th>
+              <th>Quantidade</th>
+              <th>Valor bruto</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (
+              product of data.products;
+              track product.productId + product.name + product.code + product.unitCode
+            ) {
+              <tr>
+                <td>
+                  {{ product.name }}<small>{{ product.code }}</small>
+                </td>
+                <td>{{ quantity(product.quantity) }} {{ product.unitCode }}</td>
+                <td>{{ money(product.grossRevenue) }}</td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    </section>
+  }
 </section>

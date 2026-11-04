@@ -9,8 +9,8 @@
 | Estoque | Saldo inicial, entrada/saída/perda, mínimo, contagem, histórico imutável, estorno manual e proteção contra saldo negativo |
 | Pessoas | Clientes e fornecedores, contatos, inativação e histórico de documentos/contas vinculadas |
 | Venda | Balcão, orçamento com validade de 7 dias, confirmação, desconto autorizado, pagamentos divididos, venda a prazo e devolução integral |
-| Caixa | Um caixa físico por loja, abertura, suprimento, sangria, lançamentos em dinheiro e fechamento com diferença justificada |
-| Compras | Pedido ao fornecedor, recebimento parcial/completo, entrada física e contas a pagar apenas do material recebido |
+| Caixa | Um caixa físico por loja, abertura, suprimento, sangria, lançamentos em dinheiro e fechamento com diferença justificada e troco calculado no servidor |
+| Compras | Pedido ao fornecedor, recebimento parcial/completo, entrada física e contas a pagar apenas do material recebido e devolução integral de recebimentos |
 | Financeiro | Títulos avulsos e de origem comercial, pagamentos parciais, estorno e saldos sem duplicar faturamento |
 | Loja virtual | Catálogo, carrinho, cliente verificado, cálculo no servidor, reserva com expiração, pedido, conferência manual de pagamento, preparo e retirada/entrega |
 | Relatórios | Vendas por data, ticket, produtos, pagamentos por meio, posição de contas e exportação CSV |
@@ -21,7 +21,7 @@
 
 - O servidor lê o preço do cadastro e calcula cada linha com `quantidade × preço`, arredondamento HALF_UP para duas casas. O desconto global exige dono/gerente e não pode superar o subtotal. A interface exige cálculo prévio e envia o total esperado, recusando alterações de preço entre cálculo e confirmação.
 - Orçamento preserva preços e não movimenta estoque/financeiro. Sua confirmação consulta disponibilidade e usa o preço combinado no orçamento.
-- Venda de balcão exige caixa aberto. Sem pagamento integral, exige cliente identificado e cria o saldo a receber. Informe o valor líquido destinado à venda, sem o troco.
+- Venda de balcão exige caixa aberto. Sem pagamento integral, exige cliente identificado e cria o saldo a receber. Informe o valor líquido destinado à venda e, opcionalmente, o dinheiro entregue pelo cliente; o servidor calcula o troco, e somente o valor líquido altera a gaveta.
 - Apenas dinheiro movimenta a gaveta. Pix/cartão/transferência são registros manuais de operações feitas e conferidas fora do sistema. Não há cobrança nem reembolso bancário automático.
 - Cancelamento/devolução de venda é integral: exige gerência e motivo, restaura estoque e gera compensações dos pagamentos. Faça a devolução física e o reembolso externo antes de confirmar seu registro. Estorno de dinheiro exige saldo suficiente no caixa atual.
 - Pedido de compra não aumenta o físico nem cria dívida de material ainda não recebido. Cada recebimento cria sua própria conta. Em medidas fracionadas, o custo dos recebimentos é calculado pela diferença entre totais acumulados arredondados para evitar centavos extras no fracionamento.

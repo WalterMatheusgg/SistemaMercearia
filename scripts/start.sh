@@ -26,6 +26,7 @@ if not re.search(r'^APP_PUBLIC_URL=',text,re.M):
   url='https://'+os.environ['CODESPACE_NAME']+'-8080.'+os.environ['GITHUB_CODESPACES_PORT_FORWARDING_DOMAIN']
  path.write_text(text+'\nAPP_PUBLIC_URL='+url+'\n')
 PYENV
+chmod 600 .env
 set -a
 . "$TASK_ROOT/.env"
 set +a

@@ -1,3 +1,97 @@
-<section class="page"><header><div><p class="eyebrow">PREFERÊNCIAS PESSOAIS</p><h1>Alertas por e-mail</h1><small>Escolha o que você quer receber.</small></div><button (click)="load()">Atualizar histórico</button></header><app-action-status [action]="action"/>@if(error()){<p class="note error" role="alert">{{error()}}</p>}
-@if(state();as data){<section class="panel"><h2>Destinatário</h2><p>{{data.email||'Nenhum e-mail cadastrado.'}} · {{data.emailVerified?'Verificado':'Não verificado'}}</p>@if(data.email&&!data.emailVerified){<button (click)="verify()" [disabled]="action.locked()">Enviar link de verificação</button>}@if(!data.email){<p>Cadastre seu e-mail em <a routerLink="/admin/users">Usuários</a> ou peça ao dono da loja.</p>}<p class="muted">Os alertas comerciais começam após a verificação. No ambiente local, os e-mails são capturados no Mailpit e não chegam à internet.</p></section><section class="panel"><h2>Eventos</h2><form (ngSubmit)="save()"><fieldset [disabled]="action.locked()">@if(management()){<label class="inline"><input name="sales" type="checkbox" [(ngModel)]="form.saleCompleted"/>Vendas concluídas e seus cancelamentos</label>}<label class="inline gap"><input name="stock" type="checkbox" [(ngModel)]="form.stockLow"/>Produto atingiu o estoque mínimo</label>@if(management()){<label class="inline gap"><input name="summary" type="checkbox" [(ngModel)]="form.dailySummary"/>Resumo diário às 21h (Brasília)</label>}<button class="primary gap">Salvar preferências</button></fieldset></form><p class="muted">A venda é confirmada mesmo que o SMTP esteja indisponível. O sistema tenta novamente até cinco vezes; o resultado aparece no histórico.</p></section><section class="panel"><h2>Últimas 50 mensagens</h2><div class="scroll"><table><thead><tr><th>Criação</th><th>Evento / assunto</th><th>Situação</th><th>Tentativas</th><th>Enviado em</th></tr></thead><tbody>@for(message of data.history;track message.id){<tr><td>{{date(message.createdAt)}}</td><td>{{label(message.eventType)}}<small>{{message.subject}}</small></td><td>{{label(message.status)}}<small>{{message.lastError}}</small></td><td>{{message.attempts}}</td><td>{{date(message.sentAt)}}</td></tr>}</tbody></table></div>@if(!data.history.length){<p class="empty">Nenhuma mensagem registrada.</p>}</section>}
+<section class="page">
+  <header>
+    <div>
+      <p class="eyebrow">PREFERÊNCIAS PESSOAIS</p>
+      <h1>Alertas por e-mail</h1>
+      <small>Escolha o que você quer receber.</small>
+    </div>
+    <button (click)="load()">Atualizar histórico</button>
+  </header>
+  <app-action-status [action]="action" />
+  @if (error()) {
+    <p class="note error" role="alert">{{ error() }}</p>
+  }
+  @if (state(); as data) {
+    <section class="panel">
+      <h2>Destinatário</h2>
+      <p>
+        {{ data.email || 'Nenhum e-mail cadastrado.' }} ·
+        {{ data.emailVerified ? 'Verificado' : 'Não verificado' }}
+      </p>
+      @if (data.email && !data.emailVerified) {
+        <button (click)="verify()" [disabled]="action.locked()">Enviar link de verificação</button>
+      }
+      @if (!data.email) {
+        <p>
+          Cadastre seu e-mail em <a routerLink="/admin/users">Usuários</a> ou peça ao dono da loja.
+        </p>
+      }
+      <p class="muted">
+        Os alertas comerciais começam após a verificação. No ambiente local, os e-mails são
+        capturados no Mailpit e não chegam à internet.
+      </p>
+    </section>
+    <section class="panel">
+      <h2>Eventos</h2>
+      <form (ngSubmit)="save()">
+        <fieldset [disabled]="action.locked()">
+          @if (management()) {
+            <label class="inline"
+              ><input name="sales" type="checkbox" [(ngModel)]="form.saleCompleted" />Vendas
+              concluídas e seus cancelamentos</label
+            >
+          }
+          <label class="inline gap"
+            ><input name="stock" type="checkbox" [(ngModel)]="form.stockLow" />Produto atingiu o
+            estoque mínimo</label
+          >
+          @if (management()) {
+            <label class="inline gap"
+              ><input name="summary" type="checkbox" [(ngModel)]="form.dailySummary" />Resumo diário
+              às 21h (Brasília)</label
+            >
+          }
+          <button class="primary gap">Salvar preferências</button>
+        </fieldset>
+      </form>
+      <p class="muted">
+        A venda é confirmada mesmo que o SMTP esteja indisponível. O sistema tenta novamente até
+        cinco vezes; o resultado aparece no histórico.
+      </p>
+    </section>
+    <section class="panel">
+      <h2>Últimas 50 mensagens</h2>
+      <div class="scroll">
+        <table>
+          <thead>
+            <tr>
+              <th>Criação</th>
+              <th>Evento / assunto</th>
+              <th>Situação</th>
+              <th>Tentativas</th>
+              <th>Enviado em</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (message of data.history; track message.id) {
+              <tr>
+                <td>{{ date(message.createdAt) }}</td>
+                <td>
+                  {{ label(message.eventType) }}<small>{{ message.subject }}</small>
+                </td>
+                <td>
+                  {{ label(message.status) }}<small>{{ message.lastError }}</small>
+                </td>
+                <td>{{ message.attempts }}</td>
+                <td>{{ date(message.sentAt) }}</td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+      @if (!data.history.length) {
+        <p class="empty">Nenhuma mensagem registrada.</p>
+      }
+    </section>
+  }
 </section>

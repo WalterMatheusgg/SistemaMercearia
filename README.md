@@ -24,7 +24,7 @@ As versões abaixo foram conferidas em documentação oficial e registros oficia
 
 | Componente | Versão fixada ou gerenciada | Referência |
 | --- | --- | --- |
-| Java | 21 (nível de compilação; execução local validada em JDK 25) | [Spring Boot system requirements](https://docs.spring.io/spring-boot/4.1/system-requirements.html) |
+| Java | 21 (nível de compilação; testes/execução no CI em JDK 21) | [Spring Boot system requirements](https://docs.spring.io/spring-boot/4.1/system-requirements.html) |
 | Spring Boot | 4.1.2 estável; dependências Spring gerenciadas pela BOM | [Spring Boot](https://spring.io/projects/spring-boot) |
 | Maven Wrapper / Maven | 3.3.4 / 3.9.12 | [Maven Wrapper](https://maven.apache.org/wrapper/) |
 | PostgreSQL | 18.6 (`postgres:18.6-alpine`) | [Versioning Policy](https://www.postgresql.org/support/versioning/) |

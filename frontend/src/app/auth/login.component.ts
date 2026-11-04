@@ -10,7 +10,14 @@ import { AuthService } from './auth.service';
 @Component({
   selector: 'app-login',
   standalone: true,
-  imports: [RouterLink, ReactiveFormsModule, MatButtonModule, MatFormFieldModule, MatInputModule, MatProgressBarModule],
+  imports: [
+    RouterLink,
+    ReactiveFormsModule,
+    MatButtonModule,
+    MatFormFieldModule,
+    MatInputModule,
+    MatProgressBarModule,
+  ],
   templateUrl: './login.component.html',
   styleUrl: './login.component.scss',
 })
@@ -35,9 +42,14 @@ export class LoginComponent {
 
     this.busy.set(true);
     this.auth.login(this.form.getRawValue()).subscribe({
-      next: user => void this.router.navigateByUrl(user.roles.includes('CUSTOMER') ? '/account' : '/admin/home'),
+      next: (user) =>
+        void this.router.navigateByUrl(
+          user.roles.includes('CUSTOMER') ? '/account' : '/admin/home',
+        ),
       error: (error: { error?: { detail?: string } }) => {
-        this.errorMessage.set(error.error?.detail ?? 'Não foi possível entrar. Verifique a conexão e tente novamente.');
+        this.errorMessage.set(
+          error.error?.detail ?? 'Não foi possível entrar. Verifique a conexão e tente novamente.',
+        );
         this.busy.set(false);
       },
       complete: () => this.busy.set(false),

@@ -1,7 +1,158 @@
-<section class="page"><header><div><p class="eyebrow">CADASTROS</p><h1>{{title}}</h1><small>Dados de contato e histórico preservado.</small></div><button class="primary" (click)="edit()" [disabled]="action.locked()">Novo cadastro</button></header>
-<app-action-status [action]="action"/>@if(error()){<p class="note error" role="alert">{{error()}}</p>}
-@if(open){<section class="panel"><h2>{{editing?'Editar cadastro':'Novo cadastro'}}</h2><form (ngSubmit)="save()" #contactForm="ngForm"><fieldset [disabled]="action.locked()"><div class="grid"><label>Nome<input [(ngModel)]="form.name" name="name" required maxlength="160"/></label><label>E-mail<input [(ngModel)]="form.email" name="email" type="email" maxlength="254"/></label><label>Telefone<input [(ngModel)]="form.phone" name="phone" maxlength="40"/></label><label>CPF/CNPJ (opcional)<input [(ngModel)]="form.document" name="document" maxlength="30"/></label><label class="wide">Endereço<textarea [(ngModel)]="form.address" name="address" maxlength="500"></textarea></label><label class="inline"><input type="checkbox" [(ngModel)]="form.active" name="active"/>Ativo</label></div><div class="actions gap"><button type="button" (click)="open=false">Cancelar</button><button class="primary" [disabled]="contactForm.invalid">Salvar</button></div></fieldset></form></section>}
-<form class="toolbar" (ngSubmit)="page=0;load()"><label>Pesquisar nome<input [(ngModel)]="query" name="query"/></label><button>Buscar</button></form>
-<section class="panel"><div class="scroll"><table><thead><tr><th>Nome</th><th>Contato</th><th>Documento</th><th>Situação</th><th>Ações</th></tr></thead><tbody>@for(row of rows();track row.id){<tr><td><strong>{{row['name']}}</strong><small>{{row['address']}}</small></td><td>{{row['email']||'—'}}<small>{{row['phone']}}</small></td><td>{{row['document']||'—'}}</td><td>{{row['active']?'Ativo':'Inativo'}}</td><td><button (click)="edit(row)" [disabled]="action.locked()">Editar</button><button (click)="history(row)">Histórico</button></td></tr>}</tbody></table></div>@if(!rows().length){<p class="empty">{{loading()?'Carregando...':'Nenhum cadastro encontrado.'}}</p>}<div class="pagination"><span>{{total}} cadastros · Página {{page+1}}</span><div><button [disabled]="page===0" (click)="page=page-1;load()">Anterior</button><button [disabled]="(page+1)*20>=total" (click)="page=page+1;load()">Próxima</button></div></div></section>
-@if(selected();as person){<section class="panel"><div class="toolbar"><h2>Histórico · {{person['name']}}</h2><button (click)="selected.set(null)">Fechar</button></div>@if(kind==='CUSTOMER'){<h3>Compras e pedidos (últimos 100)</h3><div class="scroll"><table><thead><tr><th>Data</th><th>Pedido</th><th>Status</th><th>Total</th></tr></thead><tbody>@for(sale of person['sales'];track sale.id){<tr><td>{{date(sale.createdAt)}}</td><td>{{sale.id}}</td><td>{{label(sale.status)}}</td><td>{{money(sale.total)}}</td></tr>}</tbody></table></div>}<h3>Contas vinculadas (últimas 100)</h3><div class="scroll"><table><thead><tr><th>Descrição</th><th>Tipo</th><th>Total / pago</th><th>Vencimento</th><th>Status</th></tr></thead><tbody>@for(account of person['accounts'];track account.id){<tr><td>{{account.description}}</td><td>{{label(account.direction)}}</td><td>{{money(account.amount)}} / {{money(account.paid)}}</td><td>{{date(account.dueDate)}}</td><td>{{label(account.status)}}</td></tr>}</tbody></table></div></section>}
+<section class="page">
+  <header>
+    <div>
+      <p class="eyebrow">CADASTROS</p>
+      <h1>{{ title }}</h1>
+      <small>Dados de contato e histórico preservado.</small>
+    </div>
+    <button class="primary" (click)="edit()" [disabled]="action.locked()">Novo cadastro</button>
+  </header>
+  <app-action-status [action]="action" />
+  @if (error()) {
+    <p class="note error" role="alert">{{ error() }}</p>
+  }
+  @if (open) {
+    <section class="panel">
+      <h2>{{ editing ? 'Editar cadastro' : 'Novo cadastro' }}</h2>
+      <form (ngSubmit)="save()" #contactForm="ngForm">
+        <fieldset [disabled]="action.locked()">
+          <div class="grid">
+            <label>Nome<input [(ngModel)]="form.name" name="name" required maxlength="160" /></label
+            ><label
+              >E-mail<input
+                [(ngModel)]="form.email"
+                name="email"
+                type="email"
+                maxlength="254" /></label
+            ><label>Telefone<input [(ngModel)]="form.phone" name="phone" maxlength="40" /></label
+            ><label
+              >CPF/CNPJ (opcional)<input
+                [(ngModel)]="form.document"
+                name="document"
+                maxlength="30" /></label
+            ><label class="wide"
+              >Endereço<textarea
+                [(ngModel)]="form.address"
+                name="address"
+                maxlength="500"
+              ></textarea></label
+            ><label class="inline"
+              ><input type="checkbox" [(ngModel)]="form.active" name="active" />Ativo</label
+            >
+          </div>
+          <div class="actions gap">
+            <button type="button" (click)="open = false">Cancelar</button
+            ><button class="primary" [disabled]="contactForm.invalid">Salvar</button>
+          </div>
+        </fieldset>
+      </form>
+    </section>
+  }
+  <form class="toolbar" (ngSubmit)="page = 0; load()">
+    <label>Pesquisar nome<input [(ngModel)]="query" name="query" /></label><button>Buscar</button>
+  </form>
+  <section class="panel">
+    <div class="scroll">
+      <table>
+        <thead>
+          <tr>
+            <th>Nome</th>
+            <th>Contato</th>
+            <th>Documento</th>
+            <th>Situação</th>
+            <th>Ações</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (row of rows(); track row.id) {
+            <tr>
+              <td>
+                <strong>{{ row['name'] }}</strong
+                ><small>{{ row['address'] }}</small>
+              </td>
+              <td>
+                {{ row['email'] || '—' }}<small>{{ row['phone'] }}</small>
+              </td>
+              <td>{{ row['document'] || '—' }}</td>
+              <td>{{ row['active'] ? 'Ativo' : 'Inativo' }}</td>
+              <td>
+                <button (click)="edit(row)" [disabled]="action.locked()">Editar</button
+                ><button (click)="history(row)">Histórico</button>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+    @if (!rows().length) {
+      <p class="empty">{{ loading() ? 'Carregando...' : 'Nenhum cadastro encontrado.' }}</p>
+    }
+    <div class="pagination">
+      <span>{{ total }} cadastros · Página {{ page + 1 }}</span>
+      <div>
+        <button [disabled]="page === 0" (click)="page = page - 1; load()">Anterior</button
+        ><button [disabled]="(page + 1) * 20 >= total" (click)="page = page + 1; load()">
+          Próxima
+        </button>
+      </div>
+    </div>
+  </section>
+  @if (selected(); as person) {
+    <section class="panel">
+      <div class="toolbar">
+        <h2>Histórico · {{ person['name'] }}</h2>
+        <button (click)="selected.set(null)">Fechar</button>
+      </div>
+      @if (kind === 'CUSTOMER') {
+        <h3>Compras e pedidos (últimos 100)</h3>
+        <div class="scroll">
+          <table>
+            <thead>
+              <tr>
+                <th>Data</th>
+                <th>Pedido</th>
+                <th>Status</th>
+                <th>Total</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (sale of person['sales']; track sale.id) {
+                <tr>
+                  <td>{{ date(sale.createdAt) }}</td>
+                  <td>{{ sale.id }}</td>
+                  <td>{{ label(sale.status) }}</td>
+                  <td>{{ money(sale.total) }}</td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      }
+      <h3>Contas vinculadas (últimas 100)</h3>
+      <div class="scroll">
+        <table>
+          <thead>
+            <tr>
+              <th>Descrição</th>
+              <th>Tipo</th>
+              <th>Total / pago</th>
+              <th>Vencimento</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (account of person['accounts']; track account.id) {
+              <tr>
+                <td>{{ account.description }}</td>
+                <td>{{ label(account.direction) }}</td>
+                <td>{{ money(account.amount) }} / {{ money(account.paid) }}</td>
+                <td>{{ date(account.dueDate) }}</td>
+                <td>{{ label(account.status) }}</td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    </section>
+  }
 </section>

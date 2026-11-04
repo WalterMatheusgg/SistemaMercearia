@@ -16,7 +16,13 @@
 
       <mat-form-field appearance="outline">
         <mat-label>Senha</mat-label>
-        <input matInput type="password" formControlName="password" autocomplete="current-password" required />
+        <input
+          matInput
+          type="password"
+          formControlName="password"
+          autocomplete="current-password"
+          required
+        />
         @if (form.controls.password.hasError('required') && form.controls.password.touched) {
           <mat-error>Informe sua senha.</mat-error>
         }
@@ -29,9 +35,15 @@
       <button mat-raised-button color="primary" type="submit" [disabled]="busy()">
         {{ busy() ? 'Entrando...' : 'Entrar' }}
       </button>
-      @if (busy()) { <mat-progress-bar mode="indeterminate" /> }
+      @if (busy()) {
+        <mat-progress-bar mode="indeterminate" />
+      }
     </form>
-    <p><a routerLink="/forgot-password">Esqueci minha senha</a></p><p><a routerLink="/register">Criar conta de cliente</a> · <a routerLink="/store">Voltar à loja</a></p>
+    <p><a routerLink="/forgot-password">Esqueci minha senha</a></p>
+    <p>
+      <a routerLink="/register">Criar conta de cliente</a> ·
+      <a routerLink="/store">Voltar à loja</a>
+    </p>
   </section>
   <aside class="login-aside" aria-hidden="true">
     <div class="aside-rule"></div>

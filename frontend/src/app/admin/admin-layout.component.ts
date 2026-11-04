@@ -17,15 +17,23 @@ export class AdminLayoutComponent {
   readonly logoutPending = signal(false);
   readonly logoutError = signal('');
 
-  has(...roles: string[]): boolean { return this.auth.currentUser()?.roles.some(role => roles.includes(role)) ?? false; }
+  has(...roles: string[]): boolean {
+    return this.auth.currentUser()?.roles.some((role) => roles.includes(role)) ?? false;
+  }
 
   logout(): void {
     if (this.logoutPending()) return;
     this.logoutPending.set(true);
     this.logoutError.set('');
-    this.auth.logout().pipe(finalize(() => this.logoutPending.set(false))).subscribe({
-      next: () => void this.router.navigateByUrl('/login'),
-      error: () => this.logoutError.set('Não foi possível confirmar a saída. Verifique a conexão e tente novamente.'),
-    });
+    this.auth
+      .logout()
+      .pipe(finalize(() => this.logoutPending.set(false)))
+      .subscribe({
+        next: () => void this.router.navigateByUrl('/login'),
+        error: () =>
+          this.logoutError.set(
+            'Não foi possível confirmar a saída. Verifique a conexão e tente novamente.',
+          ),
+      });
   }
 }
