@@ -1,0 +1,51 @@
+<section class="page home-page">
+  <header class="welcome-hero">
+    <div>
+      <p class="eyebrow">PAINEL DE CONTROLE · LOJA</p>
+      <h1>Seu negócio em <span>movimento.</span></h1>
+      <p class="welcome-description">Olá, {{ auth.currentUser()?.username }}. Tudo o que você precisa para organizar sua operação está aqui.</p>
+      <div class="welcome-actions">
+        @if (has(['OWNER', 'MANAGER', 'SELLER', 'CASHIER'])) {
+          <a class="button welcome-primary" routerLink="/admin/sales">Acessar vendas <span aria-hidden="true">↗</span></a>
+        }
+        <a class="button welcome-secondary" routerLink="/store">Visualizar loja virtual</a>
+      </div>
+    </div>
+    <div class="hero-decoration" aria-hidden="true"><span>L</span></div>
+  </header>
+  <div class="section-heading">
+    <div>
+      <p class="eyebrow">ACESSO RÁPIDO</p>
+      <h2>O que vamos fazer hoje?</h2>
+      <p>Acesse diretamente o módulo que você precisa.</p>
+    </div>
+  </div>
+  <div class="home-links">
+    @for (link of links; track link.path) {
+      @if (has(link.roles)) {
+        <a class="module-card" [routerLink]="link.path">
+          <span class="module-icon" aria-hidden="true">{{ link.icon }}</span>
+          <span class="module-title">{{ link.title }}</span>
+          <span class="module-description">{{ link.description }}</span>
+          <span class="module-arrow" aria-hidden="true">↗</span>
+        </a>
+      }
+    }
+  </div>
+  <section class="getting-started">
+    <div class="guide-heading">
+      <span class="guide-icon" aria-hidden="true">✦</span>
+      <div>
+        <p class="eyebrow">FLUXO DE TRABALHO</p>
+        <h2>Uma operação organizada, do estoque à venda.</h2>
+      </div>
+    </div>
+    <ol class="guide-steps">
+      <li><strong>Prepare o catálogo</strong><span>Cadastre produtos e confira os saldos reais antes de vender.</span></li>
+      <li><strong>Registre o atendimento</strong><span>Crie orçamentos e vendas com valores calculados no servidor.</span></li>
+      <li><strong>Confira o pagamento</strong><span>Dinheiro, Pix e cartão são registrados após conferência externa.</span></li>
+      <li><strong>Acompanhe o resultado</strong><span>Confira o financeiro e os relatórios para fechar o dia.</span></li>
+    </ol>
+    <p class="guide-note">A Loja não realiza cobrança bancária nem emissão fiscal automática.</p>
+  </section>
+</section>

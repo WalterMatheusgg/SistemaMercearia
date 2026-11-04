@@ -1,0 +1,35 @@
+.home-page { padding-top: 0; }
+.welcome-hero { display: flex !important; justify-content: space-between !important; align-items: center; gap: 22px; padding: clamp(26px,4vw,48px); border-radius: 22px; background: radial-gradient(circle at 80% 10%,#265471 0%,transparent 36%),linear-gradient(115deg,#14273d,#174057); color: white; overflow: hidden; position: relative; margin-bottom: 38px !important; }
+.welcome-hero .eyebrow { color: #83d9cd; }
+.welcome-hero h1 { font-size: clamp(32px,4vw,52px); max-width: 560px; letter-spacing: -.05em; line-height: 1.08; margin: 12px 0 14px; }
+.welcome-hero h1 span { color: #f2bd70; }
+.welcome-description { max-width: 530px; color: #c9dae7; line-height: 1.65; font-size: 15px; margin: 0; }
+.welcome-actions { display: flex; flex-wrap: wrap; gap: 11px; margin-top: 26px; }
+.welcome-actions a { display: inline-flex; align-items: center; gap: 16px; }
+.welcome-primary { background: #f1b95d !important; color: #182d40 !important; border-color: #f1b95d !important; }
+.welcome-secondary { background: #ffffff0b !important; color: #fff !important; border-color: #ffffff70 !important; }
+.hero-decoration { width: clamp(100px,16vw,192px); height: clamp(100px,16vw,192px); border: 1px solid #ffffff29; border-radius: 32px; transform: rotate(-12deg); display: grid; place-items: center; flex: 0 0 auto; }
+.hero-decoration span { font-size: clamp(75px,11vw,150px); color: #ffffff16; font-weight: 900; line-height: 1; }
+.section-heading { display: flex; justify-content: space-between; align-items: end; margin-bottom: 20px; }
+.section-heading h2 { font-size: 26px; margin: 7px 0 4px; letter-spacing: -.035em; }
+.section-heading p:last-child { color: var(--ink-soft); margin: 0; font-size: 14px; }
+.home-links { display: grid; grid-template-columns: repeat(auto-fill,minmax(225px,1fr)); gap: 15px; }
+.module-card { display: flex; flex-direction: column; min-height: 184px; position: relative; padding: 21px; border: 1px solid var(--line); border-radius: 15px; background: #fff; text-decoration: none; color: var(--ink); box-shadow: var(--shadow-sm); transition: transform .18s ease,border-color .18s ease,box-shadow .18s ease; }
+.module-card:hover { transform: translateY(-3px); border-color: #a2d6ce; box-shadow: var(--shadow-md); }
+.module-icon { display: grid; place-items: center; width: 42px; height: 42px; border-radius: 12px; background: var(--teal-soft); color: #107f73; font-size: 22px; margin-bottom: 18px; }
+.module-title { display: block; font-size: 16px; font-weight: 800; letter-spacing: -.025em; }
+.module-description { display: block; max-width: 210px; color: var(--ink-soft); font-size: 12px; line-height: 1.6; margin-top: 7px; padding-right: 7px; }
+.module-arrow { position: absolute; top: 23px; right: 21px; color: #8195a5; }
+.getting-started { margin-top: 32px; background: #fff; border: 1px solid var(--line); border-radius: 19px; padding: 27px; }
+.guide-heading { display: flex; gap: 15px; align-items: center; }
+.guide-icon { display: grid; place-items: center; background: #fff3df; color: #af7222; border-radius: 13px; width: 44px; height: 44px; font-size: 24px; }
+.guide-heading h2 { font-size: 21px; margin: 4px 0 0; }
+.guide-steps { list-style: none; counter-reset: steps; display: grid; grid-template-columns: repeat(4,minmax(0,1fr)); gap: 17px; padding: 0; margin: 26px 0 12px; }
+.guide-steps li { display: grid; align-content: start; gap: 8px; padding: 13px; border-left: 2px solid #d7eee9; counter-increment: steps; }
+.guide-steps li::before { content: counter(steps,decimal-leading-zero); color: var(--teal); font-weight: 850; font-size: 12px; }
+.guide-steps strong { font-size: 13px; }
+.guide-steps span { font-size: 12px; line-height: 1.6; color: var(--ink-soft); }
+.guide-note { color: var(--ink-soft); font-size: 12px; margin-bottom: 0; }
+@media(max-width:1000px) { .guide-steps { grid-template-columns: repeat(2,1fr); } }
+@media(max-width:650px) { .welcome-hero { padding: 25px 22px; border-radius: 16px; } .hero-decoration { display: none; } .welcome-hero h1 { font-size: 35px; } .home-links { grid-template-columns: repeat(2,minmax(0,1fr)); gap: 9px; } .module-card { padding: 15px; min-height: 175px; } .module-description { font-size: 11px; } .section-heading h2 { font-size: 22px; } .guide-steps { grid-template-columns: 1fr; gap: 5px; } .getting-started { padding: 20px; } }
+@media(max-width:395px) { .home-links { grid-template-columns: 1fr; } .module-card { min-height: 140px; } }

@@ -1,57 +1,63 @@
+<a class="skip-link" href="#workspace">Pular para o conteúdo</a>
 <div class="admin-shell">
   <header class="topbar">
-    <a class="brand" routerLink="/admin/home" aria-label="Ferragens, início">
-      <span class="brand-mark">F</span>
-      <span>FERRAGENS <small>GESTÃO</small></span>
+    <a class="brand" routerLink="/admin/home" aria-label="Loja, voltar ao painel">
+      <span class="brand-mark" aria-hidden="true">L</span>
+      <span class="brand-copy"><strong>Loja</strong><small>GESTÃO E OPERAÇÃO</small></span>
     </a>
     <div class="topbar-user">
+      <span class="topbar-context"><span class="status-dot" aria-hidden="true"></span> Área de gestão</span>
+      <a class="store-shortcut" routerLink="/store">Ver loja ↗</a>
+      <span class="user-avatar" aria-hidden="true">{{ (auth.currentUser()?.username || 'A').slice(0, 1).toUpperCase() }}</span>
       <span class="user-name">{{ auth.currentUser()?.username }}</span>
       <button mat-button type="button" [disabled]="logoutPending()" (click)="logout()">
         {{ logoutPending() ? 'Saindo...' : 'Sair' }}
       </button>
     </div>
   </header>
-  @if (logoutError()) {
-    <p class="logout-error" role="alert">{{ logoutError() }}</p>
-  }
-
+  @if (logoutError()) { <p class="logout-error" role="alert">{{ logoutError() }}</p> }
   <div class="admin-body">
     <nav class="side-nav" aria-label="Navegação administrativa">
-      <a routerLink="/admin/home" routerLinkActive="active">Início</a>
+      <p class="nav-caption">VISÃO GERAL</p>
+      <a class="nav-item" routerLink="/admin/home" routerLinkActive="active"><span class="nav-icon" aria-hidden="true">⌂</span>Início</a>
       <p class="nav-caption">ATENDIMENTO</p>
       @if (has('OWNER', 'MANAGER', 'SELLER', 'CASHIER')) {
-        <a routerLink="/admin/sales" routerLinkActive="active">Vendas e pedidos</a
-        ><a routerLink="/admin/cash" routerLinkActive="active">Caixa</a>
+        <a class="nav-item" routerLink="/admin/sales" routerLinkActive="active"><span class="nav-icon" aria-hidden="true">▤</span>Vendas e pedidos</a>
+        <a class="nav-item" routerLink="/admin/cash" routerLinkActive="active"><span class="nav-icon" aria-hidden="true">▣</span>Caixa</a>
       }
       @if (has('OWNER', 'MANAGER', 'SELLER', 'CASHIER', 'FINANCE')) {
-        <a routerLink="/admin/customers" routerLinkActive="active">Clientes</a>
+        <a class="nav-item" routerLink="/admin/customers" routerLinkActive="active"><span class="nav-icon" aria-hidden="true">◎</span>Clientes</a>
       }
       <p class="nav-caption">OPERAÇÃO</p>
       @if (has('OWNER', 'MANAGER', 'STOCKKEEPER')) {
-        <a routerLink="/admin/products" routerLinkActive="active">Produtos</a
-        ><a routerLink="/admin/purchases" routerLinkActive="active">Compras</a>
+        <a class="nav-item" routerLink="/admin/products" routerLinkActive="active"><span class="nav-icon" aria-hidden="true">▦</span>Produtos</a>
+        <a class="nav-item" routerLink="/admin/purchases" routerLinkActive="active"><span class="nav-icon" aria-hidden="true">⇄</span>Compras</a>
       }
       @if (has('OWNER', 'MANAGER', 'STOCKKEEPER', 'SELLER', 'CASHIER')) {
-        <a routerLink="/admin/inventory" routerLinkActive="active">Estoque</a>
+        <a class="nav-item" routerLink="/admin/inventory" routerLinkActive="active"><span class="nav-icon" aria-hidden="true">▥</span>Estoque</a>
       }
       @if (has('OWNER', 'MANAGER', 'STOCKKEEPER', 'FINANCE')) {
-        <a routerLink="/admin/suppliers" routerLinkActive="active">Fornecedores</a>
+        <a class="nav-item" routerLink="/admin/suppliers" routerLinkActive="active"><span class="nav-icon" aria-hidden="true">⌑</span>Fornecedores</a>
       }
       @if (has('OWNER', 'MANAGER', 'FINANCE')) {
-        <p class="nav-caption">GESTÃO</p>
-        <a routerLink="/admin/finance" routerLinkActive="active">Financeiro</a
-        ><a routerLink="/admin/reports" routerLinkActive="active">Relatórios</a>
+        <p class="nav-caption">CONTROLE</p>
+        <a class="nav-item" routerLink="/admin/finance" routerLinkActive="active"><span class="nav-icon" aria-hidden="true">◫</span>Financeiro</a>
+        <a class="nav-item" routerLink="/admin/reports" routerLinkActive="active"><span class="nav-icon" aria-hidden="true">▧</span>Relatórios</a>
       }
       @if (has('OWNER', 'MANAGER', 'STOCKKEEPER')) {
-        <p class="nav-caption">CONFIGURAÇÕES</p>
-        <a routerLink="/admin/notifications" routerLinkActive="active">Alertas por e-mail</a>
+        <p class="nav-caption">PREFERÊNCIAS</p>
+        <a class="nav-item" routerLink="/admin/notifications" routerLinkActive="active"><span class="nav-icon" aria-hidden="true">◉</span>Alertas por e-mail</a>
       }
       @if (has('OWNER', 'MANAGER')) {
-        <a routerLink="/admin/users" routerLinkActive="active">Usuários</a
-        ><a routerLink="/admin/settings" routerLinkActive="active">Loja e auditoria</a>
+        <a class="nav-item" routerLink="/admin/users" routerLinkActive="active"><span class="nav-icon" aria-hidden="true">♙</span>Usuários</a>
+        <a class="nav-item" routerLink="/admin/settings" routerLinkActive="active"><span class="nav-icon" aria-hidden="true">⚙</span>Loja e auditoria</a>
       }
-      <a routerLink="/store">Abrir loja virtual</a>
+      <div class="sidebar-footer">
+        <span>LOJA VIRTUAL</span>
+        <a routerLink="/store">Abrir loja virtual <span aria-hidden="true">↗</span></a>
+        <small>Seu estoque e suas vendas em um só lugar.</small>
+      </div>
     </nav>
-    <main class="workspace"><router-outlet /></main>
+    <main class="workspace" id="workspace" tabindex="-1"><router-outlet /></main>
   </div>
 </div>
