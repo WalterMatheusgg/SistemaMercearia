@@ -2,8 +2,8 @@
   <header class="page-heading">
     <div>
       <p class="eyebrow"><span class="live-dot" aria-hidden="true"></span> CONTROLE DE MATERIAIS</p>
-      <h1>Seus produtos, <em>sem complicação.</em></h1>
-      <p class="subtitle">Cadastre, ajuste preços e organize os itens da sua ferragem em poucos cliques.</p>
+      <h1>Produtos</h1>
+      <p class="subtitle">Cadastro, fotos, preços e materiais da loja.</p>
     </div>
     <button class="new-product" type="button" (click)="startCreate()">
       <span aria-hidden="true">+</span> Novo produto
@@ -14,8 +14,52 @@
     <div class="overview-icon" aria-hidden="true">▦</div>
     <div><strong>{{ totalElements() }}</strong><span>itens neste filtro</span></div>
     <div class="overview-spacer"></div>
-    <span class="overview-tip">Tudo editável, com histórico preservado.</span>
+    <span class="overview-tip"></span>
   </div>
+
+
+  @if (canManageReferences()) {
+    <details class="references-panel">
+      <summary>Gerenciar categorias e unidades</summary>
+      <p>Categorias e unidades ficam junto do cadastro dos produtos.</p>
+      <div class="reference-columns">
+        <div class="reference-column">
+          <h3>Categorias</h3>
+          <form (submit)="$event.preventDefault(); createCategory()">
+            <label>Nome da categoria
+              <input name="newCategory" [(ngModel)]="categoryName" maxlength="100" placeholder="Ex.: Ferramentas elétricas"/>
+            </label>
+            <button type="submit" [disabled]="addingCategory() || !categoryName.trim()">Criar categoria</button>
+          </form>
+          <div class="reference-tags">
+            @for (category of categories(); track category.code) { <span>{{ category.name }}</span> }
+          </div>
+        </div>
+        <div class="reference-column">
+          <h3>Unidades de medida</h3>
+          <form (submit)="$event.preventDefault(); createUnit()">
+            <label>Nome da unidade
+              <input name="newUnit" [(ngModel)]="unitName" maxlength="60" placeholder="Ex.: Caixa, pacote, metro"/>
+            </label>
+            <div class="unit-settings">
+              <label>Casas decimais
+                <select [(ngModel)]="unitScale" name="unitScale">
+                  <option [ngValue]="0">0 (inteiros)</option><option [ngValue]="1">1</option>
+                  <option [ngValue]="2">2</option><option [ngValue]="3">3</option><option [ngValue]="4">4</option>
+                </select>
+              </label>
+              <label>Incremento
+                <input [(ngModel)]="unitStep" name="unitStep" placeholder="1" inputmode="decimal"/>
+              </label>
+            </div>
+            <button type="submit" [disabled]="addingUnit() || !unitName.trim()">Criar unidade</button>
+          </form>
+          <div class="reference-tags">@for (unit of units(); track unit.code) { <span>{{unit.name}}</span> }</div>
+        </div>
+      </div>
+      @if (referencesError()) { <p class="reference-error" role="alert">{{ referencesError() }}</p> }
+    </details>
+  }
 
   <div class="catalog-toolbar">
     <label class="search-wrap">
@@ -48,11 +92,36 @@
         <div>
           <p class="eyebrow">CADASTRO SIMPLES</p>
           <h2 id="form-title">{{ editingId() ? 'Editar produto' : 'Novo produto' }}</h2>
-          <p>Todos os campos são opcionais. Preencha agora ou complete depois.</p>
+          <p>Foto obrigatória. Os outros campos podem ser preenchidos depois.</p>
         </div>
         <button class="close-editor" type="button" [disabled]="saving()" (click)="closeForm()" aria-label="Fechar cadastro">×</button>
       </div>
       <form [formGroup]="form" (ngSubmit)="save()" novalidate>
+        <div class="product-photo-picker">
+          <div class="product-image-preview">
+            @if (photoPreview()) {
+              <img [src]="photoPreview()" alt="Prévia da foto selecionada" />
+            } @else if (editingId()) {
+              <app-product-photo [id]="editingId()" alt="Foto atual do material"/>
+            } @else {
+              <div class="photo-empty"><span aria-hidden="true">▧</span><small>Foto do material</small></div>
+            }
+          </div>
+          <div class="photo-picker-content">
+            <strong>Foto do produto @if (!editingId()) { <span class="required-photo">Obrigatória</span> }</strong>
+            <p>Identifique o material com JPG, PNG ou WebP, até 3 MB.</p>
+            <div class="photo-actions">
+              <button type="button" (click)="cameraInput.click()">Tirar foto</button>
+              <button type="button" (click)="deviceInput.click()">Procurar no dispositivo</button>
+              <a [href]="imageSearchUrl()" target="_blank" rel="noopener noreferrer">Buscar no Google ↗</a>
+            </div>
+            <small>Se pesquisar no Google, salve uma imagem que tenha permissão para usar e depois selecione-a.</small>
+            <input #cameraInput class="photo-file-input" type="file" accept="image/jpeg,image/png,image/webp"
+              capture="environment" (change)="selectPhoto($event)" aria-label="Tirar foto do produto"/>
+            <input #deviceInput class="photo-file-input" type="file" accept="image/jpeg,image/png,image/webp"
+              (change)="selectPhoto($event)" aria-label="Selecionar foto do dispositivo"/>
+          </div>
+        </div>
         <div class="form-grid">
           <mat-form-field appearance="outline" class="wide-field">
             <mat-label>Nome do produto (opcional)</mat-label>
@@ -80,6 +149,16 @@
               }
             </mat-select>
           </mat-form-field>
+          @if (!editingId()) {
+            <mat-form-field appearance="outline" class="wide-field">
+              <mat-label>Quantidade inicial em estoque (opcional)</mat-label>
+              <input matInput formControlName="initialQuantity" inputmode="decimal" placeholder="Ex.: 24" />
+              <mat-hint>Conte o que você já tem. A entrada fica registrada no histórico.</mat-hint>
+              @if (form.controls.initialQuantity.invalid && form.controls.initialQuantity.touched) {
+                <mat-error>Quantidade inválida (até 4 casas decimais).</mat-error>
+              }
+            </mat-form-field>
+          }
           <mat-form-field appearance="outline" class="wide-field">
             <mat-label>Preço de referência (R$) — opcional</mat-label>
             <input matInput formControlName="price" inputmode="decimal" placeholder="0,00" />
@@ -111,7 +190,7 @@
             </mat-form-field>
           </div>
         }
-        <p class="form-hint">Se não informar um nome, o sistema criará um material provisório para você renomear. Categoria e unidade recebem padrões internos. Estoque e movimentações ficam registrados no módulo Estoque.</p>
+        <p class="form-hint">Se deixar o nome vazio, o sistema cria um material provisório para renomear depois. Categoria e unidade recebem valores padrão.</p>
         @if (formError()) { <p class="form-error" role="alert">{{ formError() }}</p> }
         <div class="form-actions">
           <button type="button" class="cancel-button" [disabled]="saving()" (click)="closeForm()">Cancelar</button>
@@ -141,7 +220,7 @@
             <th mat-header-cell *matHeaderCellDef>Material</th>
             <td mat-cell *matCellDef="let product">
               <div class="product-name-cell">
-                <span class="product-monogram" aria-hidden="true">{{ product.name.slice(0, 1).toUpperCase() }}</span>
+                <app-product-photo class="product-thumb" [id]="product.id" [alt]="product.name" />
                 <span><strong>{{ product.name }}</strong><small>{{ product.baseUnitName }}</small></span>
               </div>
             </td>
