@@ -63,6 +63,19 @@ test('foto do produto: câmera, dispositivo, busca e validação do arquivo', as
   await expect(form.getByRole('alert')).toHaveCount(0);
 });
 
+test('importação com nome e valores vazios aceita quantidade informada', async ({ page }) => {
+  await signIn(page);
+  await page.goto('/admin/assistant');
+  await page.getByRole('button', { name: 'Adicionar muitos produtos' }).click();
+  await page.getByLabel('Lista de materiais').fill(';;;7');
+  await page.getByRole('button', { name: 'Revisar importação' }).click();
+  await expect(page.getByLabel('Nome 1')).toHaveValue('');
+  await expect(page.getByLabel('Quantidade 1')).toHaveValue('7');
+  page.once('dialog', dialog => dialog.accept());
+  await page.getByRole('button', { name: 'Confirmar cadastro de 1 produtos' }).click();
+  await expect(page.getByRole('status')).toContainText('1 produtos cadastrados');
+});
+
 test('rodapé, navegação por teclado e textos promocionais removidos', async ({ page }) => {
   await signIn(page);
   await expect(page.locator('.app-footer')).toHaveText('© 2026');
