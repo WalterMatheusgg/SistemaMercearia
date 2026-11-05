@@ -39,8 +39,8 @@ test('foto do produto: câmera, dispositivo, busca e validação do arquivo', as
   await page.getByRole('button', { name: /Novo produto/ }).click();
   const form = page.getByRole('dialog', { name: 'Novo produto' });
 
-  await expect(form.getByRole('button', { name: 'Tirar foto' })).toBeVisible();
-  await expect(form.getByRole('button', { name: 'Procurar no dispositivo' })).toBeVisible();
+  await expect(form.getByRole('button', { name: 'Tirar foto', exact: true })).toBeVisible();
+  await expect(form.getByRole('button', { name: 'Procurar no dispositivo', exact: true })).toBeVisible();
   await expect(form.getByRole('link', { name: /Buscar no Google/ }))
     .toHaveAttribute('href', /google\.com\/search\?tbm=isch/);
   await expect(form.locator('input[type="file"][capture]'))
@@ -88,7 +88,7 @@ test('páginas principais permanecem dentro da largura de tela', async ({ page }
   ];
   for (const route of routes) {
     await page.goto('/admin/' + route);
-    await expect(page.locator('.workspace h1').first()).toBeVisible();
+    await expect(page.locator('.workspace').getByRole('heading').first()).toBeVisible();
     const width = await page.evaluate(() => ({
       viewport: window.innerWidth,
       document: document.documentElement.scrollWidth,
