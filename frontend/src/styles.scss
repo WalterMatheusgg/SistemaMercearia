@@ -47,3 +47,10 @@ button, input, textarea, select { font: inherit; }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { scroll-behavior: auto !important; animation-duration: .01ms !important; transition-duration: .01ms !important; }
 }
+
+/* Interações globais: tema consistente, sem brilho decorativo sobre o conteúdo */
+:root{--paper:#f2f6f4;--ink:#193a36;--ink-soft:#607b75;--line:#dce9e2;--blue:#153c3a;--teal:#238d6b;--teal-soft:#e6f7ec;--amber:#e4b966;--lime:#c6ec90;--shadow-md:0 20px 48px #153e3020}
+a,button,input,textarea,select{transition:background-color .16s,border-color .16s,box-shadow .16s,color .16s}
+button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible{outline:3px solid #8cd0ae;outline-offset:3px}
+html{scrollbar-color:#a5cbb2 #edf5ef}
+@media(prefers-reduced-motion:reduce){a,button,input,textarea,select{transition:none!important}}

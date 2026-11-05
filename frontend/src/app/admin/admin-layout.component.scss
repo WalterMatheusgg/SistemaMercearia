@@ -56,3 +56,15 @@
 .sidebar-footer strong { font-size: 13px; color: #eaf8ee; }
 .sidebar-footer span { color: #abc3ce; font-size: 11px; line-height: 1.55; }
 @media(max-width:760px) { .nav-item { font-size: 12px; } .nav-icon svg { width: 17px; height: 17px; } .assistant-cta { padding: 8px 10px; } }
+
+/* Linguagem visual de produto: superfícies limpas, estrutura técnica e interação discreta */
+.topbar{background:linear-gradient(100deg,#fff,#f8fcf9);box-shadow:0 2px 16px #1a4b3610}
+.brand-mark{background:linear-gradient(135deg,#17443d,#238b68);box-shadow:0 8px 20px #135a4028;border:1px solid #2d8f6b;border-bottom:3px solid #c5ec8a;transform:rotate(-4deg);transition:transform .2s}
+.brand:hover .brand-mark{transform:rotate(0) scale(1.05)}
+.brand-copy strong{color:#143b34}
+.topbar-user{gap:11px}
+.side-nav{background:radial-gradient(circle at 2% 95%,#1a5f4a88 0%,transparent 40%),linear-gradient(170deg,#0e2731,#153b3f)}
+.nav-item.active{background:#c9f0aa;color:#193f36;box-shadow:0 6px 20px #0a1e2018}
+.nav-item.active .nav-icon{color:#265840}
+.side-nav .nav-caption{color:#a3c2b5}
+@media(max-width:760px){.nav-item.active{background:#c8f09b}.side-nav{border-bottom:1px solid #20493c}}

@@ -3,11 +3,12 @@ import { Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/rou
 import { MatButtonModule } from '@angular/material/button';
 import { AuthService } from '../auth/auth.service';
 import { finalize } from 'rxjs';
+import { QuickNavComponent } from './quick-nav.component';
 
 @Component({
   selector: 'app-admin-layout',
   standalone: true,
-  imports: [RouterLink, RouterLinkActive, RouterOutlet, MatButtonModule],
+  imports: [RouterLink, RouterLinkActive, RouterOutlet, MatButtonModule, QuickNavComponent],
   templateUrl: './admin-layout.component.html',
   styleUrl: './admin-layout.component.scss',
 })

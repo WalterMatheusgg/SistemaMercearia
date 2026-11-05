@@ -1,0 +1,25 @@
+<button type="button" class="quick-trigger" (click)="toggle(true)"
+  aria-label="Buscar rapidamente qualquer área do sistema" aria-keyshortcuts="Control+K Meta+K">
+  <app-ui-icon name="search" /> <span>Ir para...</span><kbd>Ctrl K</kbd>
+</button>
+@if (open()) {
+  <div class="quick-shade" (click)="toggle(false)" aria-hidden="true"></div>
+  <div class="quick-dialog" role="dialog" aria-modal="true" aria-label="Busca rápida" cdkTrapFocus [cdkTrapFocusAutoCapture]="true">
+    <label class="quick-input-row">
+      <app-ui-icon name="search"/>
+      <input cdkFocusInitial type="search" [value]="query()" (input)="search($any($event.target).value)"
+        placeholder="O que você quer fazer?" aria-label="Buscar área ou tarefa"/>
+      <button type="button" (click)="toggle(false)" aria-label="Fechar busca">Esc</button>
+    </label>
+    <div class="quick-result-head">ACESSO RÁPIDO <span>{{ filtered().length }} destinos</span></div>
+    <div class="quick-results">
+      @for (item of filtered(); track item.path) {
+        <button type="button" (click)="navigate(item.path)">
+          <span class="quick-icon"><app-ui-icon [name]="item.icon"/></span>
+          <span>{{ item.name }}</span><span class="quick-arrow">↗</span>
+        </button>
+      } @empty { <p class="quick-empty">Nenhuma área encontrada. Tente outra palavra.</p> }
+    </div>
+    <div class="quick-footer"><span><kbd>Ctrl K</kbd> para abrir de qualquer tela</span><span><kbd>Esc</kbd> para fechar</span></div>
+  </div>
+}

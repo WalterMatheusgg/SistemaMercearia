@@ -6,6 +6,7 @@
       <span class="brand-copy"><strong>Loja</strong><small>CONTROLE INTERNO</small></span>
     </a>
     <div class="topbar-user">
+      <app-quick-nav />
       @if (has('OWNER', 'MANAGER', 'STOCKKEEPER', 'FINANCE', 'SELLER', 'CASHIER')) {
         <a class="assistant-cta" routerLink="/admin/assistant"><span aria-hidden="true">✦</span> Assistente</a>
       }
