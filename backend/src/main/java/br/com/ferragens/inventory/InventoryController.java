@@ -35,6 +35,15 @@ public class InventoryController {
         return inventory.locations(actors.require(authentication));
     }
 
+    public record CategoryChoice(UUID id, String name) {}
+
+    @GetMapping("/categories")
+    public List<CategoryChoice> categories() {
+        return db.jdbc.query("SELECT id,name FROM category WHERE active ORDER BY name",
+                (rs, row) -> new CategoryChoice(
+                        rs.getObject("id", UUID.class), rs.getString("name")));
+    }
+
     @GetMapping("/balances")
     public Page<Balance> balances(
             Authentication authentication,
@@ -43,7 +52,8 @@ public class InventoryController {
             @RequestParam(defaultValue = "false") boolean onlyLow,
             @RequestParam(defaultValue = "false") boolean includeInactive,
             @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "20") int size) {
+            @RequestParam(defaultValue = "20") int size,
+            @RequestParam(required = false) UUID categoryId) {
         return inventory.balances(
                 actors.require(authentication),
                 locationId,
@@ -51,7 +61,8 @@ public class InventoryController {
                 onlyLow,
                 includeInactive,
                 page,
-                size);
+                size,
+                categoryId);
     }
 
     @GetMapping("/movements")
