@@ -51,9 +51,9 @@ Não considerar a loja **em produção** até concluir os itens pendentes.
 ## Revisão de interface (novembro/2026)
 
 - Menu lateral recolhível e gaveta no celular, rodapé apenas © 2026.
-- Cadastro manual com foto obrigatória e quantidade inicial na mesma transação; IDs técnicos e histórico preservados.
+- Cadastro manual com foto opcional e quantidade inicial na mesma transação; IDs técnicos e histórico preservados.
 - Categorias e unidades na seção Produtos, fora das configurações gerais.
 - Estoque com alternância entre cartões e tabela, além de atalhos de entrada e saída.
 - Financeiro com abas Contas e pagamentos / Dinheiro físico, mantendo a API histórica de caixa.
-- Assistente com sugestões contextuais, monitor de HTTP 5xx somente para a gerência e exemplos identificados como TESTE, que precisam de confirmação humana para importar.
+- Assistente com sugestões contextuais, monitor de HTTP 5xx somente para a gerência e exemplos identificados como TESTE, que precisam de confirmação humana para importar. No lote, Nome, Preço, Custo e Quantidade são opcionais; o saldo inicial é lançado apenas para novos itens.
 - Migrações novas V6–V8 mantêm dados anteriores; faça backup antes de aplicar atualizações no Codespace.
