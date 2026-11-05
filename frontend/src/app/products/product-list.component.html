@@ -143,7 +143,11 @@
             @if (!form.controls.categoryId.value) {
               <mat-hint>
                 @if (autoCategory(); as suggested) {
-                  Sugestão pelo nome: {{ suggested.name }}
+                  @if (suggested.name === 'Sem categoria') {
+                    Sem correspondência confiável; o material ficará em "Sem categoria".
+                  } @else {
+                    Sugestão pelo nome: {{ suggested.name }}
+                  }
                 } @else {
                   Sem correspondência clara, será usada "Sem categoria".
                 }
