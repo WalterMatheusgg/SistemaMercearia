@@ -3,6 +3,7 @@ package br.com.ferragens;
 import br.com.ferragens.auth.CurrentActorService.Actor;
 import br.com.ferragens.inventory.InventoryModels.*;
 import br.com.ferragens.inventory.InventoryService;
+import br.com.ferragens.product.ProductService;
 import br.com.ferragens.shared.BusinessRuleException;
 import br.com.ferragens.shared.ConflictException;
 import org.junit.jupiter.api.BeforeEach;
@@ -36,6 +37,7 @@ class InventoryIntegrationTest {
     static void services(DynamicPropertyRegistry properties) { IntegrationServices.configure(properties, SCHEMA); }
 
     @Autowired InventoryService inventory;
+    @Autowired ProductService productService;
     @Autowired JdbcTemplate jdbc;
     private UUID product;
     private Actor actor;
@@ -50,6 +52,39 @@ class InventoryIntegrationTest {
         product = UUID.randomUUID(); code = "IT-" + product.toString().substring(0, 18);
         jdbc.update("INSERT INTO product (id, code, name, category_id, base_unit_code, cost, price) VALUES (?,?,?,?,'UN',1,2)",
                 product, code, "Produto " + code, UUID.fromString("00000000-0000-0000-0000-000000000104"));
+    }
+
+    @Test
+    void bulkImportCreatesInitialStockExactlyOnceAndAllowsBlankFields() {
+        String name = "Lote ferragens " + UUID.randomUUID().toString().substring(0, 8);
+        var result = productService.importReviewed(actor, List.of(
+                new ProductService.BulkItem(name, new BigDecimal("9.90"), null, "UN",
+                        new BigDecimal("12")),
+                new ProductService.BulkItem(name, null, null, "UN",
+                        new BigDecimal("50")),
+                new ProductService.BulkItem("", null, null, "UN", BigDecimal.ZERO)));
+        assertThat(result.get("created")).isEqualTo(2);
+        assertThat(result.get("skipped")).isEqualTo(1);
+        BigDecimal stock = jdbc.queryForObject(
+                "SELECT b.physical FROM inventory_balance b JOIN product p ON p.id=b.product_id "
+                        + "WHERE p.name=?", BigDecimal.class, name);
+        assertThat(stock).isEqualByComparingTo("12");
+        Integer movements = jdbc.queryForObject(
+                "SELECT count(*) FROM inventory_movement m JOIN product p ON p.id=m.product_id "
+                        + "WHERE p.name=? AND m.kind='INITIAL'", Integer.class, name);
+        assertThat(movements).isEqualTo(1);
+    }
+
+    @Test
+    void bulkImportRejectsInvalidQuantityWithoutCreatingProducts() {
+        String name = "Lote rejeitado " + UUID.randomUUID().toString().substring(0, 8);
+        assertThatThrownBy(() -> productService.importReviewed(actor, List.of(
+                new ProductService.BulkItem(name, null, null, "UN", new BigDecimal("10")),
+                new ProductService.BulkItem("Invalido", null, null, "UN", new BigDecimal("-1")))))
+                .isInstanceOf(BusinessRuleException.class);
+        Integer count = jdbc.queryForObject(
+                "SELECT count(*) FROM product WHERE name=?", Integer.class, name);
+        assertThat(count).isZero();
     }
 
     @Test
