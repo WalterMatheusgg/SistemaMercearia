@@ -18,10 +18,14 @@ const movement: InventoryMovement = {
 };
 
 describe('Operação de estoque', () => {
-  const api = { locations: vi.fn(), balances: vi.fn(), history: vi.fn(), execute: vi.fn() };
+  const api = { locations: vi.fn(), categories: vi.fn(), balances: vi.fn(), history: vi.fn(), execute: vi.fn() };
   beforeEach(async () => {
     vi.resetAllMocks();
     api.locations.mockReturnValue(of([{ id: 'location-1', name: 'Principal' }]));
+    api.categories.mockReturnValue(of([
+      {id:'category-1',name:'Fixação'},
+      {id:'category-2',name:'Hidráulica'},
+    ]));
     api.balances.mockReturnValue(of({ content: [balance], totalElements: 1 }));
     api.history.mockReturnValue(of({ content: [], totalElements: 0 }));
     await TestBed.configureTestingModule({ imports: [InventoryComponent], providers: [
@@ -29,6 +33,21 @@ describe('Operação de estoque', () => {
       { provide: InventoryApi, useValue: api },
       { provide: AuthService, useValue: { currentUser: signal({ username: 'dono', roles: ['OWNER'] }) } },
     ] }).compileComponents();
+  });
+
+  it('filtra materiais por categoria no servidor e reseta a paginação', () => {
+    const fixture = TestBed.createComponent(InventoryComponent); fixture.detectChanges();
+    const component = fixture.componentInstance;
+    expect(component.categories().length).toBe(2);
+    component.page.set(3);
+    component.setCategory('category-1');
+    expect(component.page()).toBe(0);
+    expect(component.categoryId()).toBe('category-1');
+    expect(api.balances).toHaveBeenLastCalledWith(
+      'location-1', '', false, false, 0, 'category-1');
+    component.setCategory('');
+    expect(api.balances).toHaveBeenLastCalledWith(
+      'location-1', '', false, false, 0, '');
   });
 
   it('registra saída e atualiza a lista com o saldo retornado pelo servidor', () => {
