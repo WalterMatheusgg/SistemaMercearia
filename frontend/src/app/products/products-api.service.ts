@@ -63,12 +63,12 @@ export class ProductsApi {
   }
 
 
-  /** Novo cadastro único: foto obrigatória, quantidade inicial opcional. */
-  createComplete(product: ProductInput, quantity: string, photo: File): Observable<Product> {
+  /** Novo cadastro único: foto e quantidade inicial opcionais. */
+  createComplete(product: ProductInput, quantity: string, photo?: File): Observable<Product> {
     const data = new FormData();
     data.append('data', new Blob([JSON.stringify({ product, initialQuantity: quantity || '0' })],
       { type: 'application/json' }), 'data.json');
-    data.append('photo', photo, photo.name);
+    if (photo) data.append('photo', photo, photo.name);
     return this.http.post<Product>('/api/admin/products/complete', data);
   }
 
