@@ -150,21 +150,22 @@ public class CashService {
         return detail(actor, result);
     }
 
+    /** Garante registro contábil de dinheiro automaticamente, sem exigir abertura manual. */
     UUID requireOpen(Actor actor) {
-        return Db.id(
-                db
-                        .rows(
-                                "SELECT id FROM cash_session WHERE store_id=? AND closed_at IS NULL"
-                                        + " FOR UPDATE",
-                                actor.storeId())
-                        .stream()
-                        .findFirst()
-                        .orElseThrow(
-                                () ->
-                                        new ConflictException(
-                                                "Abra o caixa antes de registrar esta operação em"
-                                                        + " dinheiro ou venda de balcão.")),
-                "id");
+        // Bloqueia a loja para impedir duas sessões abertas simultaneamente.
+        db.jdbc.queryForObject("SELECT id FROM store WHERE id=? FOR UPDATE",
+                UUID.class, actor.storeId());
+        var sessions = db.rows(
+                "SELECT id FROM cash_session WHERE store_id=? AND closed_at IS NULL"
+                + " ORDER BY opened_at LIMIT 1 FOR UPDATE",
+                actor.storeId());
+        if (!sessions.isEmpty()) return Db.id(sessions.getFirst(), "id");
+        UUID id = UUID.randomUUID();
+        db.jdbc.update(
+                "INSERT INTO cash_session(id,store_id,opened_by,opening_amount) VALUES(?,?,?,0)",
+                id, actor.storeId(), actor.userId());
+        db.audit(actor, "CASH_AUTO_CREATED", id, "Controle de dinheiro iniciado automaticamente");
+        return id;
     }
 
     UUID add(Actor actor, BigDecimal signed, String kind, String reason) {

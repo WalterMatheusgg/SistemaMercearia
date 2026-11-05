@@ -36,9 +36,6 @@
       <a routerLink="/admin/reports" class="metric-tile"><span>Vendas de hoje</span><strong>{{ todaySales() ?? '—' }}</strong><small>Vendas confirmadas</small></a>
       <a routerLink="/admin/reports" class="metric-tile"><span>Total vendido hoje</span><strong class="money-value">{{ formattedRevenue() }}</strong><small>Não equivale a saldo em caixa</small></a>
     }
-    @if (has(['OWNER','MANAGER','SELLER','CASHIER'])) {
-      <a routerLink="/admin/cash" class="metric-tile cash-tile"><span>Situação do caixa</span><strong class="cash-state">{{ cashStatus() }}</strong><small>Consultar caixa físico</small></a>
-    }
   </div>
 
   <section class="workspace-panel" aria-labelledby="workspace-title">

@@ -1,10 +1,11 @@
 import { Component, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { RouterLink } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
 import { money, quantity, date, label, detail, today } from './ui';
 @Component({
   standalone: true,
-  imports: [FormsModule],
+  imports: [FormsModule, RouterLink],
   templateUrl: './reports.component.html',
   styleUrls: ['./ui.scss','./reports.component.scss'],
 })
