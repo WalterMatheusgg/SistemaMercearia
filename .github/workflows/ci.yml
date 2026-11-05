@@ -81,12 +81,33 @@ jobs:
       - run: npx playwright install --with-deps chromium
         working-directory: frontend
       - name: Testar desktop e celular com serviços reais
-        run: npm run e2e
+        # A API limita 20 logins por minuto/IP. Reiniciar apenas a aplicação
+        # entre perfis impede que a carga artificial do CI esgote esse limite.
+        run: |
+          npm run e2e -- --project=desktop
+          docker compose -f ../compose.yaml --profile app restart app
+          for attempt in $(seq 1 40); do
+            if curl -fsS http://localhost:8080/actuator/health 2>/dev/null | grep -q '"UP"'; then
+              break
+            fi
+            sleep 2
+          done
+          curl -fsS http://localhost:8080/actuator/health | grep -q '"UP"'
+          npm run e2e -- --project=mobile
         working-directory: frontend
         env:
           E2E_BASE_URL: http://localhost:8080
           E2E_ADMIN_USER: admin
           E2E_ADMIN_PASSWORD: local-e2e-password-123456
+      - name: Guardar evidências dos testes de navegador em caso de falha
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-errors
+          path: |
+            frontend/test-results/
+            frontend/playwright-report/
+          retention-days: 7
       - name: Conferir backup e restauração em banco separado
         run: |
           backup=$(bash scripts/backup.sh)
