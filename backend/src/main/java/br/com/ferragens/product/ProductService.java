@@ -129,7 +129,9 @@ public class ProductService {
                 code,
                 StringUtils.hasText(request.name()) ? request.name().trim() : product.getName(),
                 request.description(),
-                request.categoryId() == null ? product.getCategory() : findCategory(request.categoryId()),
+                request.categoryId() == null
+                        ? suggestCategory(StringUtils.hasText(request.name()) ? request.name() : product.getName())
+                        : findCategory(request.categoryId()),
                 unit,
                 request.cost() == null ? product.getCost() : request.cost(),
                 request.price() == null ? product.getPrice() : request.price());
