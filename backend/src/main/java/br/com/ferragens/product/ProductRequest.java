@@ -14,5 +14,11 @@ public record ProductRequest(
         UUID categoryId,
         String baseUnitCode,
         @DecimalMin("0.00") @Digits(integer = 12, fraction = 2) BigDecimal cost,
-        @DecimalMin("0.00") @Digits(integer = 12, fraction = 2) BigDecimal price) {
+        @DecimalMin("0.00") @Digits(integer = 12, fraction = 2) BigDecimal price,
+        @Size(max = 80) String brand) {
+    /** Mantém compatibilidade com chamadas anteriores e importação em lote. */
+    public ProductRequest(String code, String name, String description, UUID categoryId,
+                          String baseUnitCode, BigDecimal cost, BigDecimal price) {
+        this(code, name, description, categoryId, baseUnitCode, cost, price, null);
+    }
 }
