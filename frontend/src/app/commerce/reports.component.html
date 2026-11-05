@@ -1,128 +1,84 @@
-<section class="page">
-  <header>
-    <div>
-      <p class="eyebrow">GESTÃO</p>
-      <h1>Resumo e relatórios</h1>
-      <small>Vendas confirmadas e posição das contas.</small>
-    </div>
-    <button (click)="export()">Exportar vendas por dia (CSV)</button>
+<section class="page insights-page">
+  <header class="insights-header">
+    <div><p class="eyebrow">ANÁLISE DA LOJA</p><h1>Relatórios que fazem sentido.</h1>
+      <p>Veja o que vendeu e o que ainda precisa entrar ou sair, sem planilhas complicadas.</p></div>
+    <button type="button" (click)="export()" class="insights-export">↓ Exportar vendas (CSV)</button>
   </header>
-  @if (error()) {
-    <p class="note error" role="alert">{{ error() }}</p>
-  }
-  <form class="toolbar" (ngSubmit)="load()">
-    <label>De<input type="date" name="start" [(ngModel)]="start" required /></label
-    ><label>Até<input type="date" name="end" [(ngModel)]="end" required /></label
-    ><button class="primary" [disabled]="loading">
-      {{ loading ? 'Consultando...' : 'Atualizar relatório' }}
-    </button>
-  </form>
+  <div class="insights-range" aria-label="Período do relatório">
+    <div class="range-buttons" role="group" aria-label="Selecionar período">
+      <button type="button" [class.selected]="range==='today'" (click)="chooseRange('today')">Hoje</button>
+      <button type="button" [class.selected]="range==='week'" (click)="chooseRange('week')">7 dias</button>
+      <button type="button" [class.selected]="range==='month'" (click)="chooseRange('month')">Este mês</button>
+      <button type="button" [class.selected]="range==='custom'" (click)="range='custom'">Escolher datas</button>
+    </div>
+    @if (range === 'custom') {
+      <form class="range-custom" (ngSubmit)="load()">
+        <label>De<input type="date" [(ngModel)]="start" name="start" required/></label>
+        <label>Até<input type="date" [(ngModel)]="end" name="end" required/></label>
+        <button class="insights-primary" type="submit" [disabled]="loading || start>end">Aplicar</button>
+      </form>
+    }
+  </div>
+  @if (loading) { <p class="insights-loading" role="status">Atualizando os números da sua loja...</p> }
+  @if (error()) { <p class="insights-error" role="alert">{{ error() }}</p> }
   @if (report(); as data) {
-    <div class="cards gap">
-      <div class="card">
-        <small>Vendas no período</small><strong>{{ data.sales }}</strong>
+    <section class="insights-focus">
+      <div class="insights-focus-copy">
+        <span class="insights-kicker">RESULTADO DO PERÍODO</span>
+        <strong>{{ money(data.revenue) }}</strong>
+        <span>Valor das vendas confirmadas entre {{ date(start) }} e {{ date(end) }}</span>
+        <div class="insights-spark" aria-hidden="true">
+          @for (day of data.days; track day.day) {
+            <div [style.height.%]="barWidth(day.revenue, data.days)" title=""></div>
+          }
+        </div>
       </div>
-      <div class="card">
-        <small>Valor das vendas</small><strong>{{ money(data.revenue) }}</strong>
-      </div>
-      <div class="card">
-        <small>Ticket médio</small><strong>{{ money(data.averageTicket) }}</strong>
-      </div>
-      <div class="card">
-        <small>Descontos</small><strong>{{ money(data.discounts) }}</strong>
-      </div>
-      <div class="card">
-        <small>A receber (posição atual)</small><strong>{{ money(data.receivables) }}</strong>
-      </div>
-      <div class="card">
-        <small>A pagar (posição atual)</small><strong>{{ money(data.payables) }}</strong>
-      </div>
-    </div>
-    <p class="note">
-      Vendas são agrupadas pela confirmação, no horário de Brasília. Cancelamentos ficam fora dos
-      totais. Pagamentos são agrupados pela data do lançamento e podem pertencer a vendas de outros
-      períodos. As posições a pagar/receber consideram todas as contas abertas.
-    </p>
-    <div class="grid">
-      <section class="panel">
-        <h2>Vendas por dia</h2>
-        <table>
-          <thead>
-            <tr>
-              <th>Data</th>
-              <th>Vendas</th>
-              <th>Total</th>
-            </tr>
-          </thead>
-          <tbody>
-            @for (day of data.days; track day.day) {
-              <tr>
-                <td>{{ date(day.day) }}</td>
-                <td>{{ day.sales }}</td>
-                <td>{{ money(day.revenue) }}</td>
-              </tr>
-            }
-          </tbody>
-        </table>
-        @if (!data.days.length) {
-          <p class="empty">Nenhuma venda confirmada no período.</p>
-        }
-      </section>
-      <section class="panel">
-        <h2>Entradas menos saídas por meio</h2>
-        <table>
-          <thead>
-            <tr>
-              <th>Meio</th>
-              <th>Valor líquido</th>
-            </tr>
-          </thead>
-          <tbody>
-            @for (payment of data.payments; track payment.method) {
-              <tr>
-                <td>{{ label(payment.method) }}</td>
-                <td>{{ money(payment.net) }}</td>
-              </tr>
-            }
-          </tbody>
-        </table>
-        <p class="muted">
-          Inclui recebimentos, pagamentos de despesas e estornos registrados no financeiro. Não
-          representa saldo bancário conciliado.
-        </p>
-      </section>
-    </div>
-    <section class="panel">
-      <h2>Produtos vendidos (30 maiores valores brutos)</h2>
-      <p class="muted">
-        Valores dos itens antes do desconto global e da taxa de entrega. Quantidades são agrupadas
-        pela unidade do produto.
-      </p>
-      <div class="scroll">
-        <table>
-          <thead>
-            <tr>
-              <th>Produto</th>
-              <th>Quantidade</th>
-              <th>Valor bruto</th>
-            </tr>
-          </thead>
-          <tbody>
-            @for (
-              product of data.products;
-              track product.productId + product.name + product.code + product.unitCode
-            ) {
-              <tr>
-                <td>
-                  {{ product.name }}
-                </td>
-                <td>{{ quantity(product.quantity) }} {{ product.unitCode }}</td>
-                <td>{{ money(product.grossRevenue) }}</td>
-              </tr>
-            }
-          </tbody>
-        </table>
+      <div class="insights-mini-metrics">
+        <div><span>Vendas realizadas</span><strong>{{ data.sales }}</strong></div>
+        <div><span>Valor médio por venda</span><strong>{{ money(data.averageTicket) }}</strong></div>
+        <div><span>Descontos concedidos</span><strong>{{ money(data.discounts) }}</strong></div>
       </div>
     </section>
+    <div class="insights-section-title"><div><p class="eyebrow">PENDÊNCIAS ATUAIS</p><h2>O que ainda falta?</h2></div></div>
+    <div class="balance-grid">
+      <a routerLink="/admin/finance" [queryParams]="{view:'receivable'}" class="balance-card incoming">
+        <span>A receber</span><strong>{{ money(data.receivables) }}</strong>
+        <small>Pagamentos ainda pendentes de clientes</small>
+      </a>
+      <a routerLink="/admin/finance" [queryParams]="{view:'payable'}" class="balance-card outgoing">
+        <span>A pagar</span><strong>{{ money(data.payables) }}</strong>
+        <small>Contas e despesas ainda não liquidadas</small>
+      </a>
+    </div>
+    <div class="insights-columns">
+      <section class="insights-panel">
+        <div class="insights-panel-title"><h2>Vendas por dia</h2><p>Evolução do faturamento no período</p></div>
+        @for (day of data.days; track day.day) {
+          <div class="day-line">
+            <span class="day-label">{{ date(day.day) }}</span>
+            <span class="day-bar-bg"><span class="day-bar" [style.width.%]="barWidth(day.revenue, data.days)"></span></span>
+            <span class="day-value">{{ money(day.revenue) }}</span>
+          </div>
+        } @empty { <p class="insights-empty">Ainda não há vendas confirmadas nesse período.</p> }
+      </section>
+      <section class="insights-panel">
+        <div class="insights-panel-title"><h2>Materiais mais vendidos</h2><p>Até 30 produtos ordenados pelo valor bruto</p></div>
+        @for (product of data.products; track product.productId + product.unitCode + product.name; let i = $index) {
+          <div class="best-product"><span class="product-ranking">{{ i+1 }}</span>
+            <div><strong>{{ product.name }}</strong><small>{{ quantity(product.quantity) }} {{ product.unitCode }}</small></div>
+            <span class="product-revenue">{{ money(product.grossRevenue) }}</span>
+          </div>
+        } @empty { <p class="insights-empty">Nenhum produto vendido neste período.</p> }
+      </section>
+    </div>
+    <details class="insights-details">
+      <summary>Entender os recebimentos e pagamentos por meio</summary>
+      <p>Valores líquidos por meio de pagamento, incluindo estornos e contas de outros períodos.</p>
+      @for (payment of data.payments; track payment.method) {
+        <div class="payment-line"><span>{{ label(payment.method) }}</span>
+          <strong>{{ money(payment.net) }}</strong></div>
+      } @empty { <p class="insights-empty">Nenhum pagamento registrado.</p> }
+    </details>
+    <p class="insights-footnote">Vendas são agrupadas pela data da confirmação, no horário de Brasília, sem cancelamentos. Os valores pendentes são a posição atual de todas as contas, não somente do período. Os meios de pagamento não equivalem a saldo bancário conciliado.</p>
   }
 </section>

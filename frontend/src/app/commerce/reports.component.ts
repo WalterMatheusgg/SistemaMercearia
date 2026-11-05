@@ -6,7 +6,7 @@ import { money, quantity, date, label, detail, today } from './ui';
   standalone: true,
   imports: [FormsModule],
   templateUrl: './reports.component.html',
-  styleUrl: './ui.scss',
+  styleUrls: ['./ui.scss','./reports.component.scss'],
 })
 export class ReportsComponent {
   private readonly http = inject(HttpClient);
@@ -19,20 +19,45 @@ export class ReportsComponent {
   start = today().slice(0, 7) + '-01';
   end = today();
   loading = false;
+  range: 'today' | 'week' | 'month' | 'custom' = 'month';
+  private requestId = 0;
+
+  chooseRange(range: 'today' | 'week' | 'month'): void {
+    this.range = range;
+    this.end = today();
+    if (range === 'today') this.start = this.end;
+    else if (range === 'month') this.start = this.end.slice(0,7) + '-01';
+    else {
+      const date = new Date(this.end + 'T12:00:00Z');
+      date.setUTCDate(date.getUTCDate() - 6);
+      this.start = date.toISOString().slice(0,10);
+    }
+    this.load();
+  }
+
+  barWidth(value: string | number, days: Array<{revenue: string}>): number {
+    const total = Number(value);
+    const max = Math.max(0, ...days.map(d => Number(d.revenue)));
+    return !Number.isFinite(total) || max <= 0 ? 0 : Math.min(100,Math.max(0,total/max*100));
+  }
+
   constructor() {
     this.load();
   }
   load() {
+    const id = ++this.requestId;
     this.loading = true;
     this.error.set('');
     this.http
       .get<any>('/api/admin/reports', { params: { start: this.start, end: this.end } })
       .subscribe({
         next: (r) => {
+          if (id !== this.requestId) return;
           this.report.set(r);
           this.loading = false;
         },
         error: (e) => {
+          if (id !== this.requestId) return;
           this.error.set(detail(e));
           this.loading = false;
         },
