@@ -13,6 +13,7 @@ import java.util.UUID;
 public interface ProductRepository extends JpaRepository<Product, UUID>, JpaSpecificationExecutor<Product> {
 
     boolean existsByCodeIgnoreCase(String code);
+    boolean existsByNameIgnoreCase(String name);
 
     boolean existsByCodeIgnoreCaseAndIdNot(String code, UUID id);
 

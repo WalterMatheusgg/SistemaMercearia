@@ -1,5 +1,8 @@
 package br.com.ferragens.product;
 
+import br.com.ferragens.auth.CurrentActorService.Actor;
+import br.com.ferragens.commerce.Db;
+import br.com.ferragens.shared.BusinessRuleException;
 import br.com.ferragens.shared.ConflictException;
 import br.com.ferragens.shared.NotFoundException;
 
@@ -12,6 +15,8 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
 import java.math.BigDecimal;
+import java.util.List;
+import java.util.Map;
 import java.util.Locale;
 import java.util.UUID;
 
@@ -23,16 +28,18 @@ public class ProductService {
     private final CategoryRepository categories;
     private final UnitRepository units;
     private final JdbcTemplate jdbc;
+    private final Db database;
 
     public ProductService(
             ProductRepository products,
             CategoryRepository categories,
             UnitRepository units,
-            JdbcTemplate jdbc) {
+            JdbcTemplate jdbc, Db database) {
         this.products = products;
         this.categories = categories;
         this.units = units;
         this.jdbc = jdbc;
+        this.database = database;
     }
 
     @Transactional(readOnly = true)
@@ -129,6 +136,47 @@ public class ProductService {
         Product product = find(id);
         product.activate();
         return ProductResponse.from(product);
+    }
+
+    /** Importa materiais revisados, de modo transacional, sem mexer no saldo do estoque. */
+    public Map<String, Integer> importReviewed(Actor actor, List<BulkItem> items) {
+        if (items == null || items.isEmpty() || items.size() > 200)
+            throw new BusinessRuleException("Envie de 1 a 200 materiais por lote.");
+        var seen = new java.util.HashSet<String>();
+        var prepared = new java.util.ArrayList<BulkItem>();
+        // Validar tudo antes da primeira gravação: um item inválido não produz lote parcial.
+        for (BulkItem item : items) {
+            if (item == null || !StringUtils.hasText(item.name()) || item.name().trim().length() > 160)
+                throw new BusinessRuleException("Todo material do lote precisa de nome (até 160 caracteres).");
+            validatePrice(item.price());
+            validatePrice(item.cost());
+            if (StringUtils.hasText(item.unit()) && item.unit().length() > 12)
+                throw new BusinessRuleException("Unidade inválida para " + item.name());
+            prepared.add(item);
+        }
+        int created = 0, skipped = 0;
+        for (BulkItem item : prepared) {
+            String name = item.name().trim();
+            String normalized = name.toLowerCase(Locale.ROOT);
+            if (!seen.add(normalized) || products.existsByNameIgnoreCase(name)) {
+                skipped++;
+                continue;
+            }
+            create(new ProductRequest(null, name, null, null,
+                    item.unit(), item.cost(), item.price()));
+            created++;
+        }
+        database.audit(actor, "PRODUCT_BULK_IMPORT", null,
+                "Importação conferida: " + created + " criado(s), " + skipped + " já existente(s)/repetido(s)");
+        return Map.of("created", created, "skipped", skipped, "total", items.size());
+    }
+
+    public record BulkItem(String name, BigDecimal price, BigDecimal cost, String unit) {}
+
+    private void validatePrice(BigDecimal value) {
+        if (value != null && (value.signum() < 0 || value.scale() > 2
+                || value.precision() - value.scale() > 12))
+            throw new BusinessRuleException("Valor inválido: use preço/custo positivo com até 2 casas.");
     }
 
     private Product find(UUID id) {
