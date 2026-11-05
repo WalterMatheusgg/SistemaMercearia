@@ -100,11 +100,59 @@ public class AssistantController {
                     BigDecimal.class, actor.storeId()));
         }
         if (manager) {
+            result.put("systemFailures24h", db.jdbc.queryForObject(
+                    "SELECT count(*) FROM internal_error_event WHERE occurred_at>=now()-interval '24 hours'",
+                    Long.class));
             result.put("recentActivity", db.rows(
                     "SELECT event_type,actor_name,occurred_at FROM audit_event "
                     + "WHERE store_id=? ORDER BY occurred_at DESC LIMIT 10", actor.storeId()));
         }
         return result;
+    }
+
+
+    /** Recomendações operacionais com fatos disponíveis por papel, sem inventar indicadores. */
+    @GetMapping("/insights")
+    public Map<String, Object> insights(Authentication authentication) {
+        Map<String,Object> facts=context(authentication);
+        List<String> suggestions=new ArrayList<>();
+        if (facts.containsKey("activeProducts")) {
+            long count=((Number)facts.get("activeProducts")).longValue();
+            if(count==0) suggestions.add("Comece cadastrando os materiais que já estão na loja.");
+        }
+        if (facts.containsKey("lowStock") && ((Number)facts.get("lowStock")).longValue()>0)
+            suggestions.add("Confira os itens abaixo do estoque mínimo e priorize a reposição.");
+        if (role(authentication,"OWNER","MANAGER","STOCKKEEPER")) {
+            long missing=db.jdbc.queryForObject(
+                    "SELECT count(*) FROM product p LEFT JOIN product_photo f ON f.product_id=p.id "
+                    + "WHERE p.active AND f.product_id IS NULL",Long.class);
+            if(missing>0)
+                suggestions.add(missing+" produto(s) ainda não têm foto. Atualize os cadastros para identificá-los mais rapidamente.");
+        }
+        if (facts.containsKey("systemFailures24h")
+                && ((Number)facts.get("systemFailures24h")).longValue()>0)
+            suggestions.add("Foram detectados erros internos nas últimas 24 horas. Abra o diagnóstico para consultar quais telas falharam.");
+        if (facts.containsKey("openPayables")
+                && ((BigDecimal)facts.get("openPayables")).signum()>0)
+            suggestions.add("Confira as despesas pendentes no Financeiro e priorize os vencimentos.");
+        if(suggestions.isEmpty())
+            suggestions.add("Conclua a conferência do estoque e mantenha os cadastros de materiais atualizados.");
+        return Map.of("suggestions",suggestions,"source","consultas locais autorizadas");
+    }
+
+    /** Apenas administração pode consultar falhas técnicas; sem corpo nem dados secretos. */
+    @GetMapping("/diagnostics")
+    @PreAuthorize("hasAnyRole('OWNER','MANAGER')")
+    public Map<String,Object> diagnostics(Authentication authentication) {
+        actors.require(authentication);
+        long count=db.jdbc.queryForObject(
+                "SELECT count(*) FROM internal_error_event WHERE occurred_at>=now()-interval '24 hours'",
+                Long.class);
+        var failures=db.rows(
+                "SELECT occurred_at,request_method,endpoint,http_status FROM internal_error_event "
+                + "ORDER BY occurred_at DESC LIMIT 10");
+        return Map.of("failures24h",count,"recent",failures,
+                "note","Mostra somente falhas HTTP 5xx; não substitui o monitoramento externo nem detecta todos os erros do navegador.");
     }
 
     @PostMapping("/ask")
@@ -135,6 +183,13 @@ public class AssistantController {
 
     private String localAnswer(String text, Map<String, Object> facts) {
         String q = text.toLowerCase(Locale.ROOT);
+        if (q.contains("erro") || q.contains("falha") || q.contains("travou"))
+            return facts.containsKey("systemFailures24h")
+                ? "Foram registrados " + facts.get("systemFailures24h")
+                  + " erro(s) HTTP 5xx nas últimas 24 horas. Abra 'Verificar falhas internas' no Assistente para consultar os endpoints afetados."
+                : "Seu perfil não tem acesso ao diagnóstico de erros internos.";
+        if (q.contains("melhor") || q.contains("sugest") || q.contains("prioridade"))
+            return "Veja a seção 'Sugestões de melhoria' no Assistente. As recomendações são calculadas com base nos dados disponíveis para seu perfil.";
         if (q.contains("produto") || q.contains("material") || q.contains("catálogo"))
             return facts.containsKey("activeProducts")
                 ? "Você tem " + facts.get("activeProducts") + " produtos ativos cadastrados. "
