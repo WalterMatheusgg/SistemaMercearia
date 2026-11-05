@@ -262,8 +262,8 @@ public class AssistantController {
             try {
                 input = callModel(
                     "Extraia APENAS uma lista de produtos de ferragens. Responda com linhas no formato: "
-                    + "nome;preco;custo, sem cabeçalhos, sem markdown, sem comentários. "
-                    + "Um produto por linha. Se o valor não foi informado, use 0.00. "
+                    + "nome;preco;custo;quantidade, sem cabeçalhos, sem markdown, sem comentários. "
+                    + "Um produto por linha. Não invente valores: se não informados, use 0.00 para preço/custo e 0 para quantidade. O nome pode ficar vazio. "
                     + "NÃO invente outros produtos. Limite 200 produtos. Nunca inclua código interno.",
                     input);
                 modelUsed = true;
@@ -273,9 +273,9 @@ public class AssistantController {
         }
         var items = parseProductLines(input);
         if (items.isEmpty()) throw new BusinessRuleException(
-                "Informe um material por linha: Nome;preço;custo (valores opcionais).");
+                "Informe ao menos uma linha: Nome;preço;custo;quantidade (todos opcionais).");
         return Map.of("items", items, "usedModel", modelUsed, "note",
-                "Prévia somente leitura. Estoque não será alterado; confirme para cadastrar.");
+                "Revise os itens antes de confirmar. A quantidade inicial será registrada no estoque apenas para produtos novos.");
     }
 
     public static List<ProductService.BulkItem> parseProductLines(String text) {
@@ -286,15 +286,32 @@ public class AssistantController {
             if (line.isBlank()) continue;
             String[] parts = line.split("[;\\t]", -1);
             String name = parts[0].trim();
-            if (name.equalsIgnoreCase("nome") || name.equalsIgnoreCase("produto")) continue;
-            if (name.isBlank() || name.length() > 160 || parts.length > 3)
-                throw new BusinessRuleException("Revise o nome e o formato: Nome;preço;custo.");
+            // Também aceita CSV com cabeçalho (Nome;Preço;Custo;Quantidade).
+            if (parts.length > 1 && (name.equalsIgnoreCase("nome") || name.equalsIgnoreCase("produto"))
+                    && (parts[1].trim().equalsIgnoreCase("preço")
+                            || parts[1].trim().equalsIgnoreCase("preco"))) continue;
+            if (name.length() > 160 || parts.length > 4)
+                throw new BusinessRuleException("Revise o formato: Nome;preço;custo;quantidade.");
             var price = parseMoney(parts.length > 1 ? parts[1] : "");
             var cost = parseMoney(parts.length > 2 ? parts[2] : "");
-            items.add(new ProductService.BulkItem(name, price, cost, "UN"));
+            var quantity = parseQuantity(parts.length > 3 ? parts[3] : "");
+            items.add(new ProductService.BulkItem(name, price, cost, "UN", quantity));
         }
         if (items.size() > 200) throw new BusinessRuleException("Máximo de 200 produtos por lote.");
         return items;
+    }
+
+    private static BigDecimal parseQuantity(String raw) {
+        if (raw == null || raw.isBlank()) return BigDecimal.ZERO;
+        try {
+            var quantity = new BigDecimal(raw.trim().replace(",", "."));
+            if (quantity.signum() < 0 || quantity.precision() - quantity.scale() > 15
+                    || quantity.stripTrailingZeros().scale() > 0)
+                throw new NumberFormatException("quantidade");
+            return quantity;
+        } catch (NumberFormatException e) {
+            throw new BusinessRuleException("Quantidade inválida: informe número inteiro e não negativo, como 10.");
+        }
     }
 
     private static BigDecimal parseMoney(String raw) {
