@@ -55,6 +55,28 @@ public class FinanceService {
     }
 
     @Transactional(readOnly = true)
+    public Map<String, Object> summary(Actor actor) {
+        return db.one("""
+            SELECT
+              coalesce(sum(CASE WHEN direction='RECEIVABLE'
+                  AND status IN ('OPEN','PARTIAL') THEN amount-paid ELSE 0 END),0) AS receivables,
+              coalesce(sum(CASE WHEN direction='PAYABLE'
+                  AND status IN ('OPEN','PARTIAL') THEN amount-paid ELSE 0 END),0) AS payables,
+              coalesce(sum(CASE WHEN direction='RECEIVABLE'
+                  AND status IN ('OPEN','PARTIAL')
+                  AND due_date < (now() AT TIME ZONE 'America/Sao_Paulo')::date
+                  THEN amount-paid ELSE 0 END),0) AS overdue_receivables,
+              coalesce(sum(CASE WHEN direction='PAYABLE'
+                  AND status IN ('OPEN','PARTIAL')
+                  AND due_date < (now() AT TIME ZONE 'America/Sao_Paulo')::date
+                  THEN amount-paid ELSE 0 END),0) AS overdue_payables,
+              count(*) FILTER (WHERE status IN ('OPEN','PARTIAL')
+                  AND due_date < (now() AT TIME ZONE 'America/Sao_Paulo')::date) AS overdue_accounts
+            FROM financial_account WHERE store_id=?
+            """, actor.storeId());
+    }
+
+    @Transactional(readOnly = true)
     public Map<String, Object> detail(Actor actor, UUID id) {
         var result =
                 db.one(
