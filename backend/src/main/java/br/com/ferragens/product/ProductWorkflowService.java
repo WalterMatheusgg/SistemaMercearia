@@ -4,6 +4,7 @@ import br.com.ferragens.auth.CurrentActorService.Actor;
 import br.com.ferragens.inventory.InventoryModels;
 import br.com.ferragens.inventory.InventoryService;
 import br.com.ferragens.shared.BusinessRuleException;
+import jakarta.persistence.EntityManager;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -16,12 +17,14 @@ public class ProductWorkflowService {
     private final ProductService products;
     private final ProductPhotoService photos;
     private final InventoryService inventory;
+    private final EntityManager entityManager;
 
     public ProductWorkflowService(ProductService products, ProductPhotoService photos,
-                                  InventoryService inventory) {
+                                  InventoryService inventory, EntityManager entityManager) {
         this.products=products;
         this.photos=photos;
         this.inventory=inventory;
+        this.entityManager=entityManager;
     }
 
     public record NewMaterial(@jakarta.validation.Valid ProductRequest product, BigDecimal initialQuantity) { }
@@ -36,6 +39,9 @@ public class ProductWorkflowService {
         if (quantity.signum()<0 || quantity.scale()>4 || quantity.precision()-quantity.scale()>15)
             throw new BusinessRuleException("Informe uma quantidade inicial válida.");
         ProductResponse product=products.create(data.product());
+        // JdbcTemplate registra a foto e o saldo na mesma transação; antes,
+        // a entidade JPA precisa existir fisicamente para satisfazer as FKs.
+        entityManager.flush();
         photos.store(product.id(),validated);
         if (quantity.signum()>0) {
             var locations=inventory.locations(actor);
