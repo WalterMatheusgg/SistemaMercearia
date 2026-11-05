@@ -18,6 +18,7 @@
   @if (open) {
     <section class="panel">
       <h2>Pedido ao fornecedor</h2>
+      @if (suggestedNotice()) { <p class="note" role="status">{{ suggestedNotice() }}</p> }
       <form (ngSubmit)="save()" #purchaseForm="ngForm">
         <fieldset [disabled]="action.locked()">
           <div class="grid">
