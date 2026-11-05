@@ -18,10 +18,11 @@ const movement: InventoryMovement = {
 };
 
 describe('Operação de estoque', () => {
-  const api = { locations: vi.fn(), categories: vi.fn(), balances: vi.fn(), history: vi.fn(), execute: vi.fn() };
+  const api = { locations: vi.fn(), categories: vi.fn(), replenishment: vi.fn(), balances: vi.fn(), history: vi.fn(), execute: vi.fn() };
   beforeEach(async () => {
     vi.resetAllMocks();
     api.locations.mockReturnValue(of([{ id: 'location-1', name: 'Principal' }]));
+    api.replenishment.mockReturnValue(of([]));
     api.categories.mockReturnValue(of([
       {id:'category-1',name:'Fixação'},
       {id:'category-2',name:'Hidráulica'},
