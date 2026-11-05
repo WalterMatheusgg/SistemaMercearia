@@ -92,8 +92,9 @@ test('venda pelo navegador baixa de 50 para 35 e aparece no estoque', async ({ p
   await page.goto('/admin/inventory');
   await page.getByLabel('Nome do produto').fill(product.name);
   await page.getByRole('button', { name: 'Buscar', exact: true }).click();
-  const row = page.locator('tbody tr').filter({ hasText: product.name });
-  await expect(row.first()).toContainText('35');
+  const card = page.locator('.stock-card').filter({ hasText: product.name });
+  await expect(card).toContainText('35');
+  await expect(card).toContainText(product.name);
   expect(
     await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth + 2),
   ).toBeTruthy();
@@ -166,6 +167,9 @@ test('controle abre no login, identifica cada aba e oculta vitrine', async ({ pa
   await expect(page).toHaveURL(/\/login/);
   await login(page);
   await expect(page).toHaveTitle('Painel | Loja');
+  if ((page.viewportSize()?.width ?? 1200) <= 760) {
+    await page.getByRole('button', { name: 'Abrir ou recolher menu' }).click();
+  }
   await expect(page.getByRole('link', { name: 'Produtos', exact: true })).toBeVisible();
   await page.goto('/admin/products');
   await expect(page).toHaveTitle('Produtos | Loja');
@@ -205,6 +209,19 @@ test('cadastro rápido permite criar e editar sem código manual', async ({ page
   await page.getByRole('dialog').getByLabel('Preço de referência (R$) — opcional').fill('11,90');
   await page.getByRole('dialog').getByRole('button', { name: 'Salvar alterações' }).click();
   await expect(row.first()).toContainText('R$ 11,90');
+  const img = row.locator('app-product-photo img');
+  await expect(img).toBeVisible();
+  const src = await img.getAttribute('src');
+  expect(src).toContain('/api/admin/products/');
+  const photoResponse = await page.request.get(src!);
+  expect(photoResponse.status()).toBe(200);
+  expect(photoResponse.headers()['content-type']).toContain('image/png');
+  await page.goto('/admin/inventory');
+  await page.getByLabel('Nome do produto').fill(name);
+  await page.getByRole('button', { name: 'Buscar', exact: true }).click();
+  const stockCard = page.locator('.stock-card').filter({hasText: name});
+  await expect(stockCard).toContainText('8');
+  await expect(stockCard.locator('app-product-photo img')).toBeVisible();
 });
 
 test('cadastro de produto sem preencher nenhum campo gera um material provisório', async ({ page }) => {
@@ -273,4 +290,38 @@ test('estoque alterna entre quadradinhos e lista', async ({ page }) => {
   await expect(list).toHaveAttribute('aria-pressed','true');
   await cards.click();
   await expect(cards).toHaveAttribute('aria-pressed','true');
+});
+
+test('menu lateral abre, recolhe e mantém acesso à navegação', async ({ page }) => {
+  await login(page);
+  const menu = page.getByRole('button', { name: 'Abrir ou recolher menu' });
+  await expect(menu).toBeVisible();
+  const mobile = (page.viewportSize()?.width ?? 1200) <= 760;
+  if (mobile) {
+    await expect(page.locator('.side-nav')).toBeHidden();
+    await menu.click();
+    await expect(page.locator('.side-nav')).toBeVisible();
+    await page.locator('.side-nav').getByRole('link', { name: 'Estoque' }).click();
+    await expect(page).toHaveURL(/\/admin\/inventory/);
+    await expect(page.locator('.side-nav')).toBeHidden();
+  } else {
+    await menu.click();
+    await expect(page.locator('.admin-shell')).toHaveClass(/menu-collapsed/);
+    await expect(page.locator('.side-nav').getByRole('link', { name: 'Estoque' })).toBeAttached();
+    await menu.click();
+    await expect(page.locator('.admin-shell')).not.toHaveClass(/menu-collapsed/);
+  }
+});
+
+test('financeiro apresenta movimentações de dinheiro em aba própria sem outro item lateral', async ({ page }) => {
+  await login(page);
+  await page.goto('/admin/finance');
+  await expect(page.getByRole('button', { name: 'Contas e pagamentos' })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Dinheiro físico' })).toBeVisible();
+  await page.getByRole('button', { name: 'Dinheiro físico' }).click();
+  await expect(page.getByRole('heading', { name: 'Dinheiro movimentado' })).toBeVisible();
+  await expect(page.locator('.finance-section-switch').getByRole('button', { name: 'Dinheiro físico' }))
+    .toHaveAttribute('aria-pressed', 'true');
+  await page.getByRole('button', { name: 'Contas e pagamentos' }).click();
+  await expect(page.getByRole('button', { name: 'A receber', exact: true })).toBeVisible();
 });
