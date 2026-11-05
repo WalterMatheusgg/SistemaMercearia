@@ -7,7 +7,7 @@
     </a>
     <div class="topbar-user">
       <span class="topbar-context"><span class="status-dot" aria-hidden="true"></span> Área de gestão</span>
-      <a class="store-shortcut" routerLink="/store">Ver loja ↗</a>
+      <a class="store-shortcut" routerLink="/admin/home">Painel de controle ↗</a>
       <span class="user-avatar" aria-hidden="true">{{ (auth.currentUser()?.username || 'A').slice(0, 1).toUpperCase() }}</span>
       <span class="user-name">{{ auth.currentUser()?.username }}</span>
       <button mat-button type="button" [disabled]="logoutPending()" (click)="logout()">
@@ -53,9 +53,9 @@
         <a class="nav-item" routerLink="/admin/settings" routerLinkActive="active"><span class="nav-icon" aria-hidden="true">⚙</span>Loja e auditoria</a>
       }
       <div class="sidebar-footer">
-        <span>LOJA VIRTUAL</span>
-        <a routerLink="/store">Abrir loja virtual <span aria-hidden="true">↗</span></a>
-        <small>Seu estoque e suas vendas em um só lugar.</small>
+        <span>ACESSO RÁPIDO</span>
+        <a routerLink="/admin/home">Voltar ao painel <span aria-hidden="true">↗</span></a>
+        <small>Controle de materiais, vendas e financeiro.</small>
       </div>
     </nav>
     <main class="workspace" id="workspace" tabindex="-1"><router-outlet /></main>

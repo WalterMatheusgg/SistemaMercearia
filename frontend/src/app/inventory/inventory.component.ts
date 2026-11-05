@@ -9,6 +9,7 @@ import { MatSelectModule } from '@angular/material/select';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { finalize } from 'rxjs';
 import { AuthService } from '../auth/auth.service';
+import { ActivatedRoute } from '@angular/router';
 import {
   InventoryApi,
   InventoryBalance,
@@ -38,6 +39,7 @@ export class InventoryComponent implements OnInit {
   private readonly auth = inject(AuthService);
   private readonly destroyRef = inject(DestroyRef);
   private readonly fb = inject(FormBuilder);
+  private readonly route = inject(ActivatedRoute);
   private balanceRequest = 0;
   private historyRequest = 0;
   private operationKey = '';
@@ -94,6 +96,7 @@ export class InventoryComponent implements OnInit {
   }
 
   ngOnInit(): void {
+    this.query.set(this.route.snapshot.queryParamMap.get('produto')?.trim() ?? '');
     this.api
       .locations()
       .pipe(takeUntilDestroyed(this.destroyRef))

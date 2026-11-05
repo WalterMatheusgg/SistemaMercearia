@@ -43,7 +43,7 @@
 
   @if (formOpen()) {
     <div class="editor-backdrop" aria-hidden="true"></div>
-    <section class="product-form" role="dialog" aria-modal="true" aria-labelledby="form-title">
+    <section cdkTrapFocus [cdkTrapFocusAutoCapture]="true" class="product-form" role="dialog" aria-modal="true" aria-labelledby="form-title">
       <div class="form-heading">
         <div>
           <p class="eyebrow">CADASTRO SIMPLES</p>
@@ -56,7 +56,7 @@
         <div class="form-grid">
           <mat-form-field appearance="outline" class="wide-field">
             <mat-label>Nome do produto</mat-label>
-            <input matInput formControlName="name" maxlength="160"
+            <input matInput cdkFocusInitial formControlName="name" maxlength="160"
               placeholder="Ex.: Parafuso sextavado 8 mm" required />
             @if (form.controls.name.invalid && form.controls.name.touched) {
               <mat-error>Informe o nome do material.</mat-error>

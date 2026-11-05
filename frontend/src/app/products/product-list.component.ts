@@ -1,6 +1,7 @@
 import { CurrencyPipe } from '@angular/common';
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
+import { A11yModule } from '@angular/cdk/a11y';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -18,7 +19,7 @@ type StatusFilter = 'active' | 'inactive' | 'all';
   selector: 'app-product-list',
   standalone: true,
   providers: [{ provide: MatPaginatorIntl, useFactory: portuguesePaginator }],
-  imports: [CurrencyPipe, RouterLink, ReactiveFormsModule, MatButtonModule, MatFormFieldModule,
+  imports: [A11yModule, CurrencyPipe, RouterLink, ReactiveFormsModule, MatButtonModule, MatFormFieldModule,
     MatInputModule, MatPaginatorModule, MatProgressBarModule, MatSelectModule, MatTableModule],
   templateUrl: './product-list.component.html',
   styleUrl: './product-list.component.scss',

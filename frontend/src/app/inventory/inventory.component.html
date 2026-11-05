@@ -30,8 +30,8 @@
       </mat-select>
     </mat-form-field>
     <mat-form-field appearance="outline" class="search"
-      ><mat-label>Produto ou código</mat-label
-      ><input #searchInput matInput (keyup.enter)="search(searchInput.value)"
+      ><mat-label>Nome do produto</mat-label
+      ><input #searchInput matInput [value]="query()" (keyup.enter)="search(searchInput.value)"
     /></mat-form-field>
     <button mat-button type="button" (click)="search(searchInput.value)">Buscar</button>
   </div>
@@ -56,7 +56,7 @@
             {{ reverse() ? 'Estornar movimentação' : 'Registrar movimentação' }}
           </h2>
           <p>
-            {{ item.code }} · {{ item.name }} · Disponível: {{ number(item.available) }}
+            {{ item.name }} · Disponível: {{ number(item.available) }}
             {{ item.unit }}
           </p>
         </div>
@@ -157,7 +157,7 @@
             <tr>
               <td>
                 <strong>{{ row.name }}</strong
-                ><small>{{ row.code }} · {{ row.unit }}{{ row.active ? '' : ' · Inativo' }}</small>
+                ><small>{{ row.unit }}{{ row.active ? '' : ' · Inativo' }}</small>
               </td>
               <td class="numeric">{{ number(row.physical) }}</td>
               <td class="numeric">{{ number(row.reserved) }}</td>
@@ -264,7 +264,7 @@
                 <td>{{ date(movement.occurredAt) }}</td>
                 <td>
                   <strong>{{ movement.productName }}</strong
-                  ><small>{{ movement.code }} · {{ labels[movement.kind] }}</small>
+                  ><small>{{ labels[movement.kind] }}</small>
                   @if (movement.kind === 'MINIMUM') {
                     <small
                       >Novo mínimo: {{ number(movement.minimumAfter) }} {{ movement.unit }}</small

@@ -44,7 +44,7 @@ export class LoginComponent {
     this.auth.login(this.form.getRawValue()).subscribe({
       next: (user) =>
         void this.router.navigateByUrl(
-          user.roles.includes('CUSTOMER') ? '/account' : '/admin/home',
+          '/admin/home',
         ),
       error: (error: { error?: { detail?: string } }) => {
         this.errorMessage.set(

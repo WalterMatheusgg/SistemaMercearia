@@ -1,5 +1,5 @@
 import { Routes } from '@angular/router';
-import { adminGuard, customerGuard, roleGuard } from './auth/admin.guard';
+import { adminGuard, roleGuard } from './auth/admin.guard';
 import { pendingActionGuard } from './commerce/ui';
 const management = roleGuard('OWNER', 'MANAGER');
 const selling = roleGuard('OWNER', 'MANAGER', 'SELLER', 'CASHIER');
@@ -7,39 +7,20 @@ const finance = roleGuard('OWNER', 'MANAGER', 'FINANCE');
 const stock = roleGuard('OWNER', 'MANAGER', 'STOCKKEEPER');
 export const routes: Routes = [
   {
-    path: 'store',
-    title: 'Loja virtual',
-    loadComponent: () => import('./store/catalog.component').then((m) => m.CatalogComponent),
-  },
-  {
-    path: 'cart',
-    title: 'Meu carrinho',
-    canDeactivate: [pendingActionGuard],
-    loadComponent: () => import('./store/cart.component').then((m) => m.CartComponent),
-  },
-  {
     path: 'login',
     title: 'Entrar',
     loadComponent: () => import('./auth/login.component').then((m) => m.LoginComponent),
   },
-  ...(['register', 'forgot-password', 'reset-password', 'verify-email'] as const).map(
+  ...(['forgot-password', 'reset-password'] as const).map(
     (path, i) => ({
       path,
-      data: { mode: ['register', 'forgot', 'reset', 'verify'][i] },
-      title: ['Criar conta', 'Recuperar senha', 'Redefinir senha', 'Verificar e-mail'][i],
+      data: { mode: ['forgot', 'reset'][i] },
+      title: ['Recuperar senha', 'Redefinir senha'][i],
       canDeactivate: [pendingActionGuard],
       loadComponent: () =>
         import('./auth/account-forms.component').then((m) => m.AccountFormsComponent),
     }),
   ),
-  {
-    path: 'account',
-    title: 'Minha conta',
-    canActivate: [customerGuard],
-    canDeactivate: [pendingActionGuard],
-    loadComponent: () =>
-      import('./store/account.component').then((m) => m.CustomerAccountComponent),
-  },
   {
     path: 'admin',
     title: 'Gestão',
@@ -146,6 +127,6 @@ export const routes: Routes = [
       },
     ],
   },
-  { path: '', pathMatch: 'full', redirectTo: 'store' },
-  { path: '**', redirectTo: 'store' },
+  { path: '', pathMatch: 'full', redirectTo: 'admin/home' },
+  { path: '**', redirectTo: 'admin/home' },
 ];
