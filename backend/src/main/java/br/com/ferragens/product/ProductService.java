@@ -149,7 +149,7 @@ public class ProductService {
                 unit,
                 request.cost() == null ? product.getCost() : request.cost(),
                 request.price() == null ? product.getPrice() : request.price(),
-                normalizeBrand(request.brand()));
+                request.brand() == null ? product.getBrand() : normalizeBrand(request.brand()));
         return ProductResponse.from(product);
     }
 
