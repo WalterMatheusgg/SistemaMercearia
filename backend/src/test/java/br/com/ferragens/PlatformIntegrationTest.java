@@ -153,6 +153,30 @@ class PlatformIntegrationTest {
     }
 
     @Test
+    void createsProductWithoutPublicCodeAndCanReactivateIt() throws Exception {
+        HttpClient owner = client();
+        String csrf = csrf(owner);
+        assertThat(send(owner, "POST", "/api/auth/login",
+                "{\"username\":\"owner-it\",\"password\":\"owner-password\"}", csrf).statusCode()).isEqualTo(200);
+        csrf = csrf(owner);
+        String body = "{\"name\":\"Bucha sem código\",\"description\":null,"
+                + "\"categoryId\":\"00000000-0000-0000-0000-000000000104\",\"baseUnitCode\":\"UN\","
+                + "\"cost\":\"0.00\",\"price\":\"0.00\"}";
+        var created = send(owner, "POST", "/api/admin/products", body, csrf);
+        assertThat(created.statusCode()).as(created.body()).isEqualTo(201);
+        assertThat(created.body()).contains("INT-", "Bucha sem código");
+        String id = extractJsonString(created.body(), "id");
+        var updated = send(owner, "PUT", "/api/admin/products/" + id,
+            body.replace("Bucha sem código", "Bucha 8 mm"), csrf);
+        assertThat(updated.statusCode()).as(updated.body()).isEqualTo(200);
+        assertThat(updated.body()).contains("Bucha 8 mm");
+        assertThat(send(owner, "DELETE", "/api/admin/products/" + id, null, csrf).statusCode()).isEqualTo(204);
+        var restored = send(owner, "POST", "/api/admin/products/" + id + "/reactivate", "{}", csrf);
+        assertThat(restored.statusCode()).as(restored.body()).isEqualTo(200);
+        assertThat(restored.body()).contains("\"active\":true");
+    }
+
+    @Test
     void protectsApiDocumentation() throws Exception {
         assertThat(send(client(), "GET", "/v3/api-docs", null, null).statusCode()).isEqualTo(401);
         HttpClient owner = client();

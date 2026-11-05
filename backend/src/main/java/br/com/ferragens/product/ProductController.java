@@ -68,6 +68,11 @@ public class ProductController {
         products.deactivate(id);
     }
 
+    @PostMapping("/products/{id}/reactivate")
+    public ProductResponse reactivate(@PathVariable UUID id) {
+        return products.reactivate(id);
+    }
+
     @GetMapping("/categories")
     public List<LookupResponse> categories() {
         return categories.findAllByActiveTrueOrderByNameAsc().stream()

@@ -63,7 +63,7 @@ public class ProductService {
     }
 
     public ProductResponse create(ProductRequest request) {
-        String code = normalizeCode(request.code());
+        String code = internalCodeForNewProduct(request.code());
         if (products.existsByCodeIgnoreCase(code)) {
             throw new ConflictException("Já existe um produto com este código.");
         }
@@ -102,7 +102,8 @@ public class ProductService {
                     "A unidade não pode mudar após movimentações. Cadastre outro item para a nova"
                             + " medida.");
         }
-        String code = normalizeCode(request.code());
+        String code = StringUtils.hasText(request.code())
+                ? normalizeCode(request.code()) : product.getCode();
         if (products.existsByCodeIgnoreCaseAndIdNot(code, id)) {
             throw new ConflictException("Já existe um produto com este código.");
         }
@@ -121,6 +122,12 @@ public class ProductService {
         find(id).deactivate();
     }
 
+    public ProductResponse reactivate(UUID id) {
+        Product product = find(id);
+        product.activate();
+        return ProductResponse.from(product);
+    }
+
     private Product find(UUID id) {
         return products.findWithDetailsById(id)
                 .orElseThrow(() -> new NotFoundException("Produto não encontrado."));
@@ -135,6 +142,12 @@ public class ProductService {
     private Unit findUnit(String code) {
         return units.findById(code.trim().toUpperCase(Locale.ROOT))
                 .orElseThrow(() -> new NotFoundException("Unidade não encontrada."));
+    }
+
+    private String internalCodeForNewProduct(String provided) {
+        // Mantém identificador estável para o histórico, sem exigir código no formulário.
+        if (StringUtils.hasText(provided)) return normalizeCode(provided);
+        return "INT-" + UUID.randomUUID().toString().replace("-", "").toUpperCase(Locale.ROOT);
     }
 
     private String normalizeCode(String code) {

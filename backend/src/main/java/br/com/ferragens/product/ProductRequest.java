@@ -10,7 +10,7 @@ import java.math.BigDecimal;
 import java.util.UUID;
 
 public record ProductRequest(
-        @NotBlank @Size(max = 40) String code,
+        @Size(max = 40) String code,
         @NotBlank @Size(max = 160) String name,
         @Size(max = 2000) String description,
         @NotNull UUID categoryId,

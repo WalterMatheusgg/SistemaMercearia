@@ -42,20 +42,20 @@ public class AccountsService {
     public record Register(
             @NotBlank @Pattern(regexp = "[A-Za-z0-9._@-]{3,120}") String username,
             @NotBlank @Email @Size(max = 254) String email,
-            @NotBlank @Size(min = 12, max = 72) String password,
+            @NotBlank @Size(min = 4, max = 72) @Pattern(regexp = "(?s)(?=.*[0-9]).*", message = "A senha precisa conter pelo menos um número.") String password,
             @NotBlank @Size(max = 160) String name,
             @Size(max = 40) String phone) {}
 
     public record UserInput(
             @NotBlank @Pattern(regexp = "[A-Za-z0-9._@-]{3,120}") String username,
             @Email @Size(max = 254) String email,
-            @Size(min = 12, max = 72) String password,
+            @Size(min = 4, max = 72) @Pattern(regexp = "(?s)(?=.*[0-9]).*", message = "A senha precisa conter pelo menos um número.") String password,
             @NotEmpty Set<String> roles,
             boolean enabled) {}
 
     public record Reset(
             @NotBlank @Size(max = 200) String token,
-            @NotBlank @Size(min = 12, max = 72) String password) {}
+            @NotBlank @Size(min = 4, max = 72) @Pattern(regexp = "(?s)(?=.*[0-9]).*", message = "A senha precisa conter pelo menos um número.") String password) {}
 
     public record Preferences(boolean saleCompleted, boolean stockLow, boolean dailySummary) {}
 
@@ -443,10 +443,11 @@ public class AccountsService {
 
     private String password(String value) {
         if (value == null
-                || value.length() < 12
+                || value.length() < 4
+                || !value.matches("(?s).*[0-9].*")
                 || value.getBytes(java.nio.charset.StandardCharsets.UTF_8).length > 72)
             throw new BusinessRuleException(
-                    "Use senha com ao menos 12 caracteres e no máximo 72 bytes.");
+                    "Use senha com pelo menos 4 caracteres, incluindo 1 número (máximo 72 bytes).");
         return value;
     }
 

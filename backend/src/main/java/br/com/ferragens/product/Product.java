@@ -87,6 +87,11 @@ public class Product {
         this.updatedAt = Instant.now();
     }
 
+    public void activate() {
+        this.active = true;
+        this.updatedAt = Instant.now();
+    }
+
     public UUID getId() { return id; }
     public String getCode() { return code; }
     public String getName() { return name; }
