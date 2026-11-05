@@ -27,6 +27,8 @@ spring:
       mail.smtp.timeout: 10000
       mail.smtp.writetimeout: 10000
 app:
+  # Somente controle interno por padrão. Ativar o legado exige decisão explícita.
+  customer-portal-enabled: ${CUSTOMER_PORTAL_ENABLED:false}
   jobs:
     enabled: ${APP_JOBS_ENABLED:true}
   bootstrap:

@@ -4,6 +4,8 @@
 
 A marca do aplicativo é apenas **Loja**, com títulos individualizados por seção no navegador. [Veja os ajustes visuais](DESIGN_LOJA.md).
 
+Esta entrega prioriza o **controle interno**. A vitrine pública e o cadastro externo estão desativados por padrão; nenhum registro comercial é apagado. Produtos não exigem código manual. Senhas novas seguem a regra de 4 caracteres e 1 número.
+
 ## O que está entregue
 
 - Java 21 / Spring Boot 4 / Angular 22 / PostgreSQL 18; sessão e CSRF no mesmo domínio.

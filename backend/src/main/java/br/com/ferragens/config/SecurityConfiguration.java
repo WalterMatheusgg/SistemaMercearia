@@ -161,6 +161,7 @@ public class SecurityConfiguration {
                                                 "/*.js",
                                                 "/*.css",
                                                 "/*.ico",
+                                                "/*.svg",
                                                 "/assets/**",
                                                 "/media/**",
                                                 "/store",

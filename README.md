@@ -1,6 +1,6 @@
-# Loja — Gestão e loja online
+# Loja — Controle interno de ferragens
 
-**Loja** é um sistema de gestão comercial com operação interna e portal do cliente. Inclui produtos/estoque, clientes/fornecedores, vendas/orçamentos, caixa, compras/recebimentos, contas, relatórios, pedidos online e notificações configuráveis.
+**Loja** é um sistema de controle para ferragens: produtos sem código manual, estoque e movimentações, compras, fornecedores, vendas internas, caixa, contas, relatórios e perfis por funcionário. O antigo carrinho, a vitrine pública e o cadastro externo não são publicados por padrão; os registros históricos e serviços internos permanecem preservados.
 
 ## Começar no Codespace
 
@@ -12,7 +12,7 @@ git pull --ff-only origin main
 bash scripts/start.sh
 ```
 
-Abra a porta **8080** na aba **Ports**. O script compila e sobe o app completo no Docker, preservando o banco e o `.env` existentes. Em ambiente novo cria senhas locais aleatórias: consulte o login administrativo no `.env`. O catálogo é público; contas administrativas entram na gestão, e clientes entram em Minha conta. E-mails de desenvolvimento aparecem no Mailpit, porta **8025**.
+Abra a porta **8080** na aba **Ports**. O script compila e sobe o app completo no Docker, preservando o banco e o `.env` existentes. Em ambiente novo cria senhas locais aleatórias: consulte o login administrativo no `.env`. O acesso é interno: a porta 8080 abre o login para usuários autorizados. Contas administrativas entram no painel de controle. E-mails de desenvolvimento aparecem no Mailpit, porta **8025**.
 
 **Precisa criar ou recuperar acesso de dono?** Use `python3 scripts/owner-setup.py` no terminal privado do Codespace. O comando salva backup, verifica o perfil Docker local, cria `admin` (OWNER) se faltar ou redefine a senha de um `admin` já dono, com nova senha forte gerada e mostrada somente no terminal. Não altera outros usuários, vendas, estoque ou volumes. Para apenas conferir a senha inicial, use `bash scripts/admin-access.sh`. O usuário padrão é `admin`; por segurança não existe senha universal `admin/admin`. Veja a experiência visual em [docs/DESIGN_LOJA.md](docs/DESIGN_LOJA.md).
 
@@ -20,7 +20,7 @@ Instruções completas: [docs/CODESPACE.md](docs/CODESPACE.md). Conferência seg
 
 **Hospedagem comercial e HTTPS:** antes de publicar, consulte [docs/HOSPEDAGEM.md](docs/HOSPEDAGEM.md). A Vercel Hobby gratuita não autoriza uso comercial; a implantação Docker com Caddy mantém API e interface na mesma origem. Nenhuma URL externa foi homologada.
 
-**Pagamentos são registrados e conferidos manualmente pela loja.** Cobrança/reembolso bancário automático, emissão fiscal e publicação em domínio real dependem de integrações e credenciais externas. Não há credenciais de produção embutidas nem emissão fiscal simulada. A versão atende uma loja/local principal e um caixa físico.
+**A aplicação agora é para controle interno, sem checkout público.** Pagamentos são registrados e conferidos manualmente pela loja.** Cobrança/reembolso bancário automático, emissão fiscal e publicação em domínio real dependem de integrações e credenciais externas. Não há credenciais de produção embutidas nem emissão fiscal simulada. A versão atende uma loja/local principal e um caixa físico.
 
 ## Matriz de versões
 

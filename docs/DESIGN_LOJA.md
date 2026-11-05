@@ -1,6 +1,6 @@
 # Loja — Interface e navegação
 
-A plataforma utiliza somente o nome **Loja**. O título da aba do navegador identifica o módulo, como `Estoque | Loja`, `Caixa | Loja` e `Minha conta | Loja`.
+A plataforma utiliza somente o nome **Loja** e opera como painel interno de ferragens, sem vitrine pública nem carrinho no fluxo principal. O título da aba do navegador identifica o módulo, como `Estoque | Loja`, `Caixa | Loja` e `Minha conta | Loja`.
 
 ## Atualizações
 
@@ -10,6 +10,18 @@ A plataforma utiliza somente o nome **Loja**. O título da aba do navegador iden
 - Vitrine com cards melhorados, mensagem explícita para produto sem saldo, estado de carregamento e prevenção de respostas fora de ordem durante buscas.
 - Login, botões, tabelas, formulários e alertas com cores, bordas e hierarquia visual consistentes.
 - Rótulos, navegação e foco continuam acessíveis; animações são reduzidas conforme a preferência do usuário.
+
+## Cadastro e operação
+
+O novo formulário de produtos não pede código. O backend gera um identificador técnico estável usado somente para integridade dos vínculos e histórico. Nome, categoria, unidade e preço de referência são campos de cadastro rápido; custo e observações ficam em opções adicionais. Produtos podem ser inativados e reativados. A edição não modifica códigos técnicos.
+
+O painel apresenta indicadores reais de produtos ativos, itens para reposição no local principal, vendas e valor confirmado no dia; cada cartão respeita as permissões. Busca e filtros permitem navegar sem menus extensos. As animações de fundo têm controle de pausa.
+
+A API histórica de clientes fica desabilitada por padrão com `CUSTOMER_PORTAL_ENABLED=false`, preservando os registros no PostgreSQL. A estrutura de checkout não foi apagada do banco.
+
+## Senhas
+
+A regra solicitada é mínimo de **4 caracteres e 1 número** (máximo de 72 bytes), incluindo cadastro interno, alteração e recuperação. Essa regra é mais fraca que o padrão recomendado: para a conta do dono, prefira uma senha longa e única.
 
 ## Credenciais administrativas
 

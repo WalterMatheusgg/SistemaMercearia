@@ -2,6 +2,9 @@ package br.com.ferragens.auth;
 
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.*;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpStatus;
+import org.springframework.web.server.ResponseStatusException;
 
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
@@ -14,10 +17,13 @@ import java.util.*;
 public class AccountController {
     private final AccountsService accounts;
     private final CurrentActorService actors;
+    private final boolean customerPortalEnabled;
 
-    public AccountController(AccountsService accounts, CurrentActorService actors) {
+    public AccountController(AccountsService accounts, CurrentActorService actors,
+            @Value("${app.customer-portal-enabled:false}") boolean customerPortalEnabled) {
         this.accounts = accounts;
         this.actors = actors;
+        this.customerPortalEnabled = customerPortalEnabled;
     }
 
     public record Request(@NotBlank @Size(max = 254) String username) {}
@@ -26,6 +32,8 @@ public class AccountController {
 
     @PostMapping("/auth/register")
     public Map<String, Object> register(@Valid @RequestBody AccountsService.Register body) {
+        if (!customerPortalEnabled)
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Cadastro externo desabilitado.");
         return accounts.register(body);
     }
 

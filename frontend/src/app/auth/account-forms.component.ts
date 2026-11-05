@@ -33,7 +33,7 @@ export class AccountFormsComponent {
   confirmPassword = '';
   token = this.route.snapshot.queryParamMap.get('token') ?? '';
   submit() {
-    if (['register', 'reset'].includes(this.mode) && this.password !== this.confirmPassword) {
+    if (this.mode === 'reset' && this.password !== this.confirmPassword) {
       this.action.error.set('As senhas precisam ser iguais.');
       return;
     }

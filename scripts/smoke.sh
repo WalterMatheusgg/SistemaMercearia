@@ -27,10 +27,11 @@ grep -Eiq '<html([[:space:]>])' "$TEMP_DIR/index.html" || {
 }
 echo "OK · Angular servido pela aplicação"
 
-[[ "$(http_status "${BASE_URL}/api/catalog")" == 200 ]] || {
-  echo "ERRO: catálogo público indisponível" >&2; exit 1;
+CATALOG_STATUS=$(http_status "${BASE_URL}/api/catalog")
+[[ "$CATALOG_STATUS" == 401 || "$CATALOG_STATUS" == 403 || "$CATALOG_STATUS" == 404 ]] || {
+  echo "ERRO: vitrine pública disponível sem autorização (HTTP $CATALOG_STATUS)" >&2; exit 1;
 }
-echo "OK · Catálogo público"
+echo "OK · Vitrine pública desativada ($CATALOG_STATUS)"
 
 curl --silent --show-error --max-time 10 -D "$TEMP_DIR/csrf.headers" -o /dev/null "${BASE_URL}/api/auth/csrf"
 grep -Eiq '^set-cookie:[[:space:]]*XSRF-TOKEN=' "$TEMP_DIR/csrf.headers" || {

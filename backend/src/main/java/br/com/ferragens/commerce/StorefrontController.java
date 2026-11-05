@@ -5,12 +5,14 @@ import br.com.ferragens.auth.*;
 import jakarta.validation.Valid;
 
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.*;
 
 @RestController
+@ConditionalOnProperty(name = "app.customer-portal-enabled", havingValue = "true")
 @RequestMapping("/api")
 public class StorefrontController {
     private final CatalogService catalog;
