@@ -138,7 +138,21 @@
   }
 
   <div class="stock-view-bar">
-    <div><strong>Materiais no estoque</strong><span>{{ total() }} produto(s) neste filtro</span></div>
+    <div class="stock-view-heading">
+      <div class="stock-view-title">
+        <strong>Materiais no estoque</strong>
+        <span>{{ total() }} produto(s) neste filtro</span>
+      </div>
+      <mat-form-field appearance="outline" class="stock-category-filter">
+        <mat-label>Categoria do estoque</mat-label>
+        <mat-select [value]="categoryId()" (selectionChange)="setCategory($event.value)">
+          <mat-option value="">Todos os materiais</mat-option>
+          @for (category of categories(); track category.id) {
+            <mat-option [value]="category.id">{{ category.name }}</mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+    </div>
     <div class="stock-view-switch" role="group" aria-label="Forma de exibir estoque">
       <button type="button" [attr.aria-pressed]="viewMode() === 'cards'"
         [class.selected]="viewMode() === 'cards'" (click)="setViewMode('cards')">▦ Quadradinhos</button>
