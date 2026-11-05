@@ -31,6 +31,10 @@
         <label for="assistant-question">Sua pergunta</label>
         <textarea id="assistant-question" name="question" rows="3" maxlength="1000"
           [(ngModel)]="question" placeholder="Ex.: Quais são as pendências de hoje?"></textarea>
+        @if (summary()?.aiEnabled) {
+          <label class="ai-choice"><input type="checkbox" name="questionAi" [(ngModel)]="questionAi" />
+            Usar IA externa (envia somente as informações que seu perfil pode consultar ao provedor configurado)</label>
+        }
         <button class="assistant-primary" type="submit" [disabled]="busy() || !question.trim()">
           {{ busy() ? 'Consultando...' : 'Perguntar' }}</button>
       </form>

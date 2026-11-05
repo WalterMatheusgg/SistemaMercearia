@@ -1,5 +1,4 @@
 import { Component, inject, signal } from '@angular/core';
-import { RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
 import { AuthService } from '../auth/auth.service';
@@ -7,7 +6,7 @@ import { Row, createAction, money, date, label, decimal, detail } from './ui';
 import { ActionStatusComponent } from './action-status.component';
 @Component({
   standalone: true,
-  imports: [FormsModule, RouterLink, ActionStatusComponent],
+  imports: [FormsModule, ActionStatusComponent],
   templateUrl: './cash.component.html',
   styleUrls: ['./ui.scss', './cash.component.scss'],
 })

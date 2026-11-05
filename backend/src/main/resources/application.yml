@@ -31,7 +31,7 @@ app:
   customer-portal-enabled: ${CUSTOMER_PORTAL_ENABLED:false}
   assistant:
     api-key: ${OPENAI_API_KEY:}
-    model: ${OPENAI_MODEL:gpt-6-luna}
+    model: ${OPENAI_MODEL:gpt-5-mini}
   jobs:
     enabled: ${APP_JOBS_ENABLED:true}
   bootstrap:

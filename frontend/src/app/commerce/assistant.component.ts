@@ -35,6 +35,7 @@ export class AssistantComponent {
   question = '';
   batch = '';
   useAi = false;
+  questionAi = false;
 
   constructor() { this.refresh(); }
   refresh(): void {
@@ -48,7 +49,7 @@ export class AssistantComponent {
     if (!this.question.trim() || this.busy()) return;
     this.busy.set(true); this.error.set('');
     this.http.post<{ answer: string; usedModel: boolean }>('/api/admin/assistant/ask',
-      { question: this.question.trim() }).subscribe({
+      { question: this.question.trim(), useAi: this.questionAi && !!this.summary()?.aiEnabled }).subscribe({
         next: value => {
           this.answer.set(value.answer); this.usedModel.set(value.usedModel); this.busy.set(false);
         },

@@ -40,12 +40,12 @@ public class AssistantController {
 
     public AssistantController(CurrentActorService actors, ProductService products, Db db,
             ObjectMapper json, @Value("${app.assistant.api-key:}") String apiKey,
-            @Value("${app.assistant.model:gpt-6-luna}") String model) {
+            @Value("${app.assistant.model:gpt-5-mini}") String model) {
         this.actors = actors; this.products = products; this.db = db; this.json = json;
         this.apiKey = apiKey; this.model = model;
     }
 
-    public record Question(@NotBlank @Size(max=1000) String question) {}
+    public record Question(@NotBlank @Size(max=1000) String question, boolean useAi) {}
     public record Lines(@NotBlank @Size(max=30000) String text, boolean useAi) {}
     public record Confirm(List<ProductService.BulkItem> items) {}
 
@@ -66,9 +66,9 @@ public class AssistantController {
             result.put("activeProducts", db.jdbc.queryForObject(
                     "SELECT count(*) FROM product WHERE active", Long.class));
             result.put("lowStock", db.jdbc.queryForObject(
-                    "SELECT count(*) FROM inventory_balance b JOIN product p ON p.id=b.product_id "
-                    + "WHERE p.active AND b.minimum_quantity>0 "
-                    + "AND b.physical-b.reserved-b.unavailable<b.minimum_quantity", Long.class));
+                    "SELECT count(*) FROM inventory_balance b JOIN product p ON p.id=b.product_id JOIN inventory_location l ON l.id=b.location_id "
+                    + "WHERE p.active AND l.store_id=? AND b.minimum_quantity>0 "
+                    + "AND b.physical-b.reserved-b.unavailable<b.minimum_quantity", Long.class, actor.storeId()));
             result.put("recentMovements", db.rows(
                     "SELECT product_name,kind,quantity,actor_name,occurred_at "
                     + "FROM inventory_movement WHERE store_id=? "
@@ -111,7 +111,7 @@ public class AssistantController {
         String q = request.question().trim();
         String answer = localAnswer(q, facts);
         boolean external = false;
-        if (apiKey != null && !apiKey.isBlank()) {
+        if (request.useAi() && apiKey != null && !apiKey.isBlank()) {
             throttle(actors.require(auth).userId());
             try {
                 answer = callModel(
