@@ -92,7 +92,7 @@ test('venda pelo navegador baixa de 50 para 35 e aparece no estoque', async ({ p
   await page.getByRole('button', { name: 'Concluir venda e baixar estoque' }).click();
   await expect(page.getByRole('status')).toContainText('Operação confirmada');
   await page.goto('/admin/inventory');
-  await page.getByLabel('Produto ou código').fill(product.code);
+  await page.getByLabel('Nome do produto').fill(product.name);
   await page.getByRole('button', { name: 'Buscar', exact: true }).click();
   const row = page.locator('tbody tr').filter({ hasText: product.name });
   await expect(row.first()).toContainText('35');
