@@ -34,7 +34,7 @@ public class ProductPhotoController {
     @PreAuthorize("hasAnyRole('OWNER','MANAGER','STOCKKEEPER')")
     public ProductResponse create(Authentication authentication,
             @Valid @RequestPart("data") ProductWorkflowService.NewMaterial data,
-            @RequestPart("photo") MultipartFile photo) {
+            @RequestPart(value="photo",required=false) MultipartFile photo) {
         return workflow.create(actors.require(authentication),data,photo);
     }
 
