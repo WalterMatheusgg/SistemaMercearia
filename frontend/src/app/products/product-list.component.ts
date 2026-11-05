@@ -358,7 +358,7 @@ export class ProductListComponent implements OnInit, OnDestroy {
     const input: ProductInput = {
       name: raw.name.trim(),
       description: raw.description.trim() || null,
-      ...(raw.brand.trim() ? {brand: raw.brand.trim()} : {}),
+      ...(this.editingId() || raw.brand.trim() ? {brand: raw.brand.trim()} : {}),
       categoryId: raw.categoryId || null,
       baseUnitCode: raw.baseUnitCode,
       cost: raw.cost.trim() ? raw.cost.replace(',', '.') : '0.00',
