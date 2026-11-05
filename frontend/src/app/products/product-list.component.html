@@ -92,7 +92,7 @@
         <div>
           <p class="eyebrow">CADASTRO SIMPLES</p>
           <h2 id="form-title">{{ editingId() ? 'Editar produto' : 'Novo produto' }}</h2>
-          <p>Foto obrigatória. Os outros campos podem ser preenchidos depois.</p>
+          <p>Preencha apenas o que souber. A foto e todos os campos são opcionais.</p>
         </div>
         <button class="close-editor" type="button" [disabled]="saving()" (click)="closeForm()" aria-label="Fechar cadastro">×</button>
       </div>
@@ -108,8 +108,8 @@
             }
           </div>
           <div class="photo-picker-content">
-            <strong>Foto do produto @if (!editingId()) { <span class="required-photo">Obrigatória</span> }</strong>
-            <p>Identifique o material com JPG, PNG ou WebP, até 3 MB.</p>
+            <strong>Foto do produto <span class="optional-photo">(opcional)</span></strong>
+            <p>Você pode adicionar uma foto agora ou depois. JPG, PNG ou WebP, até 3 MB.</p>
             <div class="photo-actions">
               <button type="button" (click)="cameraInput.click()">Tirar foto</button>
               <button type="button" (click)="deviceInput.click()">Procurar no dispositivo</button>
