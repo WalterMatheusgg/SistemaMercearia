@@ -231,7 +231,7 @@ test('assistente consulta dados e prepara importação em lote com prévia', asy
   const name = 'Material E2E ' + randomUUID().slice(0, 8);
   await page.getByLabel('Lista de materiais').fill(name + ';9,90;4,00');
   await page.getByRole('button', { name: 'Revisar importação' }).click();
-  await expect(page.locator('.import-row')).toContainText(name);
+  await expect(page.locator('.import-row input[aria-label^="Nome"]')).toHaveValue(name);
   page.once('dialog', dialog => dialog.accept());
   await page.getByRole('button', { name: 'Confirmar cadastro de 1 produtos' }).click();
   await expect(page.getByRole('status')).toContainText('1 produtos cadastrados');
