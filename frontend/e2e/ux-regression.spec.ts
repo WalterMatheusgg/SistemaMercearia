@@ -50,7 +50,7 @@ test('categoria criada no cadastro aparece nas listas e filtra o estoque', async
   await expect(form.getByRole('combobox', { name: 'Categoria (opcional)' })).toContainText(category);
 
   await form.getByRole('button', { name: 'Cadastrar produto' }).click();
-  await expect(page.getByRole('status')).toContainText('Produto cadastrado');
+  await expect(page.locator('.success-notice')).toContainText('Produto cadastrado');
   const panel = page.locator('.references-panel');
   await panel.locator('summary').click();
   await expect(panel.locator('.reference-tags').first()).toContainText(category);
