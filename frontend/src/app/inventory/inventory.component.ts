@@ -16,6 +16,7 @@ import {
   InventoryApi,
   InventoryBalance,
   InventoryCategory,
+  ReplenishmentSuggestion,
   InventoryLocation,
   InventoryMovement,
   MovementCommand,
@@ -57,6 +58,9 @@ export class InventoryComponent implements OnInit {
   readonly categoryId = signal('');
   readonly locationId = signal('');
   readonly rows = signal<InventoryBalance[]>([]);
+  readonly replenishment = signal<ReplenishmentSuggestion[]>([]);
+  readonly showReplenishment = signal(false);
+  readonly replenishmentError = signal('');
   readonly movements = signal<InventoryMovement[]>([]);
   readonly page = signal(0);
   readonly total = signal(0);
@@ -136,7 +140,18 @@ export class InventoryComponent implements OnInit {
   refresh(): void {
     this.loadCategories();
     this.loadBalances();
+    this.loadReplenishment();
     this.loadHistory();
+  }
+
+  loadReplenishment(): void {
+    if (!this.locationId()) return;
+    this.replenishmentError.set('');
+    this.api.replenishment(this.locationId(), this.categoryId())
+      .pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
+        next: items => this.replenishment.set(items),
+        error: () => this.replenishmentError.set('Não foi possível consultar sugestões de reposição.'),
+      });
   }
 
   private loadCategories(): void {
@@ -151,6 +166,7 @@ export class InventoryComponent implements OnInit {
     this.categoryId.set(id);
     this.page.set(0);
     this.loadBalances();
+    this.loadReplenishment();
   }
 
   changeLocation(id: string): void {
