@@ -1,6 +1,7 @@
 import { Component, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
+import { ActivatedRoute } from '@angular/router';
 import { AuthService } from '../auth/auth.service';
 import { ActionStatusComponent } from './action-status.component';
 import {
@@ -23,6 +24,7 @@ import {
 })
 export class PurchasesComponent {
   private readonly http = inject(HttpClient);
+  private readonly route = inject(ActivatedRoute);
   readonly auth = inject(AuthService);
   readonly action = createAction();
   readonly rows = signal<Row[]>([]);
@@ -45,6 +47,7 @@ export class PurchasesComponent {
   cost = '';
   dueDate = today();
   note = '';
+  readonly suggestedNotice = signal('');
   receiptNote = '';
   cancelReason = '';
   lines: { productId: string; name: string; quantity: string; unitCost: string }[] = [];
@@ -60,6 +63,26 @@ export class PurchasesComponent {
     this.load();
     this.searchProducts();
     this.searchSuppliers();
+    const params = this.route.snapshot.queryParamMap;
+    const suggestedProductId = params.get('produto');
+    if (suggestedProductId && this.management()) {
+      this.open = true;
+      this.productId = suggestedProductId;
+      this.amount = params.get('quantidade') || '1';
+      this.cost = params.get('custo') || '';
+      this.supplierId = params.get('fornecedor') || '';
+      this.suggestedNotice.set(
+        'Sugestão de reposição carregada. Confira fornecedor, custo e quantidade. '
+        + 'Clique em Adicionar item e confirme o pedido somente após revisar tudo.');
+      this.http.get<Row>('/api/admin/products/' + encodeURIComponent(suggestedProductId))
+        .subscribe({
+          next: product => {
+            this.query = product['name'];
+            this.searchProducts();
+          },
+          error: () => this.error.set('O produto sugerido não pôde ser consultado. Selecione-o manualmente.'),
+        });
+    }
   }
   management() {
     return this.auth.currentUser()?.roles.some((r) => ['OWNER', 'MANAGER'].includes(r));
