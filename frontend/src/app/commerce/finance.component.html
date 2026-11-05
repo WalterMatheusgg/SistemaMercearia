@@ -1,205 +1,127 @@
-<section class="page">
-  <header>
-    <div>
-      <p class="eyebrow">GESTÃO</p>
-      <h1>Financeiro</h1>
-      <small>Contas a pagar, receber e pagamentos conferidos.</small>
-    </div>
-    <button class="primary" (click)="open = !open" [disabled]="action.locked()">
-      Nova conta avulsa
+<section class="page money-page">
+  <header class="money-head">
+    <div><p class="eyebrow">DINHEIRO DA LOJA</p><h1>Financeiro, sem complicação.</h1>
+      <p>Acompanhe o que falta pagar ou receber e registre o que já foi pago.</p></div>
+    <button type="button" class="money-new" (click)="open = !open" [disabled]="action.locked()">
+      {{ open ? 'Fechar cadastro' : '+ Registrar conta' }}
     </button>
   </header>
-  <app-action-status [action]="action" />
-  @if (error()) {
-    <p class="note error" role="alert">{{ error() }}</p>
-  }
-  <p class="note">
-    Vendas e recebimentos de compras criam suas próprias contas. O pagamento posterior liquida a
-    conta existente, sem criar outra venda. Pix e cartões precisam ser conferidos no
-    banco/adquirente antes do registro.
-  </p>
+  <app-action-status [action]="action"/>
+  @if (error()) { <p class="money-error" role="alert">{{ error() }}</p> }
+
+  <section class="money-switch" role="group" aria-label="Filtrar contas">
+    <button type="button" [class.active]="filter() === 'pending'" (click)="switchFilter('pending')">Pendentes</button>
+    <button type="button" [class.active]="filter() === 'receivable'" (click)="switchFilter('receivable')">A receber</button>
+    <button type="button" [class.active]="filter() === 'payable'" (click)="switchFilter('payable')">A pagar</button>
+    <button type="button" [class.active]="filter() === 'finished'" (click)="switchFilter('finished')">Pagas</button>
+    <button type="button" [class.active]="filter() === 'all'" (click)="switchFilter('all')">Todas</button>
+  </section>
+
   @if (open) {
-    <section class="panel">
-      <h2>Conta avulsa</h2>
+    <section class="money-editor" aria-label="Registrar conta">
+      <div class="money-section-heading"><h2>Nova conta</h2><p>Informe apenas o necessário. Você poderá registrar o pagamento depois.</p></div>
       <form (ngSubmit)="create()" #accountForm="ngForm">
         <fieldset [disabled]="action.locked()">
-          <div class="grid">
-            <label
-              >Tipo<select aria-label="Tipo" name="direction" [(ngModel)]="form.direction">
-                <option value="PAYABLE">A pagar (despesa)</option>
-                <option value="RECEIVABLE">A receber</option>
-              </select></label
-            ><label
-              >Descrição<input
-                name="description"
-                [(ngModel)]="form.description"
-                required
-                maxlength="300" /></label
-            ><label
-              >Valor<input
-                name="amount"
-                [(ngModel)]="form.amount"
-                required
-                pattern="[0-9]+([.,][0-9]{1,2})?"
-                inputmode="decimal" /></label
-            ><label
-              >Vencimento<input type="date" name="due" [(ngModel)]="form.dueDate" required
-            /></label>
+          <div class="money-fields">
+            <label>O que é?
+              <select name="direction" [(ngModel)]="form.direction" aria-label="Tipo">
+                <option value="PAYABLE">Despesa / conta a pagar</option>
+                <option value="RECEIVABLE">Valor que vou receber</option>
+              </select>
+            </label>
+            <label>Descrição<input name="description" [(ngModel)]="form.description"
+              maxlength="300" required placeholder="Ex.: Compra de ferramentas"/></label>
+            <label>Valor (R$)<input name="amount" [(ngModel)]="form.amount"
+              inputmode="decimal" pattern="[0-9]+([.,][0-9]{1,2})?" required placeholder="0,00"/></label>
+            <label>Vencimento<input name="due" [(ngModel)]="form.dueDate" type="date" required/></label>
           </div>
-          <button class="primary gap" [disabled]="accountForm.invalid">Registrar conta</button>
+          <div class="money-editor-actions"><button class="money-primary" [disabled]="accountForm.invalid">Salvar conta</button>
+            <button type="button" (click)="open=false">Cancelar</button></div>
         </fieldset>
       </form>
     </section>
   }
-  <form class="toolbar" (ngSubmit)="page = 0; load()">
-    <label
-      >Tipo<select aria-label="Tipo" name="direction" [(ngModel)]="direction">
-        <option value="">Todas</option>
-        <option value="PAYABLE">A pagar</option>
-        <option value="RECEIVABLE">A receber</option>
-      </select></label
-    ><label
-      >Situação<select aria-label="Situação" name="status" [(ngModel)]="status">
-        <option value="">Todas</option>
-        @for (value of ['OPEN', 'PARTIAL', 'PAID', 'CANCELLED']; track value) {
-          <option [value]="value">{{ label(value) }}</option>
-        }
-      </select></label
-    ><button>Filtrar</button>
-  </form>
-  <section class="panel">
-    <div class="scroll">
-      <table>
-        <thead>
-          <tr>
-            <th>Descrição / pessoa</th>
-            <th>Tipo</th>
-            <th>Vencimento</th>
-            <th>Total</th>
-            <th>Pago</th>
-            <th>Status</th>
-            <th></th>
-          </tr>
-        </thead>
-        <tbody>
-          @for (account of rows(); track account.id) {
-            <tr>
-              <td>
-                {{ account['description'] }}<small>{{ account['partyName'] }}</small>
-              </td>
-              <td>{{ label(account['direction']) }}</td>
-              <td>{{ date(account['dueDate']) }}</td>
-              <td>{{ money(account['amount']) }}</td>
-              <td>{{ money(account['paid']) }}</td>
-              <td>{{ label(account['status']) }}</td>
-              <td><button (click)="show(account.id)">Abrir</button></td>
-            </tr>
-          }
-        </tbody>
-      </table>
-    </div>
-    @if (!rows().length) {
-      <p class="empty">Nenhuma conta encontrada.</p>
+
+  <div class="money-list-header">
+    <div><h2>{{ filterLabel() }}</h2><p>Toque em uma conta para ver o detalhe e registrar um pagamento.</p></div>
+    <span>{{ total }} registro(s)</span>
+  </div>
+  <section class="money-list">
+    @for (account of rows(); track account.id) {
+      <button class="money-record" type="button" (click)="show(account.id)">
+        <span class="record-icon" [class.receivable]="account['direction']==='RECEIVABLE'">
+          {{ account['direction']==='RECEIVABLE' ? '↓' : '↑' }}
+        </span>
+        <span class="record-text">
+          <strong>{{ account['description'] }}</strong>
+          <small>{{ account['partyName'] || (account['direction']==='RECEIVABLE' ? 'Valor a receber' : 'Despesa') }}
+            · Vencimento: {{ date(account['dueDate']) }}</small>
+        </span>
+        <span class="record-amount"><strong>{{ money(account['amount']) }}</strong>
+          <small>{{ label(account['status']) }}</small></span>
+        <span class="record-arrow" aria-hidden="true">↗</span>
+      </button>
+    } @empty {
+      <div class="money-empty">
+        <span aria-hidden="true">✓</span><h3>Nenhuma conta encontrada</h3>
+        <p>Os lançamentos aparecem aqui quando você cadastrar uma conta ou registrar uma venda ou compra.</p>
+      </div>
     }
-    <div class="pagination">
-      <span>{{ total }} contas · Página {{ page + 1 }}</span>
-      <div>
-        <button [disabled]="page === 0" (click)="page = page - 1; load()">Anterior</button
-        ><button [disabled]="(page + 1) * 20 >= total" (click)="page = page + 1; load()">
-          Próxima
-        </button>
+    @if (total > 20) {
+      <div class="money-pagination">
+        <span>Página {{ page + 1 }}</span><div>
+          <button type="button" [disabled]="page===0" (click)="page=page-1; load()">Anterior</button>
+          <button type="button" [disabled]="(page+1)*20>=total" (click)="page=page+1; load()">Próxima</button>
+        </div>
       </div>
-    </div>
+    }
   </section>
+
   @if (selected(); as account) {
-    <section class="panel">
-      <div class="toolbar">
-        <h2>{{ account['description'] }}</h2>
-        <button [disabled]="action.locked()" (click)="selected.set(null)">Fechar</button>
+    <div class="money-overlay" aria-hidden="true"></div>
+    <section class="money-detail" role="dialog" aria-modal="true" aria-labelledby="money-detail-title">
+      <div class="detail-header"><div><p class="eyebrow">DETALHES DA CONTA</p>
+        <h2 id="money-detail-title">{{ account['description'] }}</h2></div>
+        <button type="button" (click)="selected.set(null)" aria-label="Fechar detalhes">×</button></div>
+      <div class="money-detail-status">
+        <span>{{ label(account['direction']) }} · {{ label(account['status']) }}</span>
+        <strong>{{ money(account['amount']) }}</strong>
+        <small>Já pago: {{ money(account['paid']) }} · Vencimento: {{ date(account['dueDate']) }}</small>
       </div>
-      <p>
-        {{ label(account['direction']) }} · {{ label(account['status']) }} · Vencimento:
-        {{ date(account['dueDate']) }}
-      </p>
-      <p>
-        Total: <strong>{{ money(account['amount']) }}</strong> · Pago:
-        <strong>{{ money(account['paid']) }}</strong>
-      </p>
-      @if (['OPEN', 'PARTIAL'].includes(account['status'])) {
-        <h3>Registrar pagamento ou recebimento</h3>
-        <form (ngSubmit)="settle()" #paymentForm="ngForm">
+      @if (['OPEN','PARTIAL'].includes(account['status'])) {
+        <form class="money-settle" (ngSubmit)="settle()" #paymentForm="ngForm">
+          <h3>{{ account['direction']==='RECEIVABLE' ? 'Registrar recebimento' : 'Registrar pagamento' }}</h3>
+          <p>Registre somente quando a transferência ou pagamento já tiver acontecido.</p>
           <fieldset [disabled]="action.locked()">
-            <div class="grid">
-              <label
-                >Meio<select aria-label="Meio" name="method" [(ngModel)]="payment.method">
-                  @for (method of methods; track method) {
-                    <option [value]="method">{{ label(method) }}</option>
-                  }
-                </select></label
-              ><label
-                >Valor conferido<input
-                  name="paymentAmount"
-                  [(ngModel)]="payment.amount"
-                  required
-                  pattern="[0-9]+([.,][0-9]{1,2})?"
-                  inputmode="decimal" /></label
-              ><label
-                >Referência / observação<input
-                  name="note"
-                  [(ngModel)]="payment.note"
-                  maxlength="500"
-              /></label>
-            </div>
-            <button class="primary gap" [disabled]="paymentForm.invalid">
-              Confirmar lançamento
-            </button>
+            <label>Valor confirmado (R$)<input name="paymentAmount" [(ngModel)]="payment.amount"
+              required inputmode="decimal" pattern="[0-9]+([.,][0-9]{1,2})?" placeholder="0,00"/></label>
+            <label>Como foi pago?
+              <select name="method" [(ngModel)]="payment.method" aria-label="Meio">
+                @for (method of methods; track method) { <option [value]="method">{{ label(method) }}</option> }
+              </select>
+            </label>
+            <details class="money-optional"><summary>Adicionar observação</summary>
+              <input name="note" [(ngModel)]="payment.note" maxlength="500" placeholder="Referência do pagamento"/></details>
+            <button class="money-primary" [disabled]="paymentForm.invalid">Confirmar pagamento</button>
           </fieldset>
         </form>
       }
-      <h3>Histórico de pagamentos</h3>
-      <label>Motivo para eventual estorno<input [(ngModel)]="reason" maxlength="500" /></label>
-      <div class="scroll gap">
-        <table>
-          <thead>
-            <tr>
-              <th>Data / responsável</th>
-              <th>Meio / referência</th>
-              <th>Sentido</th>
-              <th>Valor</th>
-              <th>Correção</th>
-            </tr>
-          </thead>
-          <tbody>
-            @for (p of account['payments']; track p.id) {
-              <tr>
-                <td>
-                  {{ date(p.occurredAt) }}<small>{{ p.actorName }}</small>
-                </td>
-                <td>
-                  {{ label(p.method) }}<small>{{ p.note }}</small>
-                </td>
-                <td>{{ p.direction === 'IN' ? 'Entrada' : 'Saída' }}</td>
-                <td>{{ money(p.amount) }}</td>
-                <td>
-                  @if (p.reversed) {
-                    Estornado
-                  } @else if (p.reversalOf) {
-                    Compensação
-                  } @else {
-                    <button
-                      class="danger"
-                      [disabled]="action.locked() || reason.trim().length < 3"
-                      (click)="reverse(p.id)"
-                    >
-                      Estornar
-                    </button>
-                  }
-                </td>
-              </tr>
-            }
-          </tbody>
-        </table>
-      </div>
+      <details class="money-history">
+        <summary>Histórico e eventuais correções</summary>
+        <p>Estornos são registrados no histórico e exigem justificativa.</p>
+        <label>Motivo da correção<input [(ngModel)]="reason" maxlength="500" placeholder="Explique a correção"/></label>
+        @for (p of account['payments']; track p.id) {
+          <div class="history-row"><div><strong>{{ money(p.amount) }} · {{ label(p.method) }}</strong>
+            <small>{{ date(p.occurredAt) }} · {{ p.actorName }}</small></div>
+            @if (p.reversed) { <span>Estornado</span> }
+            @else if (p.reversalOf) { <span>Compensação</span> }
+            @else { <button class="money-danger" type="button"
+              [disabled]="action.locked() || reason.trim().length < 3" (click)="reverse(p.id)">Estornar</button> }
+          </div>
+        }
+      </details>
     </section>
   }
+
+  <p class="money-footnote">O financeiro registra valores conferidos. Pix/cartão não são cobrados automaticamente e o saldo bancário não é conciliado pelo sistema.</p>
 </section>

@@ -7,12 +7,26 @@ import { Row, Page, createAction, money, date, label, decimal, detail, today } f
   standalone: true,
   imports: [FormsModule, ActionStatusComponent],
   templateUrl: './finance.component.html',
-  styleUrl: './ui.scss',
+  styleUrls: ['./ui.scss','./finance.component.scss'],
 })
 export class FinanceComponent {
   private readonly http = inject(HttpClient);
   readonly action = createAction();
   readonly rows = signal<Row[]>([]);
+  readonly filter = signal<'pending'|'receivable'|'payable'|'finished'|'all'>('pending');
+  private requested = 0;
+  filterLabel(): string {
+    return ({ pending:'Pendências', receivable:'A receber', payable:'A pagar',
+      finished:'Já pagas', all:'Todas as contas' } as const)[this.filter()];
+  }
+  switchFilter(value: 'pending'|'receivable'|'payable'|'finished'|'all'): void {
+    this.filter.set(value);
+    this.direction = value === 'receivable' ? 'RECEIVABLE' : value === 'payable' ? 'PAYABLE' : '';
+    this.status = value === 'pending' || value === 'receivable' || value === 'payable' ? 'OPEN,PARTIAL'
+      : value === 'finished' ? 'PAID' : '';
+    this.page = 0;
+    this.load();
+  }
   readonly selected = signal<Row | null>(null);
   readonly error = signal('');
   readonly money = money;
@@ -20,7 +34,7 @@ export class FinanceComponent {
   readonly label = label;
   readonly methods = ['CASH', 'PIX', 'DEBIT_CARD', 'CREDIT_CARD', 'TRANSFER'];
   direction = '';
-  status = '';
+  status = 'OPEN,PARTIAL';
   page = 0;
   total = 0;
   open = false;
@@ -31,16 +45,19 @@ export class FinanceComponent {
     this.load();
   }
   load() {
+    const request = ++this.requested;
+    this.error.set('');
     this.http
       .get<Page>('/api/admin/finance', {
         params: { direction: this.direction, status: this.status, page: this.page },
       })
       .subscribe({
         next: (r) => {
+          if (request !== this.requested) return;
           this.rows.set(r.content);
           this.total = r.totalElements;
         },
-        error: (e) => this.error.set(detail(e)),
+        error: (e) => { if (request === this.requested) this.error.set(detail(e)); },
       });
   }
   create() {
