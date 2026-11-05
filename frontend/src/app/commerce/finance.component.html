@@ -1,7 +1,8 @@
 <section class="page money-page">
   <header class="money-head">
     <div><p class="eyebrow">DINHEIRO DA LOJA</p><h1>Financeiro, sem complicação.</h1>
-      <p>Acompanhe o que falta pagar ou receber e registre o que já foi pago.</p></div>
+      <p>Contas a pagar, a receber e pagamentos registrados.</p></div>
+    @if (canSeeMoney()) { <a class="money-cash-link" routerLink="/admin/cash">Movimentações em dinheiro</a> }
     <button type="button" class="money-new" (click)="open = !open" [disabled]="action.locked()">
       {{ open ? 'Fechar cadastro' : '+ Registrar conta' }}
     </button>

@@ -12,11 +12,10 @@
 
   <section class="dash-actions" aria-label="Ações rápidas">
     @if (has(['OWNER','MANAGER','STOCKKEEPER'])) {
-      <a class="dash-primary" routerLink="/admin/products"><app-ui-icon name="plus" /><strong>Novo produto</strong><span>Rápido, sem códigos nem campos obrigatórios</span></a>
+      <a class="dash-primary" routerLink="/admin/products"><app-ui-icon name="plus" /><strong>Novo produto</strong><span>Foto, nome e quantidade no mesmo cadastro</span></a>
     }
     @if (has(['OWNER','MANAGER','SELLER','CASHIER'])) {
       <a routerLink="/admin/sales"><app-ui-icon name="cart" /><strong>Nova venda</strong><span>Atenda e registre em poucos passos</span></a>
-      <a routerLink="/admin/cash"><app-ui-icon name="coins" /><strong>Dinheiro</strong><span>Entradas e retiradas, sem abertura de caixa</span></a>
     }
     <a routerLink="/admin/assistant"><app-ui-icon name="wand" /><strong>Assistente</strong><span>Pergunte ou cadastre até 200 materiais</span></a>
   </section>

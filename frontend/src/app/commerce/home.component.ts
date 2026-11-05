@@ -16,14 +16,12 @@ export class HomeComponent {
   private readonly http = inject(HttpClient);
   readonly searchTerm = signal('');
   readonly activeGroup = signal<'all' | 'estoque' | 'comercial' | 'financeiro'>('all');
-  readonly motionPaused = signal(false);
   readonly updating = signal(false);
   readonly productsTotal = signal<number | null>(null);
   readonly lowStockTotal = signal<number | null>(null);
   readonly todaySales = signal<number | null>(null);
   readonly todayRevenue = signal<string | null>(null);
   readonly lastUpdated = signal('');
-  readonly todayLabel = new Intl.DateTimeFormat('pt-BR', { weekday: 'long', day: 'numeric', month: 'long', timeZone: 'America/Sao_Paulo' }).format(new Date());
   readonly filteredLinks = computed(() => {
     const search = this.searchTerm().toLocaleLowerCase('pt-BR');
     const group = this.activeGroup();
@@ -86,7 +84,6 @@ export class HomeComponent {
   }
   readonly links = [
     { group: 'comercial', path: '/admin/sales', icon: 'cart', title: 'Vendas e pedidos', description: 'Orçamentos, vendas e pedidos em um só lugar.', roles: ['OWNER', 'MANAGER', 'SELLER', 'CASHIER'] },
-    { group: 'comercial', path: '/admin/cash', icon: 'coins', title: 'Dinheiro', description: 'Entradas e retiradas de dinheiro físico.', roles: ['OWNER', 'MANAGER', 'SELLER', 'CASHIER'] },
     { group: 'estoque', path: '/admin/inventory', icon: 'package', title: 'Estoque', description: 'Saldos, mínimos e movimentações auditadas.', roles: ['OWNER', 'MANAGER', 'SELLER', 'CASHIER', 'STOCKKEEPER'] },
     { group: 'estoque', path: '/admin/products', icon: 'boxes', title: 'Produtos', description: 'Organize o catálogo e os preços da loja.', roles: ['OWNER', 'MANAGER', 'STOCKKEEPER'] },
     { group: 'estoque', path: '/admin/purchases', icon: 'vendors', title: 'Compras', description: 'Pedidos ao fornecedor e recebimentos.', roles: ['OWNER', 'MANAGER', 'STOCKKEEPER'] },
