@@ -106,15 +106,17 @@ describe('Cadastro simples de produtos', () => {
     const http = TestBed.inject(HttpTestingController);
     const create = http.expectOne('/api/admin/references/categories');
     expect(create.request.method).toBe('POST');
+    // Simula a leitura atualizada do servidor após a criação, não a lista antiga.
+    api.categories.mockReturnValue(of([
+      {code:'category-1',name:'Ferramentas'},
+      {code:'category-new',name:'Ferramentas elétricas'},
+    ]));
     create.flush({id:'category-new',name:'Ferramentas elétricas'});
     expect(component.form.controls.categoryId.value).toBe('category-new');
     expect(component.categories().some(c => c.code === 'category-new')).toBe(true);
     expect(input.value).toBe('');
     expect(component.referencesSuccess()).toContain('Categoria criada');
-    http.expectOne('/api/admin/categories').flush([
-      {code:'category-1',name:'Ferramentas'},
-      {code:'category-new',name:'Ferramentas elétricas'},
-    ]);
+    expect(api.categories).toHaveBeenCalledTimes(2);
     expect(component.categories()).toHaveLength(2);
     http.verify();
   });
