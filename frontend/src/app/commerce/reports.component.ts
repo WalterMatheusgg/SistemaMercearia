@@ -36,6 +36,13 @@ export class ReportsComponent {
     this.load();
   }
 
+  percentage(value: string | number | null | undefined, signed = false): string {
+    if (value == null || !Number.isFinite(Number(value))) return 'Sem comparação';
+    const n = Number(value);
+    return (signed && n > 0 ? '+' : '') +
+      n.toLocaleString('pt-BR', { minimumFractionDigits: 1, maximumFractionDigits: 1 }) + '%';
+  }
+
   barWidth(value: string | number, days: Array<{revenue: string}>): number {
     const total = Number(value);
     const max = Math.max(0, ...days.map(d => Number(d.revenue)));
