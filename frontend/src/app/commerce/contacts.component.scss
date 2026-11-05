@@ -1,0 +1,12 @@
+
+.supplier-shortcuts{display:flex;flex-wrap:wrap;gap:8px;margin:0 0 20px}
+.supplier-shortcuts a{color:#205e47;background:#edf8f1;border:1px solid #cce4d3;text-decoration:none;font-size:12px;font-weight:800;border-radius:10px;padding:10px 13px}
+.contacts-cards{display:none}
+@media(max-width:730px){
+.contacts-table{display:none}.contacts-cards{display:grid;gap:9px}
+.contact-card{display:grid;grid-template-columns:44px minmax(0,1fr);gap:12px;border:1px solid #dcece1;padding:14px;background:#fbfdfa;border-radius:13px}
+.contact-avatar{display:grid;place-items:center;width:42px;height:42px;background:#e3f4e9;color:#1d7853;border-radius:12px;font-size:19px;font-weight:850}
+.contact-copy{display:grid;gap:6px;min-width:0}
+.contact-copy strong{font-size:14px;color:#1f4136}.contact-copy small{font-size:12px;color:#778c80;overflow-wrap:anywhere}
+.contact-buttons{grid-column:1/-1;display:flex;gap:8px}.contact-buttons button{flex:1}
+}

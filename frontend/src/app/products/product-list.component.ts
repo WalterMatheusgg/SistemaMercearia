@@ -104,6 +104,8 @@ export class ProductListComponent implements OnInit, OnDestroy {
       encodeURIComponent((this.form.controls.name.value || 'ferragens ferramentas') + ' produto');
   }
 
+  createCategoryFromEditor(name: string): void { this.categoryName=name; this.createCategory(); }
+
   createCategory(): void {
     const name = this.categoryName.trim();
     if (!this.canManageReferences() || !name || this.addingCategory()) return;
@@ -115,10 +117,11 @@ export class ProductListComponent implements OnInit, OnDestroy {
         this.categories.update(items => [...items, {code:value.id,name:value.name}]
           .sort((a,b)=>a.name.localeCompare(b.name)));
         this.form.controls.categoryId.setValue(value.id);
-        this.categoryName=''; this.addingCategory.set(false);
+        this.categoryName=''; this.addingCategory.set(false); this.formError.set('');
       },
       error: e => {this.addingCategory.set(false);
-        this.referencesError.set(e.error?.detail ?? 'Não foi possível criar a categoria.');},
+        this.referencesError.set(e.error?.detail ?? 'Não foi possível criar a categoria.');
+        this.formError.set(this.referencesError());},
     });
   }
 

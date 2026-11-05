@@ -3,10 +3,17 @@
     <div>
       <p class="eyebrow">CADASTROS</p>
       <h1>{{ title }}</h1>
-      <small>Preencha apenas o que souber. Você poderá completar o cadastro depois.</small>
+      <small>{{ explanation }}</small>
     </div>
     <button class="primary" (click)="edit()" [disabled]="action.locked()">Novo cadastro</button>
   </header>
+  @if (kind === 'SUPPLIER' && canManageMaterials()) {
+    <nav class="supplier-shortcuts" aria-label="Ações de materiais">
+      <a routerLink="/admin/products">Produtos</a>
+      <a routerLink="/admin/inventory">Estoque</a>
+      <a routerLink="/admin/purchases">Compras e recebimentos</a>
+    </nav>
+  }
   <app-action-status [action]="action" />
   @if (error()) {
     <p class="note error" role="alert">{{ error() }}</p>
@@ -53,7 +60,7 @@
     <label>Pesquisar nome<input [(ngModel)]="query" name="query" /></label><button>Buscar</button>
   </form>
   <section class="panel">
-    <div class="scroll">
+    <div class="scroll contacts-table">
       <table>
         <thead>
           <tr>
@@ -84,6 +91,17 @@
           }
         </tbody>
       </table>
+    </div>
+    <div class="contacts-cards">
+      @for (row of rows(); track row.id) {
+        <article class="contact-card">
+          <span class="contact-avatar" aria-hidden="true">{{ (row['name'] || 'C').slice(0,1).toUpperCase() }}</span>
+          <div class="contact-copy"><strong>{{row['name']}}</strong>
+            <small>{{row['phone'] || row['email'] || 'Contato não informado'}}</small></div>
+          <div class="contact-buttons"><button type="button" (click)="edit(row)" [disabled]="action.locked()">Editar</button>
+            <button type="button" (click)="history(row)">Histórico</button></div>
+        </article>
+      }
     </div>
     @if (!rows().length) {
       <p class="empty">{{ loading() ? 'Carregando...' : 'Nenhum cadastro encontrado.' }}</p>

@@ -3,7 +3,7 @@
     <div>
       <p class="eyebrow">ABASTECIMENTO</p>
       <h1>Compras e recebimentos</h1>
-      <small>Estoque aumenta apenas com o material efetivamente recebido.</small>
+      <small>Pedidos aos fornecedores. O estoque aumenta quando o material chega.</small>
     </div>
     @if (management()) {
       <button class="primary" [disabled]="action.locked()" (click)="open = !open">

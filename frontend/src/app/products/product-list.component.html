@@ -140,6 +140,15 @@
               }
             </mat-select>
           </mat-form-field>
+          @if (canManageReferences()) {
+            <div class="inline-add-category wide-field">
+              <label for="inlineCategoryName">Nova categoria (se precisar)</label>
+              <div>
+                <input #inlineCategory id="inlineCategoryName" maxlength="100" placeholder="Ex.: Ferramentas elétricas" />
+                <button type="button" [disabled]="addingCategory()" (click)="createCategoryFromEditor(inlineCategory.value); inlineCategory.value=''">Criar</button>
+              </div>
+            </div>
+          }
           <mat-form-field appearance="outline">
             <mat-label>Unidade (opcional)</mat-label>
             <mat-select formControlName="baseUnitCode">

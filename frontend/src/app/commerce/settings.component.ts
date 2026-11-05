@@ -15,7 +15,6 @@ export class SettingsComponent {
   readonly error = signal('');
   readonly loaded = signal(false);
   readonly audit = signal<Row[]>([]);
-  readonly refs = signal<any>({ categories: [], units: [] });
   readonly date = date;
   page = 0;
   total = 0;
@@ -28,12 +27,9 @@ export class SettingsComponent {
     paymentInstructions: '',
     reservationMinutes: 1440,
   };
-  category = { name: '', active: true };
-  unit = { code: '', name: '', active: true, quantityScale: 0, quantityStep: '1' };
   constructor() {
     this.load();
     this.loadAudit();
-    this.loadRefs();
   }
   load() {
     this.http.get<any>('/api/admin/settings').subscribe({
@@ -71,37 +67,5 @@ export class SettingsComponent {
       },
       error: (e) => this.error.set(detail(e)),
     });
-  }
-  loadRefs() {
-    this.http
-      .get<any>('/api/admin/references')
-      .subscribe({ next: (r) => this.refs.set(r), error: (e) => this.error.set(detail(e)) });
-  }
-  createCategory() {
-    this.action.submit('/api/admin/references/categories', this.category, () => {
-      this.category.name = '';
-      this.loadRefs();
-      this.loadAudit();
-    });
-  }
-  toggleCategory(category: Row) {
-    this.action.submit(
-      '/api/admin/references/categories/' + category.id,
-      { name: category['name'], active: !category['active'], quantityScale: 0 },
-      () => this.loadRefs(),
-      'PUT',
-    );
-  }
-  createUnit() {
-    this.action.submit(
-      '/api/admin/references/units',
-      { ...this.unit, quantityStep: decimal(this.unit.quantityStep) },
-      () => {
-        this.unit.code = '';
-        this.unit.name = '';
-        this.loadRefs();
-        this.loadAudit();
-      },
-    );
   }
 }

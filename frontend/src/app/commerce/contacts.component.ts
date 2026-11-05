@@ -1,18 +1,22 @@
 import { Component, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, RouterLink } from '@angular/router';
+import { AuthService } from '../auth/auth.service';
 import { HttpClient } from '@angular/common/http';
 import { ActionStatusComponent } from './action-status.component';
 import { Row, Page, createAction, money, date, label, detail } from './ui';
 @Component({
   standalone: true,
-  imports: [FormsModule, ActionStatusComponent],
+  imports: [FormsModule, RouterLink, ActionStatusComponent],
   templateUrl: './contacts.component.html',
-  styleUrl: './ui.scss',
+  styleUrls: ['./ui.scss','./contacts.component.scss'],
 })
 export class ContactsComponent {
   private readonly http = inject(HttpClient);
   private readonly route = inject(ActivatedRoute);
+  private readonly auth = inject(AuthService);
+  readonly explanation = this.kind === 'SUPPLIER' ? 'Empresas que fornecem materiais. Quantidades e movimentações ficam em Estoque.' : 'Contatos de clientes e seu histórico.';
+  canManageMaterials(): boolean { return this.auth.currentUser()?.roles.some(r=>['OWNER','MANAGER','STOCKKEEPER'].includes(r)) ?? false; }
   readonly action = createAction();
   readonly rows = signal<Row[]>([]);
   readonly selected = signal<Row | null>(null);
