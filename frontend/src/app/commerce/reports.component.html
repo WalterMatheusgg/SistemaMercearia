@@ -39,6 +39,32 @@
         <div><span>Descontos concedidos</span><strong>{{ money(data.discounts) }}</strong></div>
       </div>
     </section>
+    <section class="insights-economics" aria-label="Margens e custo das vendas">
+      <header><p class="eyebrow">RENTABILIDADE ESTIMADA</p><h2>Quanto sobra das vendas de mercadorias?</h2></header>
+      <div class="insights-economics-grid">
+        <div><span>Venda de mercadorias, após descontos</span><strong>{{ money(data.merchandiseRevenue) }}</strong></div>
+        <div><span>Custo histórico das mercadorias vendidas</span><strong>{{ money(data.goodsCost) }}</strong></div>
+        <div class="emphasis"><span>Lucro bruto estimado</span><strong>{{ money(data.grossProfit) }}</strong></div>
+        <div><span>Margem bruta estimada</span><strong>{{ percentage(data.grossMarginPercent) }}</strong></div>
+      </div>
+      <p>Estimativa baseada no custo registrado no momento da venda. Não considera impostos, salários, despesas operacionais ou custo do frete. Não é lucro líquido nem saldo de caixa.</p>
+    </section>
+    <section class="insights-stock-summary" aria-label="Comparativo e estoque">
+      <div><span>Período anterior, mesma duração</span><strong>{{ money(data.previousRevenue) }}</strong>
+        <small>Variação de faturamento: {{ percentage(data.revenueChangePercent, true) }}</small></div>
+      <div><span>Valor do estoque físico a custo</span><strong>{{ money(data.stockCostValue) }}</strong>
+        <small>{{ data.stockedProducts }} material(is) com saldo positivo</small></div>
+      <div><span>Materiais parados há 90 dias</span><strong>{{ data.dormantProducts }}</strong>
+        <small>Apenas cadastros com mais de 90 dias e estoque positivo</small></div>
+    </section>
+    <details class="insights-dormant">
+      <summary>Ver materiais com estoque sem vendas há 90 dias</summary>
+      <p>Mostramos até dez materiais com maior quantidade parada. Produtos cadastrados há menos de 90 dias não entram nessa análise.</p>
+      @for (item of data.dormantSamples; track item.id) {
+        <div class="dormant-row"><strong>{{ item.name }}</strong>
+          <span>{{ quantity(item.quantity) }} em estoque · Custo unitário {{ money(item.cost) }}</span></div>
+      } @empty { <p>Nenhum material parado encontrado pelo critério.</p> }
+    </details>
     <div class="insights-section-title"><div><p class="eyebrow">PENDÊNCIAS ATUAIS</p><h2>O que ainda falta?</h2></div></div>
     <div class="balance-grid">
       <a routerLink="/admin/finance" [queryParams]="{view:'receivable'}" class="balance-card incoming">
