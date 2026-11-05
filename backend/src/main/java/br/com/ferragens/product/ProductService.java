@@ -11,6 +11,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
+import java.math.BigDecimal;
 import java.util.Locale;
 import java.util.UUID;
 
@@ -71,12 +72,13 @@ public class ProductService {
                 products.save(
                         new Product(
                                 code,
-                                request.name().trim(),
+                                StringUtils.hasText(request.name()) ? request.name().trim()
+                                        : "Material sem nome " + UUID.randomUUID().toString().substring(0, 8),
                                 request.description(),
-                                findCategory(request.categoryId()),
-                                findUnit(request.baseUnitCode()),
-                                request.cost(),
-                                request.price())));
+                                categoryOrDefault(request.categoryId()),
+                                unitOrDefault(request.baseUnitCode()),
+                                request.cost() == null ? BigDecimal.ZERO : request.cost(),
+                                request.price() == null ? BigDecimal.ZERO : request.price())));
     }
 
     public ProductResponse update(UUID id, ProductRequest request) {
@@ -87,7 +89,8 @@ public class ProductService {
                         id);
         if (locked.isEmpty()) throw new NotFoundException("Produto não encontrado.");
         Product product = find(id);
-        Unit unit = findUnit(request.baseUnitCode());
+        Unit unit = StringUtils.hasText(request.baseUnitCode())
+                ? findUnit(request.baseUnitCode()) : product.getBaseUnit();
         if (!product.getBaseUnit().getCode().equals(unit.getCode())
                 && Boolean.TRUE.equals(
                         jdbc.queryForObject(
@@ -109,12 +112,12 @@ public class ProductService {
         }
         product.update(
                 code,
-                request.name().trim(),
+                StringUtils.hasText(request.name()) ? request.name().trim() : product.getName(),
                 request.description(),
-                findCategory(request.categoryId()),
+                request.categoryId() == null ? product.getCategory() : findCategory(request.categoryId()),
                 unit,
-                request.cost(),
-                request.price());
+                request.cost() == null ? product.getCost() : request.cost(),
+                request.price() == null ? product.getPrice() : request.price());
         return ProductResponse.from(product);
     }
 
@@ -131,6 +134,21 @@ public class ProductService {
     private Product find(UUID id) {
         return products.findWithDetailsById(id)
                 .orElseThrow(() -> new NotFoundException("Produto não encontrado."));
+    }
+
+    private Category categoryOrDefault(UUID id) {
+        if (id != null) return findCategory(id);
+        return categories.findAllByActiveTrueOrderByNameAsc().stream()
+                .findFirst().orElseThrow(() ->
+                        new ConflictException("Nenhuma categoria ativa disponível para cadastrar materiais."));
+    }
+
+    private Unit unitOrDefault(String code) {
+        if (StringUtils.hasText(code)) return findUnit(code);
+        return units.findById("UN")
+                .orElseGet(() -> units.findAllByActiveTrueOrderByNameAsc().stream()
+                    .findFirst().orElseThrow(() ->
+                        new ConflictException("Nenhuma unidade ativa disponível para cadastrar materiais.")));
     }
 
     private Category findCategory(UUID id) {

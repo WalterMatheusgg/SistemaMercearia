@@ -48,43 +48,42 @@
         <div>
           <p class="eyebrow">CADASTRO SIMPLES</p>
           <h2 id="form-title">{{ editingId() ? 'Editar produto' : 'Novo produto' }}</h2>
-          <p>Sem códigos para preencher. Só as informações que você precisa.</p>
+          <p>Todos os campos são opcionais. Preencha agora ou complete depois.</p>
         </div>
         <button class="close-editor" type="button" [disabled]="saving()" (click)="closeForm()" aria-label="Fechar cadastro">×</button>
       </div>
       <form [formGroup]="form" (ngSubmit)="save()" novalidate>
         <div class="form-grid">
           <mat-form-field appearance="outline" class="wide-field">
-            <mat-label>Nome do produto</mat-label>
+            <mat-label>Nome do produto (opcional)</mat-label>
             <input matInput cdkFocusInitial formControlName="name" maxlength="160"
-              placeholder="Ex.: Parafuso sextavado 8 mm" required />
+              placeholder="Ex.: Parafuso sextavado 8 mm" />
             @if (form.controls.name.invalid && form.controls.name.touched) {
-              <mat-error>Informe o nome do material.</mat-error>
+              <mat-error>O nome pode ter até 160 caracteres.</mat-error>
             }
           </mat-form-field>
           <mat-form-field appearance="outline">
-            <mat-label>Categoria</mat-label>
-            <mat-select formControlName="categoryId" required>
+            <mat-label>Categoria (opcional)</mat-label>
+            <mat-select formControlName="categoryId">
+              <mat-option value="">Escolher automaticamente</mat-option>
               @for (category of categories(); track category.code) {
                 <mat-option [value]="category.code">{{ category.name }}</mat-option>
               }
             </mat-select>
-            @if (form.controls.categoryId.invalid && form.controls.categoryId.touched) {
-              <mat-error>Selecione uma categoria.</mat-error>
-            }
           </mat-form-field>
           <mat-form-field appearance="outline">
-            <mat-label>Unidade</mat-label>
-            <mat-select formControlName="baseUnitCode" required>
+            <mat-label>Unidade (opcional)</mat-label>
+            <mat-select formControlName="baseUnitCode">
+              <mat-option value="">Unidade padrão</mat-option>
               @for (unit of units(); track unit.code) {
                 <mat-option [value]="unit.code">{{ unit.name }}</mat-option>
               }
             </mat-select>
           </mat-form-field>
           <mat-form-field appearance="outline" class="wide-field">
-            <mat-label>Preço de referência (R$)</mat-label>
-            <input matInput formControlName="price" inputmode="decimal" placeholder="0,00" required />
-            <mat-hint>Deixe 0,00 se quiser cadastrar somente para controle.</mat-hint>
+            <mat-label>Preço de referência (R$) — opcional</mat-label>
+            <input matInput formControlName="price" inputmode="decimal" placeholder="0,00" />
+            <mat-hint>Pode deixar vazio; o preço inicial será R$ 0,00.</mat-hint>
             @if (form.controls.price.invalid && form.controls.price.touched) {
               <mat-error>Valor inválido. Use até duas casas decimais.</mat-error>
             }
@@ -112,7 +111,7 @@
             </mat-form-field>
           </div>
         }
-        <p class="form-hint">Estoque e movimentações são controlados com histórico no módulo Estoque.</p>
+        <p class="form-hint">Se não informar um nome, o sistema criará um material provisório para você renomear. Categoria e unidade recebem padrões internos. Estoque e movimentações ficam registrados no módulo Estoque.</p>
         @if (formError()) { <p class="form-error" role="alert">{{ formError() }}</p> }
         <div class="form-actions">
           <button type="button" class="cancel-button" [disabled]="saving()" (click)="closeForm()">Cancelar</button>

@@ -51,6 +51,18 @@ describe('Cadastro simples de produtos', () => {
       baseUnitCode: 'UN', cost: '5.00', price: '12.90',
     });
   });
+  it('permite cadastro sem preencher nenhum campo', () => {
+    api.create.mockReturnValue(of(product));
+    const fixture = TestBed.createComponent(ProductListComponent);
+    fixture.detectChanges();
+    const component = fixture.componentInstance;
+    component.startCreate();
+    expect(component.form.valid).toBe(true);
+    component.save();
+    expect(api.create).toHaveBeenCalledWith(expect.objectContaining({
+      name: '', categoryId: null, baseUnitCode: '', cost: '0.00', price: '0.00',
+    }));
+  });
   it('permite editar sem alterar o identificador interno do produto', () => {
     api.update.mockReturnValue(of(product));
     const fixture = TestBed.createComponent(ProductListComponent);

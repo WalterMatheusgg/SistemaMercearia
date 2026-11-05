@@ -47,12 +47,12 @@ export class ProductListComponent implements OnInit {
   readonly filter = signal<StatusFilter>('active');
   readonly columns = ['product', 'category', 'price', 'status', 'actions'];
   readonly form = this.fb.nonNullable.group({
-    name: ['', [Validators.required, Validators.maxLength(160)]],
+    name: ['', Validators.maxLength(160)],
     description: ['', Validators.maxLength(2000)],
-    categoryId: ['', Validators.required],
-    baseUnitCode: ['UN', Validators.required],
-    cost: ['0', [Validators.required, Validators.pattern(/^\d+([.,]\d{1,2})?$/)]],
-    price: ['0', [Validators.required, Validators.pattern(/^\d+([.,]\d{1,2})?$/)]],
+    categoryId: [''],
+    baseUnitCode: [''],
+    cost: ['', Validators.pattern(/^(?:\d+(?:[.,]\d{1,2})?)?$/)],
+    price: ['', Validators.pattern(/^(?:\d+(?:[.,]\d{1,2})?)?$/)],
   });
 
   ngOnInit(): void {
@@ -108,11 +108,10 @@ export class ProductListComponent implements OnInit {
     this.form.reset({
       name: '',
       description: '',
-      categoryId: this.categories()[0]?.code ?? '',
-      baseUnitCode: this.units().find((unit) => unit.code === 'UN')?.code
-        ?? this.units()[0]?.code ?? 'UN',
-      cost: '0',
-      price: '0',
+      categoryId: '',
+      baseUnitCode: '',
+      cost: '',
+      price: '',
     });
     this.formOpen.set(true);
   }
@@ -142,19 +141,19 @@ export class ProductListComponent implements OnInit {
   save(): void {
     if (this.saving()) return;
     this.formError.set('');
-    if (this.form.invalid || !this.form.controls.name.value.trim()) {
+    if (this.form.invalid) {
       this.form.markAllAsTouched();
-      this.formError.set('Informe o nome do produto e revise os campos destacados.');
+      this.formError.set('Revise os valores informados. Os campos podem ficar vazios.');
       return;
     }
     const raw = this.form.getRawValue();
     const input: ProductInput = {
       name: raw.name.trim(),
       description: raw.description.trim() || null,
-      categoryId: raw.categoryId,
+      categoryId: raw.categoryId || null,
       baseUnitCode: raw.baseUnitCode,
-      cost: raw.cost.replace(',', '.'),
-      price: raw.price.replace(',', '.'),
+      cost: raw.cost.trim() ? raw.cost.replace(',', '.') : '0.00',
+      price: raw.price.trim() ? raw.price.replace(',', '.') : '0.00',
     };
     this.saving.set(true);
     const isEditing = !!this.editingId();
@@ -204,9 +203,6 @@ export class ProductListComponent implements OnInit {
     this.api.categories().subscribe({
       next: (items) => {
         this.categories.set(items);
-        if (this.formOpen() && !this.editingId() && !this.form.controls.categoryId.value) {
-          this.form.controls.categoryId.setValue(items[0]?.code ?? '');
-        }
       },
       error: () => this.errorMessage.set('Não foi possível carregar as categorias.'),
     });

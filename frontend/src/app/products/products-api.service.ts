@@ -22,7 +22,7 @@ export interface ProductInput {
   code?: string;
   name: string;
   description: string | null;
-  categoryId: string;
+  categoryId: string | null;
   baseUnitCode: string;
   cost: string;
   price: string;

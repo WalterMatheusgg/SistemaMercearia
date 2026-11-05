@@ -182,6 +182,23 @@ class PlatformIntegrationTest {
     }
 
     @Test
+    void allowsBlankProductDraftAndKeepsHistoryReferencesSafe() throws Exception {
+        HttpClient owner = client();
+        String csrf = csrf(owner);
+        assertThat(send(owner, "POST", "/api/auth/login",
+                "{\"username\":\"owner-it\",\"password\":\"owner-password\"}", csrf).statusCode()).isEqualTo(200);
+        csrf = csrf(owner);
+        var draft = send(owner, "POST", "/api/admin/products", "{}", csrf);
+        assertThat(draft.statusCode()).as(draft.body()).isEqualTo(201);
+        assertThat(draft.body()).contains("Material sem nome", "\"cost\":\"0.00\"", "\"price\":\"0.00\"");
+        String id = extractJsonString(draft.body(), "id");
+        assertThat(send(owner, "PUT", "/api/admin/products/" + id,
+                "{\"name\":\"Torneira galvanizada\"}", csrf).statusCode()).isEqualTo(200);
+        var saved = send(owner, "GET", "/api/admin/products/" + id, null, null);
+        assertThat(saved.body()).contains("Torneira galvanizada", "\"active\":true");
+    }
+
+    @Test
     void protectsApiDocumentation() throws Exception {
         assertThat(send(client(), "GET", "/v3/api-docs", null, null).statusCode()).isEqualTo(401);
         HttpClient owner = client();
