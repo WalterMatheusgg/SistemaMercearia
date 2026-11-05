@@ -2,7 +2,7 @@
     <header class="dashboard-heading">
     <div>
       <p class="eyebrow">PAINEL DE CONTROLE</p>
-      <h2>Olá, {{ auth.currentUser()?.username }}. Vamos organizar seu dia.</h2>
+      <h2>Visão geral</h2>
       <p>Produtos, vendas e movimentações do período.</p>
     </div>
     <button class="refresh-button" type="button" (click)="refreshDashboard()" [disabled]="updating()">
@@ -21,7 +21,7 @@
   </section>
 
   <div class="section-top">
-    <div><p class="eyebrow">RESUMO OPERACIONAL</p><h2>O que importa agora</h2></div>
+    <div><p class="eyebrow">RESUMO OPERACIONAL</p><h2>Indicadores</h2></div>
     @if (lastUpdated()) { <span class="updated">Atualizado às {{ lastUpdated() }}</span> }
   </div>
   <div class="dashboard-metrics">
