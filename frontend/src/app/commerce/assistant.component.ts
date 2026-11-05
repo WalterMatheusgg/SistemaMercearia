@@ -13,7 +13,7 @@ interface Summary {
   openPayables?: string;
 }
 interface Diagnostic { failures24h: number; recent: Array<{occurredAt:string;requestMethod:string;endpoint:string;httpStatus:number}>; note:string }
-interface Material { name: string; price: string | number; cost: string | number; unit: string }
+interface Material { name: string; price: string | number; cost: string | number; quantity: string | number; unit: string }
 interface Preparation { items: Material[]; usedModel: boolean; note: string }
 interface ImportResult { total: number; created: number; skipped: number }
 
@@ -65,7 +65,7 @@ export class AssistantComponent {
       'Serrote profissional 20 polegadas', 'Nível de bolha 40 cm',
       'Disco de corte inox 115 mm', 'Broca de aço rápido 6 mm',
       'Caixa de parafusos sextavados 8 mm',
-    ].map(name => 'TESTE — ' + name + ';0;0').join('\n');
+    ].map(name => 'TESTE — ' + name + ';0;0;0').join('\n');
     this.preview.set([]); this.error.set(''); this.success.set('Exemplos preparados. Revise e confirme apenas se quiser inseri-los na base.');
   }
   refresh(): void {
@@ -120,14 +120,25 @@ export class AssistantComponent {
   removeItem(index: number): void {
     this.preview.update(items => items.filter((_, i) => i !== index));
   }
+  private optionalDecimal(value: string | number): string | null {
+    const text = String(value ?? '').trim();
+    return text ? text.replace(',', '.') : null;
+  }
   commit(): void {
     if (!this.preview().length || this.submitting()) return;
     if (!window.confirm('Cadastrar ' + this.preview().length
-      + ' materiais revisados? Os já existentes serão ignorados. O estoque não será alterado.')) return;
+      + ' materiais revisados? Itens repetidos serão ignorados. As quantidades informadas serão registradas apenas nos novos produtos.')) return;
     this.submitting.set(true); this.error.set('');
-    this.http.post<ImportResult>('/api/admin/assistant/products/commit', { items: this.preview() }).subscribe({
+    const items = this.preview().map(item => ({
+      name: item.name?.trim() ?? '',
+      price: this.optionalDecimal(item.price),
+      cost: this.optionalDecimal(item.cost),
+      quantity: this.optionalDecimal(item.quantity),
+      unit: item.unit || 'UN',
+    }));
+    this.http.post<ImportResult>('/api/admin/assistant/products/commit', { items }).subscribe({
       next: result => {
-        this.success.set(result.created + ' produtos cadastrados; ' + result.skipped
+        this.success.set(result.created + ' produtos cadastrados com as quantidades iniciais informadas; ' + result.skipped
           + ' já existentes ou repetidos ignorados.');
         this.preview.set([]); this.submitting.set(false); this.refresh();
       },
