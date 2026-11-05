@@ -57,12 +57,10 @@ test('categoria criada no cadastro aparece nas listas e filtra o estoque', async
 
   await page.goto('/admin/inventory');
   const filter = page.getByRole('combobox', { name: 'Categoria do estoque' });
-  await filter.click();
-  await page.getByRole('option', { name: category }).click();
+  await filter.selectOption({ label: category });
   await expect(page.locator('.stock-card').filter({ hasText: material })).toBeVisible();
   await expect(page.locator('.stock-view-title')).toContainText('1 produto(s) neste filtro');
-  await filter.click();
-  await page.getByRole('option', { name: 'Todos os materiais' }).click();
+  await filter.selectOption('');
   await expect(page.locator('.stock-view-title')).toContainText('produto(s) neste filtro');
 });
 
