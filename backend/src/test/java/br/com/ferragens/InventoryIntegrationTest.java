@@ -4,6 +4,10 @@ import br.com.ferragens.auth.CurrentActorService.Actor;
 import br.com.ferragens.inventory.InventoryModels.*;
 import br.com.ferragens.inventory.InventoryService;
 import br.com.ferragens.product.ProductService;
+import br.com.ferragens.product.ProductRequest;
+import br.com.ferragens.commerce.ReportingService;
+import br.com.ferragens.commerce.FinanceService;
+import org.springframework.data.domain.PageRequest;
 import br.com.ferragens.shared.BusinessRuleException;
 import br.com.ferragens.shared.ConflictException;
 import org.junit.jupiter.api.BeforeEach;
@@ -38,6 +42,8 @@ class InventoryIntegrationTest {
 
     @Autowired InventoryService inventory;
     @Autowired ProductService productService;
+    @Autowired ReportingService reporting;
+    @Autowired FinanceService finance;
     @Autowired JdbcTemplate jdbc;
     private UUID product;
     private Actor actor;
@@ -81,6 +87,33 @@ class InventoryIntegrationTest {
                 .isZero();
         assertThat(inventory.balances(actor, LOCATION, name, false, false, 0, 20,
                 null).totalElements()).isEqualTo(1);
+    }
+
+    @Test
+    void productBrandCanBeSavedAndFilteredWithoutChangingOtherProducts() {
+        String label = "Parafuso marca " + UUID.randomUUID().toString().substring(0, 8);
+        String brand = "Marca " + UUID.randomUUID().toString().substring(0, 8);
+        var product = productService.create(new ProductRequest(null, label, null, null,
+                "UN", new BigDecimal("4.50"), new BigDecimal("9.00"), brand));
+        assertThat(product.brand()).isEqualTo(brand);
+        assertThat(productService.search(label, true, null, brand, false, PageRequest.of(0,20))
+                .getTotalElements()).isEqualTo(1);
+        assertThat(productService.search(label, true, null, "Marca inexistente", false, PageRequest.of(0,20))
+                .getTotalElements()).isZero();
+        assertThat(productService.search(label, true, null, brand, true, PageRequest.of(0,20))
+                .getTotalElements()).isZero();
+    }
+
+    @Test
+    void reportingExplainsGrossProfitAndInventoryValuationWithoutSales() {
+        var report = reporting.report(actor, br.com.ferragens.commerce.Db.today().minusDays(6),
+                br.com.ferragens.commerce.Db.today());
+        assertThat(report).containsKeys("grossProfit", "grossMarginPercent", "goodsCost",
+                "stockCostValue", "previousRevenue", "dormantProducts");
+        assertThat(new BigDecimal(report.get("goodsCost").toString())).isZero();
+        var overview = finance.summary(actor);
+        assertThat(overview).containsKeys("receivables", "payables",
+                "overdueReceivables", "overduePayables");
     }
 
     @Test
