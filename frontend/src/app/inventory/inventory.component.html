@@ -137,7 +137,17 @@
     </section>
   }
 
-  <section class="data-section" aria-label="Saldos do estoque">
+  <div class="stock-view-bar">
+    <div><strong>Materiais no estoque</strong><span>{{ total() }} produto(s) neste filtro</span></div>
+    <div class="stock-view-switch" role="group" aria-label="Forma de exibir estoque">
+      <button type="button" [attr.aria-pressed]="viewMode() === 'cards'"
+        [class.selected]="viewMode() === 'cards'" (click)="viewMode.set('cards')">▦ Quadradinhos</button>
+      <button type="button" [attr.aria-pressed]="viewMode() === 'list'"
+        [class.selected]="viewMode() === 'list'" (click)="viewMode.set('list')">☷ Lista</button>
+    </div>
+  </div>
+  <section class="data-section" aria-label="Saldos do estoque"
+    [class.mode-cards]="viewMode() === 'cards'" [class.mode-list]="viewMode() === 'list'">
     @if (loading()) {
       <mat-progress-bar mode="indeterminate" />
     }
@@ -200,6 +210,7 @@
     <div class="mobile-stock-cards" aria-label="Produtos e quantidades">
       @for (row of rows(); track row.productId) {
         <article class="stock-card">
+          <app-product-photo class="stock-card-photo" [id]="row.productId" [alt]="row.name" />
           <div class="stock-card-header"><div><strong>{{ row.name }}</strong>
             <small>{{ row.unit }}{{ row.active ? '' : ' · Inativo' }}</small></div>
             <span class="status" [class.low]="row.status !== 'NORMAL'">{{ status(row.status) }}</span>

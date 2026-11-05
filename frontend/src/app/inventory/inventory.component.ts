@@ -10,6 +10,7 @@ import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { finalize, Subject, debounceTime, distinctUntilChanged } from 'rxjs';
 import { AuthService } from '../auth/auth.service';
 import { ActivatedRoute, RouterLink } from '@angular/router';
+import { ProductPhotoComponent } from '../products/product-photo.component';
 import { A11yModule } from '@angular/cdk/a11y';
 import {
   InventoryApi,
@@ -27,6 +28,7 @@ import {
     ReactiveFormsModule,
     A11yModule,
     RouterLink,
+    ProductPhotoComponent,
     MatButtonModule,
     MatCheckboxModule,
     MatFormFieldModule,
@@ -67,6 +69,7 @@ export class InventoryComponent implements OnInit {
   readonly historyProduct = signal<InventoryBalance | null>(null);
   readonly reverse = signal<InventoryMovement | null>(null);
   readonly formOpen = signal(false);
+  readonly viewMode = signal<'cards'|'list'>('cards');
   readonly onlyLow = signal(false);
   readonly includeInactive = signal(false);
   readonly query = signal('');
