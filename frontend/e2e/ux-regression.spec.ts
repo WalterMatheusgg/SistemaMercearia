@@ -33,6 +33,39 @@ test('categorias e unidades são gerenciadas em Produtos, não em Configuraçõe
   await expect(page.locator('.references-panel')).toHaveCount(0);
 });
 
+test('categoria criada no cadastro aparece nas listas e filtra o estoque', async ({ page }) => {
+  await signIn(page);
+  await page.goto('/admin/products');
+  await page.getByRole('button', { name: /Novo produto/ }).click();
+  const form = page.getByRole('dialog', { name: 'Novo produto' });
+  const material = 'Parafuso E2E ' + randomUUID().slice(0, 8);
+  const category = 'Ferragens E2E ' + randomUUID().slice(0, 8);
+  await form.getByLabel('Nome do produto (opcional)').fill(material);
+  await expect(form).toContainText('Sugestão pelo nome: Fixação');
+
+  const inline = form.locator('#inlineCategoryName');
+  await inline.fill(category);
+  await form.getByRole('button', { name: 'Criar', exact: true }).click();
+  await expect(form.getByRole('status')).toContainText('Categoria criada e selecionada');
+  await expect(form.getByRole('combobox', { name: 'Categoria (opcional)' })).toContainText(category);
+
+  await form.getByRole('button', { name: 'Cadastrar produto' }).click();
+  await expect(page.getByRole('status')).toContainText('Produto cadastrado');
+  const panel = page.locator('.references-panel');
+  await panel.locator('summary').click();
+  await expect(panel.locator('.reference-tags').first()).toContainText(category);
+
+  await page.goto('/admin/inventory');
+  const filter = page.getByRole('combobox', { name: 'Categoria do estoque' });
+  await filter.click();
+  await page.getByRole('option', { name: category }).click();
+  await expect(page.locator('.stock-card').filter({ hasText: material })).toBeVisible();
+  await expect(page.locator('.stock-view-title')).toContainText('1 produto(s) neste filtro');
+  await filter.click();
+  await page.getByRole('option', { name: 'Todos os materiais' }).click();
+  await expect(page.locator('.stock-view-title')).toContainText('produto(s) neste filtro');
+});
+
 test('foto do produto: câmera, dispositivo, busca e validação do arquivo', async ({ page }) => {
   await signIn(page);
   await page.goto('/admin/products');
