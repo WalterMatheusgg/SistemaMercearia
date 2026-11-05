@@ -290,3 +290,21 @@ tbody tr:hover { background: #f6faf9; }
 .empty { padding: 30px 17px; background: #f8fafb; border: 1px dashed #d7e5e7; border-radius: 12px; line-height: 1.6; }
 .pagination { color: var(--ink-soft); font-size: 13px; }
 @media(max-width:650px) { .panel { padding: 17px; border-radius: 13px; } .card { padding: 15px; } .page > header { gap: 16px; } .page > header h1 { font-size: 27px; } .scroll { overflow-x: auto; } table { min-width: 480px; } .actions > button { min-width: 0; } }
+
+/* Comportamento visual unificado dos formulários, cartões e histórico */
+.page > header h1{color:#143d32}
+.page > header small{color:#6c8279}
+.panel,.card{border-color:#dce9e1;box-shadow:0 7px 22px #11402b0b}
+input,select,textarea{border-color:#cfdfd5;color:#214235}
+button.primary,.button.primary{background:#215f49;border-color:#215f49}
+button.primary:hover:not(:disabled),.button.primary:hover{background:#174b3a;border-color:#174b3a}
+tbody tr:hover{background:#f0f8f2}
+thead{background:#f1f7f2}
+th{color:#557366}
+td{color:#213f35}
+.settings-page .legacy-config{background:#f8fbf8;border:1px solid #e2eee5;border-radius:12px;padding:15px;margin-top:19px}
+.settings-page .legacy-config summary,.settings-page .settings-audit summary{cursor:pointer;color:#24704f;font-weight:800;font-size:13px}
+.settings-page .legacy-config>p{color:#758c7d;font-size:12px}
+.settings-page .legacy-config .grid{margin-top:13px}
+.settings-page .settings-audit>p{font-size:12px;margin:15px 0}
+@media(prefers-reduced-motion:reduce){button,.button,input,select,textarea{transition:none}}

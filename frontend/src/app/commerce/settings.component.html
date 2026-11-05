@@ -1,98 +1,71 @@
-<section class="page">
+<section class="page settings-page">
   <header>
     <div>
       <p class="eyebrow">ADMINISTRAÇÃO</p>
-      <h1>Dados da loja e auditoria</h1>
+      <h1>Dados da loja</h1>
+      <small>Nome, telefone e endereço do negócio.</small>
     </div>
   </header>
   <app-action-status [action]="action" />
-  @if (error()) {
-    <p class="note error" role="alert">{{ error() }}</p>
-  }
+  @if (error()) { <p class="note error" role="alert">{{ error() }}</p> }
   @if (loaded()) {
     <section class="panel">
-      <h2>Dados da loja</h2>
+      <h2>Informações principais</h2>
       <form (ngSubmit)="save()" #settingsForm="ngForm">
         <fieldset [disabled]="action.locked()">
           <div class="grid">
-            <label
-              >Nome da loja<input
-                name="name"
-                [(ngModel)]="form.name"
-                required
-                maxlength="160" /></label
-            ><label>Telefone<input name="phone" [(ngModel)]="form.phone" maxlength="40" /></label
-            ><label
-              >Endereço<textarea
-                name="address"
-                [(ngModel)]="form.address"
-                maxlength="500"
-              ></textarea></label
+            <label>Nome da loja
+              <input name="name" [(ngModel)]="form.name" required maxlength="160" placeholder="Nome do estabelecimento"/>
+            </label>
+            <label>Telefone
+              <input name="phone" [(ngModel)]="form.phone" maxlength="40" placeholder="Telefone de contato"/>
+            </label>
+            <label class="wide">Endereço
+              <textarea name="address" [(ngModel)]="form.address" maxlength="500" rows="2"
+                placeholder="Endereço da loja"></textarea>
+            </label>
           </div>
           <details class="legacy-config">
-            <summary>Configurações antigas de entregas e vendas online</summary>
-            <p>Essas opções são mantidas para preservar dados legados, mas não fazem parte do controle interno.</p>
+            <summary>Opções antigas de entrega e pedidos online</summary>
+            <p>Essas configurações permanecem disponíveis para preservar o histórico,
+              mas não são necessárias no controle interno.</p>
             <div class="grid">
-              <label class="inline"><input name="delivery" type="checkbox" [(ngModel)]="form.deliveryEnabled" />Permitir
-              entrega</label
-            ><label
-              >Taxa fixa de entrega<input
-                name="fee"
-                [(ngModel)]="form.deliveryFee"
-                required
-                pattern="[0-9]+([.,][0-9]{1,2})?" /></label
-            ><label
-              >Validade da reserva online (minutos)<input
-                name="reservation"
-                type="number"
-                [(ngModel)]="form.reservationMinutes"
-                required
-                min="15"
-                max="10080"
-                step="1" /></label
-            ><label class="wide"
-              >Instruções de pagamento publicadas para o cliente<textarea
-                name="payment"
-                [(ngModel)]="form.paymentInstructions"
-                required
-                maxlength="1000"
-              ></textarea>
-            </label>
+              <label class="inline">
+                <input name="delivery" type="checkbox" [(ngModel)]="form.deliveryEnabled" />
+                Permitir entrega
+              </label>
+              <label>Taxa de entrega
+                <input name="fee" [(ngModel)]="form.deliveryFee"
+                  required pattern="[0-9]+([.,][0-9]{1,2})?" />
+              </label>
+              <label>Reserva online (minutos)
+                <input name="reservation" type="number" [(ngModel)]="form.reservationMinutes"
+                  required min="15" max="10080" step="1" />
+              </label>
+              <label class="wide">Instruções antigas de pagamento
+                <textarea name="payment" [(ngModel)]="form.paymentInstructions"
+                  required maxlength="1000" rows="2"></textarea>
+              </label>
             </div>
           </details>
-          <p class="muted">
-            O site não confirma Pix/cartão automaticamente. Cadastre instruções verdadeiras para
-            pagamento fora do sistema e confira o recebimento antes de confirmar o pedido.
-          </p>
-          <button class="primary gap" [disabled]="settingsForm.invalid">
-            Salvar configurações
+          <button class="primary gap" type="submit" [disabled]="settingsForm.invalid">
+            Salvar dados da loja
           </button>
         </fieldset>
       </form>
     </section>
   }
-  <section class="panel">
-    <h2>Histórico administrativo</h2>
+  <details class="panel settings-audit">
+    <summary>Histórico administrativo</summary>
+    <p class="muted">Alterações feitas por pessoas autorizadas, com data e responsável.</p>
     <div class="scroll">
       <table>
-        <thead>
-          <tr>
-            <th>Data</th>
-            <th>Responsável</th>
-            <th>Evento</th>
-            <th>Descrição / referência</th>
-          </tr>
-        </thead>
+        <thead><tr><th>Data</th><th>Responsável</th><th>Evento</th><th>Descrição</th></tr></thead>
         <tbody>
           @for (event of audit(); track event.id) {
-            <tr>
-              <td>{{ date(event['occurredAt']) }}</td>
-              <td>{{ event['actorName'] }}</td>
+            <tr><td>{{ date(event['occurredAt']) }}</td><td>{{ event['actorName'] }}</td>
               <td>{{ event['eventType'] }}</td>
-              <td>
-                {{ event['detail'] }}<small>{{ event['entityId'] }}</small>
-              </td>
-            </tr>
+              <td>{{ event['detail'] }}</td></tr>
           }
         </tbody>
       </table>
@@ -100,11 +73,9 @@
     <div class="pagination">
       <span>{{ total }} eventos · Página {{ page + 1 }}</span>
       <div>
-        <button [disabled]="page === 0" (click)="page = page - 1; loadAudit()">Anterior</button
-        ><button [disabled]="(page + 1) * 30 >= total" (click)="page = page + 1; loadAudit()">
-          Próxima
-        </button>
+        <button type="button" [disabled]="page===0" (click)="page=page-1;loadAudit()">Anterior</button>
+        <button type="button" [disabled]="(page+1)*30>=total" (click)="page=page+1;loadAudit()">Próxima</button>
       </div>
     </div>
-  </section>
+  </details>
 </section>
