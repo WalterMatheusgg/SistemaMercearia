@@ -34,7 +34,7 @@ class AccountsIntegrationTest {
     @Autowired PasswordEncoder encoder;
     @LocalServerPort int port;
     Actor owner;
-    String username, password = "password-for-account-tests";
+    String username, password = "password-for-account-tests1";
 
     @BeforeEach
     void fixture() {

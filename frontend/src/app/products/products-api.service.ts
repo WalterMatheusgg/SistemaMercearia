@@ -4,6 +4,7 @@ import { Observable } from 'rxjs';
 
 export interface Product {
   id: string;
+  code: string;
   name: string;
   description: string | null;
   categoryId: string;
