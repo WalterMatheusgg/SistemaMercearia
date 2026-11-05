@@ -143,15 +143,16 @@
         <strong>Materiais no estoque</strong>
         <span>{{ total() }} produto(s) neste filtro</span>
       </div>
-      <mat-form-field appearance="outline" class="stock-category-filter">
-        <mat-label>Categoria do estoque</mat-label>
-        <mat-select [value]="categoryId()" (selectionChange)="setCategory($event.value)">
-          <mat-option value="">Todos os materiais</mat-option>
+      <label class="stock-category-filter">
+        <span>Categoria do estoque</span>
+        <select [value]="categoryId()" aria-label="Categoria do estoque"
+          (change)="setCategory($any($event.target).value)">
+          <option value="">Todos os materiais</option>
           @for (category of categories(); track category.id) {
-            <mat-option [value]="category.id">{{ category.name }}</mat-option>
+            <option [value]="category.id">{{ category.name }}</option>
           }
-        </mat-select>
-      </mat-form-field>
+        </select>
+      </label>
     </div>
     <div class="stock-view-switch" role="group" aria-label="Forma de exibir estoque">
       <button type="button" [attr.aria-pressed]="viewMode() === 'cards'"
