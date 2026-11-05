@@ -4,6 +4,7 @@ import { Observable } from 'rxjs';
 
 export type MovementKind = 'INITIAL' | 'ENTRY' | 'EXIT' | 'LOSS' | 'COUNT' | 'MINIMUM' | 'REVERSAL';
 export interface InventoryLocation { id: string; name: string; }
+export interface InventoryCategory { id: string; name: string; }
 export interface InventoryBalance {
   productId: string; locationId: string; code: string; name: string; unit: string;
   quantityScale: number; quantityStep: string; physical: string; reserved: string;
@@ -30,9 +31,15 @@ export class InventoryApi {
     return this.http.get<InventoryLocation[]>('/api/admin/inventory/locations');
   }
 
-  balances(locationId: string, query: string, onlyLow: boolean, includeInactive: boolean, page: number): Observable<InventoryPage<InventoryBalance>> {
-    const params = new HttpParams().set('locationId', locationId).set('query', query)
+  categories(): Observable<InventoryCategory[]> {
+    return this.http.get<InventoryCategory[]>('/api/admin/inventory/categories');
+  }
+
+  balances(locationId: string, query: string, onlyLow: boolean, includeInactive: boolean,
+    page: number, categoryId = ''): Observable<InventoryPage<InventoryBalance>> {
+    let params = new HttpParams().set('locationId', locationId).set('query', query)
       .set('onlyLow', onlyLow).set('includeInactive', includeInactive).set('page', page).set('size', 20);
+    if (categoryId) params = params.set('categoryId', categoryId);
     return this.http.get<InventoryPage<InventoryBalance>>('/api/admin/inventory/balances', { params });
   }
 
