@@ -53,7 +53,7 @@ describe('Cadastro simples de produtos', () => {
       baseUnitCode: 'UN', cost: '5.00', price: '12.90',
     }, '0', image);
   });
-  it('permite nome/categoria/valores vazios, exigindo apenas uma foto', () => {
+  it('permite cadastrar sem nome, categoria, preço, custo, quantidade ou foto', () => {
     api.createComplete.mockReturnValue(of(product));
     const fixture = TestBed.createComponent(ProductListComponent);
     fixture.detectChanges();
@@ -61,13 +61,10 @@ describe('Cadastro simples de produtos', () => {
     component.startCreate();
     expect(component.form.valid).toBe(true);
     component.save();
-    expect(component.formError()).toContain('foto');
-    const image = new File([new Uint8Array([137,80,78,71])], 'item.png', {type: 'image/png'});
-    component.selectedPhoto=image;
-    component.save();
+    expect(component.formError()).toBe('');
     expect(api.createComplete).toHaveBeenCalledWith(expect.objectContaining({
       name: '', categoryId: null, baseUnitCode: '', cost: '0.00', price: '0.00',
-    }), '0', image);
+    }), '0', undefined);
   });
   it('aceita quantidade inicial inteira ou decimal sem rejeitar números válidos', () => {
     const fixture = TestBed.createComponent(ProductListComponent);
