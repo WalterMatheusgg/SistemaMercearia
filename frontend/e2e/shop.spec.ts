@@ -169,13 +169,20 @@ test('controle abre no login, identifica cada aba e oculta vitrine', async ({ pa
   await expect(page.getByRole('link', { name: 'Produtos', exact: true })).toBeVisible();
   await page.goto('/admin/products');
   await expect(page).toHaveTitle('Produtos | Loja');
-  await expect(page.getByRole('heading', { name: /Seus produtos/ })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Produtos' })).toBeVisible();
   await expect(page.getByText('Código', { exact: true })).toHaveCount(0);
   await page.goto('/admin/inventory');
   await expect(page).toHaveTitle('Estoque | Loja');
   await page.goto('/admin/sales');
   await expect(page).toHaveTitle('Vendas e pedidos | Loja');
 });
+
+
+async function uploadDemoPhoto(dialog: import('@playwright/test').Locator) {
+  const png = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVQIHWP4//8/AwAI/AL+XoSMAAAAAElFTkSuQmCC', 'base64');
+  await dialog.locator('input[type="file"][aria-label="Selecionar foto do dispositivo"]')
+    .setInputFiles({ name: 'foto-teste.png', mimeType: 'image/png', buffer: png });
+}
 
 test('cadastro rápido permite criar e editar sem código manual', async ({ page }) => {
   await login(page);
@@ -186,8 +193,10 @@ test('cadastro rápido permite criar e editar sem código manual', async ({ page
   await expect(editor.getByLabel('Código')).toHaveCount(0);
   await editor.getByLabel('Nome do produto (opcional)').fill(name);
   await editor.getByLabel('Preço de referência (R$) — opcional').fill('9,50');
+  await editor.getByLabel('Quantidade inicial em estoque (opcional)').fill('8');
+  await uploadDemoPhoto(editor);
   await editor.getByRole('button', { name: 'Cadastrar produto' }).click();
-  await expect(page.locator('.success-notice')).toContainText('Produto cadastrado');
+  await expect(page.locator('.success-notice')).toContainText('Produto e foto cadastrados');
   const search = page.getByRole('searchbox', { name: 'Buscar produto' });
   await search.fill(name);
   const row = page.locator('tr').filter({ hasText: name });
@@ -204,6 +213,9 @@ test('cadastro de produto sem preencher nenhum campo gera um material provisóri
   await page.getByRole('button', { name: /Novo produto/ }).click();
   const form = page.getByRole('dialog', { name: 'Novo produto' });
   await expect(form.getByLabel('Nome do produto (opcional)')).toHaveCount(1);
+  await form.getByRole('button', { name: 'Cadastrar produto' }).click();
+  await expect(form.getByRole('alert')).toContainText('foto');
+  await uploadDemoPhoto(form);
   await form.getByRole('button', { name: 'Cadastrar produto' }).click();
   await expect(page.locator('.success-notice')).toContainText('Material sem nome');
   await expect(page.locator('.product-form')).toHaveCount(0);
@@ -249,4 +261,16 @@ test('financeiro e relatórios oferecem filtros simples', async ({ page }) => {
   await page.goto('/admin/reports');
   await page.getByRole('button', { name: '7 dias' }).click();
   await expect(page.getByRole('heading', { name: 'Vendas por dia' })).toBeVisible();
+});
+
+test('estoque alterna entre quadradinhos e lista', async ({ page }) => {
+  await login(page);
+  await page.goto('/admin/inventory');
+  const cards = page.getByRole('button', { name: '▦ Quadradinhos' });
+  const list = page.getByRole('button', { name: '☷ Lista' });
+  await expect(cards).toHaveAttribute('aria-pressed','true');
+  await list.click();
+  await expect(list).toHaveAttribute('aria-pressed','true');
+  await cards.click();
+  await expect(cards).toHaveAttribute('aria-pressed','true');
 });
