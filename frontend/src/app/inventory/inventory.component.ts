@@ -48,6 +48,7 @@ export class InventoryComponent implements OnInit {
   private readonly route = inject(ActivatedRoute);
   private readonly typedSearch = new Subject<string>();
   private balanceRequest = 0;
+  private shortcutPending = false;
   private historyRequest = 0;
   private operationKey = '';
   private submitted: MovementCommand | null = null;
@@ -116,6 +117,7 @@ export class InventoryComponent implements OnInit {
     this.typedSearch.pipe(debounceTime(240), distinctUntilChanged(),
       takeUntilDestroyed(this.destroyRef)).subscribe(value => this.search(value));
     this.query.set(this.route.snapshot.queryParamMap.get('produto')?.trim() ?? '');
+    this.shortcutPending = this.route.snapshot.queryParamMap.get('acao') === 'entrada';
     this.api
       .locations()
       .pipe(takeUntilDestroyed(this.destroyRef))
@@ -189,6 +191,14 @@ export class InventoryComponent implements OnInit {
           this.rows.set(result.content);
           this.total.set(result.totalElements);
           this.loading.set(false);
+          if (this.shortcutPending && this.canWrite()) {
+            const target = result.content.find(row =>
+              row.name.toLocaleLowerCase('pt-BR') === this.query().toLocaleLowerCase('pt-BR'));
+            if (target) {
+              this.shortcutPending = false;
+              this.open(target, 'ENTRY');
+            }
+          }
           const updated = result.content.find(
             (row) => row.productId === this.historyProduct()?.productId,
           );
