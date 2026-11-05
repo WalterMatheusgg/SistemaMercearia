@@ -39,7 +39,7 @@ public class FinanceService {
     public Map<String, Object> list(Actor actor, String direction, String status, int page) {
         String where =
                 " FROM financial_account a LEFT JOIN party p ON p.id=a.party_id WHERE a.store_id=?"
-                        + " AND (?='' OR a.direction=?) AND (?='' OR a.status=?)";
+                        + " AND (?='' OR a.direction=?) AND (?='' OR a.status = ANY(string_to_array(?, ',')))";
         return db.page(
                 "SELECT a.*,p.name AS party_name"
                         + where
