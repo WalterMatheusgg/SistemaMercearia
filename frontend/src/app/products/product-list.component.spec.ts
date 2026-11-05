@@ -1,9 +1,11 @@
 import { TestBed } from '@angular/core/testing';
+import { signal } from '@angular/core';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { of, throwError } from 'rxjs';
 import { appConfig } from '../app.config';
 import { ProductListComponent } from './product-list.component';
 import { Product, ProductsApi } from './products-api.service';
+import { AuthService } from '../auth/auth.service';
 
 const product: Product = {
   id: 'product-1', code: 'FUR-001', name: 'Furadeira', description: null,
@@ -25,7 +27,9 @@ describe('Cadastro simples de produtos', () => {
     api.suggestCategory.mockReturnValue(of({code:'category-1',name:'Ferramentas'}));
     await TestBed.configureTestingModule({
       imports: [ProductListComponent],
-      providers: [...appConfig.providers, provideHttpClientTesting(), { provide: ProductsApi, useValue: api }],
+      providers: [...appConfig.providers, provideHttpClientTesting(),
+        { provide: ProductsApi, useValue: api },
+        { provide: AuthService, useValue: { currentUser: signal({username:'dono',roles:['OWNER']}) } }],
     }).compileComponents();
   });
   it('mostra os preços e não exige nem exibe código', async () => {
