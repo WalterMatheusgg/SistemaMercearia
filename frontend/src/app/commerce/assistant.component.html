@@ -8,6 +8,41 @@
     <strong>{{ summary()?.aiEnabled ? 'IA externa conectada' : 'Consulta local disponível' }}</strong>
     <span>O assistente respeita o acesso de cada usuário. Perguntas não alteram produtos, estoque nem dinheiro.</span>
   </div>
+  @if (suggestions().length > 0) {
+    <section class="assistant-suggestions" aria-label="Sugestões de melhoria">
+      <div class="suggestion-heading"><div><p class="eyebrow">RECOMENDAÇÕES</p>
+        <h2>Sugestões com base na sua loja</h2></div>
+        <button type="button" (click)="refresh()">↻ Atualizar</button>
+      </div>
+      <div class="suggestion-cards">
+        @for (item of suggestions(); track item; let n=$index) {
+          <article><span>{{ n+1 }}</span><p>{{item}}</p></article>
+        }
+      </div>
+    </section>
+  }
+  @if (canDiagnose()) {
+    <section class="diagnostic-section">
+      <button type="button" class="diagnostic-toggle"
+        [class.has-errors]="(diagnostic()?.failures24h ?? 0) > 0"
+        (click)="openDiagnostics()" [attr.aria-expanded]="diagnosticsOpen()">
+        <span>Diagnóstico do sistema</span>
+        <strong>{{ diagnostic() ? diagnostic()!.failures24h + ' erro(s) HTTP 5xx nas últimas 24h' : 'Verificar falhas internas' }}</strong>
+        <span>{{diagnosticsOpen() ? '−' : '+'}}</span>
+      </button>
+      @if (diagnosticsOpen()) {
+        <div class="diagnostic-results">
+          <p>Somente administradores podem ver este histórico. Não são exibidos senhas ou corpos de requisição.</p>
+          @if (diagnosticError()) { <p role="alert">{{ diagnosticError() }}</p> }
+          @for (issue of diagnostic()?.recent ?? []; track $index) {
+            <div class="diagnostic-error"><strong>HTTP {{issue.httpStatus}} · {{issue.endpoint}}</strong>
+              <small>{{ issue.requestMethod }} · {{issue.occurredAt}}</small></div>
+          } @empty { <p>Nenhuma falha de servidor registrada.</p> }
+          <small>Este diagnóstico identifica respostas HTTP 5xx; não detecta automaticamente todos os erros de interface ou infraestrutura.</small>
+        </div>
+      }
+    </section>
+  }
   <div class="assistant-tabs" role="group" aria-label="Função do assistente">
     <button type="button" [class.active]="section() === 'ask'" [attr.aria-pressed]="section() === 'ask'"
       (click)="section.set('ask'); error.set('')">Fazer pergunta</button>
@@ -22,7 +57,7 @@
       <p class="eyebrow">PERGUNTAS SOBRE SEU NEGÓCIO</p><h2>O que você quer saber?</h2>
       <p>Os números são consultados no sistema e limitados às suas permissões.</p>
       <div class="suggestions">
-        @for (example of ['Quantos produtos tenho?', 'Como está o estoque?',
+        @for (example of ['Como posso melhorar meus cadastros?', 'Quantos produtos tenho?', 'Como está o estoque?',
           'Quais as últimas atividades?', 'Quanto tenho a pagar e a receber?']; track example) {
           <button type="button" [disabled]="busy()" (click)="ask(example)">{{ example }}</button>
         }
@@ -52,6 +87,10 @@
     <section class="assistant-panel">
       <p class="eyebrow">CADASTRO EM LOTE</p><h2>Importe até 200 materiais</h2>
       <p>Um por linha, sem código. Preço e custo são opcionais. Revise tudo antes de cadastrar.</p>
+      <div class="demo-products">
+        <div><strong>Quer testar com ferramentas?</strong><span>Prepara dez itens de exemplo com valores zerados. Nada é salvo sem sua confirmação.</span></div>
+        <button type="button" (click)="fillDemo()">Carregar exemplos de ferragens</button>
+      </div>
       <div class="import-example"><strong>Exemplo de lista</strong>
         <code>Parafuso 8 mm;2,50;1,20
 Bucha 6 mm;0,80
@@ -91,7 +130,7 @@ Luva soldável 25 mm</code>
             </div>
           }
         </div>
-        <p class="assistant-disclaimer">A confirmação cria cadastros, não movimenta estoque, não gera compras nem altera preços existentes. Nomes duplicados são ignorados.</p>
+        <p class="assistant-disclaimer">A confirmação cria cadastros, não movimenta estoque, não gera compras nem altera preços existentes. Nomes duplicados são ignorados. Itens importados sem foto aparecerão com imagem provisória e poderão receber uma foto em Produtos.</p>
         <button type="button" class="assistant-primary" [disabled]="submitting()" (click)="commit()">
           {{ submitting() ? 'Cadastrando...' : 'Confirmar cadastro de ' + preview().length + ' produtos' }}
         </button>

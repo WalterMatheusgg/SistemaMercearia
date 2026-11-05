@@ -2,6 +2,7 @@ import { Component, inject, signal } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
+import { AuthService } from '../auth/auth.service';
 
 interface Summary {
   aiEnabled: boolean;
@@ -11,6 +12,7 @@ interface Summary {
   openReceivables?: string;
   openPayables?: string;
 }
+interface Diagnostic { failures24h: number; recent: Array<{occurredAt:string;requestMethod:string;endpoint:string;httpStatus:number}>; note:string }
 interface Material { name: string; price: string | number; cost: string | number; unit: string }
 interface Preparation { items: Material[]; usedModel: boolean; note: string }
 interface ImportResult { total: number; created: number; skipped: number }
@@ -23,6 +25,11 @@ interface ImportResult { total: number; created: number; skipped: number }
 })
 export class AssistantComponent {
   private readonly http = inject(HttpClient);
+  private readonly auth = inject(AuthService);
+  readonly suggestions = signal<string[]>([]);
+  readonly diagnostic = signal<Diagnostic | null>(null);
+  readonly diagnosticError = signal('');
+  readonly diagnosticsOpen = signal(false);
   readonly summary = signal<Summary | null>(null);
   readonly answer = signal('');
   readonly preview = signal<Material[]>([]);
@@ -38,7 +45,34 @@ export class AssistantComponent {
   questionAi = false;
 
   constructor() { this.refresh(); }
+  canDiagnose(): boolean {
+    return this.auth.currentUser()?.roles.some(r => r === 'OWNER' || r === 'MANAGER') ?? false;
+  }
+  openDiagnostics(): void { this.diagnosticsOpen.update(value => !value); if (this.diagnosticsOpen()) this.loadDiagnostics(); }
+  loadDiagnostics(): void {
+    if (!this.canDiagnose()) return;
+    this.diagnosticError.set('');
+    this.http.get<Diagnostic>('/api/admin/assistant/diagnostics').subscribe({
+      next: result => this.diagnostic.set(result),
+      error: () => this.diagnosticError.set('Não foi possível consultar as falhas técnicas agora.'),
+    });
+  }
+  fillDemo(): void {
+    if (this.batch.trim() && !window.confirm('Substituir a lista atual pelos exemplos de ferragens?')) return;
+    this.batch = [
+      'Furadeira de impacto 650 W', 'Jogo de chaves de fenda com 6 peças',
+      'Martelo de unha 27 mm', 'Trena de aço 5 metros', 'Alicate universal 8 polegadas',
+      'Serrote profissional 20 polegadas', 'Nível de bolha 40 cm',
+      'Disco de corte inox 115 mm', 'Broca de aço rápido 6 mm',
+      'Caixa de parafusos sextavados 8 mm',
+    ].map(name => 'TESTE — ' + name + ';0;0').join('\n');
+    this.preview.set([]); this.error.set(''); this.success.set('Exemplos preparados. Revise e confirme apenas se quiser inseri-los na base.');
+  }
   refresh(): void {
+    this.http.get<{suggestions:string[]}>('/api/admin/assistant/insights').subscribe({
+      next: v=>this.suggestions.set(v.suggestions), error:()=>this.suggestions.set([]),
+    });
+    if (this.canDiagnose()) this.loadDiagnostics();
     this.http.get<Summary>('/api/admin/assistant/summary').subscribe({
       next: value => this.summary.set(value),
       error: () => this.error.set('Não foi possível consultar as informações do assistente.'),
