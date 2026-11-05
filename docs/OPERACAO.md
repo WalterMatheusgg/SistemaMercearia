@@ -5,15 +5,15 @@
 | Área | Operação |
 | --- | --- |
 | Acesso | Login/sessão/CSRF, contas de funcionários por papel, desativação com invalidação de sessão, cadastro de cliente, verificação de e-mail e recuperação por link de uso único |
-| Catálogo | Produtos, categorias, novas unidades com precisão, inativação e catálogo público sem custo interno |
-| Estoque | Saldo inicial, entrada/saída/perda, mínimo, contagem, histórico imutável, estorno manual e proteção contra saldo negativo |
+| Catálogo | Produtos, marca opcional, categorias, novas unidades com precisão, filtros e cadastros a revisar, inativação e catálogo público sem custo interno |
+| Estoque | Saldo inicial, entrada/saída/perda, mínimo, contagem, histórico imutável, estorno manual, proteção contra saldo negativo, acesso à edição pelo estoque e reposição sugerida até 2× o mínimo, sem criação automática de compras |
 | Pessoas | Clientes e fornecedores, contatos, inativação e histórico de documentos/contas vinculadas |
 | Venda | Balcão, orçamento com validade de 7 dias, confirmação, desconto autorizado, pagamentos divididos, venda a prazo e devolução integral |
 | Caixa | Um caixa físico por loja, abertura, suprimento, sangria, lançamentos em dinheiro e fechamento com diferença justificada e troco calculado no servidor |
 | Compras | Pedido ao fornecedor, recebimento parcial/completo, entrada física e contas a pagar apenas do material recebido e devolução integral de recebimentos |
 | Financeiro | Títulos avulsos e de origem comercial, pagamentos parciais, estorno e saldos sem duplicar faturamento |
 | Loja virtual | Catálogo, carrinho, cliente verificado, cálculo no servidor, reserva com expiração, pedido, conferência manual de pagamento, preparo e retirada/entrega |
-| Relatórios | Vendas por data, ticket, produtos, pagamentos por meio, posição de contas e exportação CSV |
+| Relatórios | Vendas por data, ticket, produtos, pagamentos por meio, posição de contas, custo histórico das mercadorias vendidas, lucro e margem brutos estimados, estoque físico avaliado a custo, comparativo de períodos e materiais sem vendas há 90 dias (com cadastro mais antigo que 90 dias), exportação CSV |
 | E-mail | Preferências por usuário, verificação do destinatário, outbox transacional, reenvios automáticos limitados e histórico; resumo às 21h de Brasília |
 | Operação | Docker integrado, perfil de produção, saúde, CI, testes de navegador, backup e restauração em banco separado |
 
