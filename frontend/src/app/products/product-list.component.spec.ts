@@ -1,4 +1,5 @@
 import { TestBed } from '@angular/core/testing';
+import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { of, throwError } from 'rxjs';
 import { appConfig } from '../app.config';
 import { ProductListComponent } from './product-list.component';
@@ -14,16 +15,17 @@ const product: Product = {
 describe('Cadastro simples de produtos', () => {
   const api = {
     list: vi.fn(), categories: vi.fn(), units: vi.fn(),
-    create: vi.fn(), update: vi.fn(), createComplete: vi.fn(), updateComplete: vi.fn(), deactivate: vi.fn(), reactivate: vi.fn(),
+    create: vi.fn(), update: vi.fn(), createComplete: vi.fn(), updateComplete: vi.fn(), deactivate: vi.fn(), reactivate: vi.fn(), suggestCategory: vi.fn(),
   };
   beforeEach(async () => {
     vi.resetAllMocks();
     api.list.mockReturnValue(of({ content: [product], page: 0, size: 20, totalElements: 1, totalPages: 1 }));
     api.categories.mockReturnValue(of([{ code: 'category-1', name: 'Ferramentas' }]));
     api.units.mockReturnValue(of([{ code: 'UN', name: 'Unidade' }]));
+    api.suggestCategory.mockReturnValue(of({code:'category-1',name:'Ferramentas'}));
     await TestBed.configureTestingModule({
       imports: [ProductListComponent],
-      providers: [...appConfig.providers, { provide: ProductsApi, useValue: api }],
+      providers: [...appConfig.providers, provideHttpClientTesting(), { provide: ProductsApi, useValue: api }],
     }).compileComponents();
   });
   it('mostra os preços e não exige nem exibe código', async () => {
@@ -90,6 +92,44 @@ describe('Cadastro simples de produtos', () => {
     expect(api.updateComplete).toHaveBeenCalledWith('product-1',
       expect.objectContaining({ price: '219.50', name: 'Furadeira' }), undefined);
   });
+  it('cria categoria dentro do editor e atualiza a lista sem recarregar a tela', () => {
+    const fixture = TestBed.createComponent(ProductListComponent); fixture.detectChanges();
+    const component = fixture.componentInstance;
+    component.startCreate();
+    const input = document.createElement('input'); input.value = 'Ferramentas elétricas';
+    component.createCategoryFromEditor(input);
+    expect(input.value).toBe('Ferramentas elétricas');
+    const http = TestBed.inject(HttpTestingController);
+    const create = http.expectOne('/api/admin/references/categories');
+    expect(create.request.method).toBe('POST');
+    create.flush({id:'category-new',name:'Ferramentas elétricas'});
+    expect(component.form.controls.categoryId.value).toBe('category-new');
+    expect(component.categories().some(c => c.code === 'category-new')).toBe(true);
+    expect(input.value).toBe('');
+    expect(component.referencesSuccess()).toContain('Categoria criada');
+    http.expectOne('/api/admin/categories').flush([
+      {code:'category-1',name:'Ferramentas'},
+      {code:'category-new',name:'Ferramentas elétricas'},
+    ]);
+    expect(component.categories()).toHaveLength(2);
+    http.verify();
+  });
+
+  it('mantém nome e mostra erro quando não consegue criar categoria', () => {
+    const fixture = TestBed.createComponent(ProductListComponent); fixture.detectChanges();
+    const component = fixture.componentInstance;
+    component.startCreate();
+    const input = document.createElement('input'); input.value = 'Categoria em teste';
+    component.createCategoryFromEditor(input);
+    const http = TestBed.inject(HttpTestingController);
+    http.expectOne('/api/admin/references/categories').flush(
+      {detail:'Categoria não autorizada'}, {status:403,statusText:'Forbidden'});
+    expect(input.value).toBe('Categoria em teste');
+    expect(component.referencesError()).toContain('não autorizada');
+    expect(component.addingCategory()).toBe(false);
+    http.verify();
+  });
+
   it('permite consultar inativos e reativar', () => {
     api.reactivate.mockReturnValue(of(product));
     const fixture = TestBed.createComponent(ProductListComponent);
