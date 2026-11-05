@@ -207,7 +207,7 @@ test('cadastro rápido permite criar e editar sem código manual', async ({ page
   // O navegador pode descartar o corpo da resposta ao atualizar a interface.
   // Verifique HTTP sem depender de Network.getResponseBody.
   expect(createResponse.status(), 'Cadastro completo deve retornar HTTP 201').toBe(201);
-  await expect(page.locator('.success-notice')).toContainText('Produto e foto cadastrados');
+  await expect(page.locator('.success-notice')).toContainText('Produto cadastrado');
   const search = page.getByRole('searchbox', { name: 'Buscar produto' });
   await search.fill(name);
   const row = page.locator('tr').filter({ hasText: name });
