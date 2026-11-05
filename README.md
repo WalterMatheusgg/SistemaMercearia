@@ -24,13 +24,13 @@ Instruções completas: [docs/CODESPACE.md](docs/CODESPACE.md). Conferência seg
 
 ## Navegação renovada
 
-A interface organiza as tarefas em **Estoque, Produtos, Fornecedores, Vendas, Dinheiro e Financeiro**, com acesso à área de Compras dentro de Estoque, sem perder históricos. A nova pesquisa universal abre com `Ctrl+K` (ou `⌘K` no macOS); o painel mostra indicadores reais e um resumo de reposição sob demanda.
+A interface organiza as tarefas em **Estoque, Produtos, Fornecedores, Vendas e Financeiro**, com acesso à área de Compras dentro de Estoque, sem perder históricos. Dentro do **Financeiro**, a aba Dinheiro físico permite entradas e retiradas sem abertura/fechamento manual. A nova pesquisa universal abre com `Ctrl+K` (ou `⌘K` no macOS); o painel mostra indicadores reais e ações rápidas para a operação.
 
-- **Produtos:** cadastro opcional, sem código exibido, com editor lateral e edição posterior. Não preencha nenhum campo para gerar um rascunho com nome provisório.
+- **Produtos:** foto obrigatória no cadastro manual, via câmera ou arquivo JPG/PNG/WebP de até 3 MB. Nome, categoria, unidade, preço e **quantidade inicial** podem ser preenchidos na mesma tela, sem código manual. O nome pode ficar vazio, gerando um material provisório. Categorias e unidades podem ser criadas dentro de Produtos.
 - **Vendas:** três partes — escolher itens, conferir total e confirmar. Abertura de caixa deixa de ser uma etapa do atendimento.
-- **Dinheiro:** entradas/retiradas e saldo físico registrado, sem exigir abertura/fechamento manual. Operações continuam auditadas.
-- **Financeiro:** pendências a pagar ou receber, com pagamento no detalhe. **Relatórios:** períodos rápidos, gráficos e exportação CSV.
-- **Assistente:** consultas locais com dados permitidos a cada perfil e **prévia de importação de até 200 materiais por lote**, com nomes duplicados ignorados. Cada importação precisa de confirmação.
+- **Estoque:** alternância entre cartões ilustrados e tabela, com preferência salva no navegador. Nos cartões, use Entrada, Saída, Histórico ou Mínimo. Movimentações exigem quantidade e motivo, e são auditadas.
+- **Financeiro:** duas abas — Contas e pagamentos / Dinheiro físico — para reunir registros sem duplicar o menu. **Relatórios:** períodos rápidos, gráficos e exportação CSV.
+- **Assistente:** consultas locais e recomendações sobre o estado real da loja; gestores visualizam falhas HTTP 5xx recentes sem dados sensíveis. Há **prévia de importação de até 200 materiais por lote**, com nomes duplicados ignorados e confirmação obrigatória. Os dez materiais de exemplo podem ser carregados manualmente e têm prefixo TESTE; **nada é inserido automaticamente**. Materiais importados em lote sem foto usam imagem provisória até receberem uma foto no editor.
 
 ### IA opcional dentro da Loja
 
@@ -120,7 +120,7 @@ O bootstrap local cria o administrador configurado no `.env`, vinculado ao papel
 
 ## Usar o estoque
 
-Após cadastrar um produto, abra **Estoque** no menu administrativo. O local principal é criado pela migração V2, sem saldo fictício. Registre um saldo inicial de 50 e uma saída manual de 15: o físico e o disponível passam a 35. Uma entrada posterior de 20 leva o saldo a 55. Toda operação exige um motivo e guarda responsável, instante e valores anteriores/posteriores.
+No cadastro de um produto novo, você já pode informar a quantidade inicial e enviar a fotografia; o sistema salva tudo na mesma transação. Para alterações posteriores, abra **Estoque**. O local principal é criado pela migração V2, sem saldo fictício. Registre um saldo inicial de 50 e uma saída manual de 15: o físico e o disponível passam a 35. Uma entrada posterior de 20 leva o saldo a 55. Toda operação exige um motivo e guarda responsável, instante e valores anteriores/posteriores.
 
 - `UN` aceita inteiros; `M` aceita incrementos de `0.01`; `KG` e `L`, de `0.001`. Quantidades via API são strings decimais, sem cálculo em ponto flutuante no navegador.
 - Dono/gerente/estoquista registram saldo inicial, entrada, saída, perda e mínimo. Contagem e estorno são restritos ao dono/gerente. Vendedor/caixa também têm consulta na interface e na API, sem botões de movimentação manual.

@@ -1,6 +1,6 @@
 # Loja — Interface e navegação
 
-A plataforma utiliza somente o nome **Loja** e opera como painel interno de ferragens, sem vitrine pública nem carrinho no fluxo principal. O título da aba do navegador identifica o módulo, como `Estoque | Loja`, `Dinheiro | Loja` e `Produtos | Loja`.
+A plataforma utiliza somente o nome **Loja** e opera como painel interno de ferragens, sem vitrine pública nem carrinho no fluxo principal. O título da aba do navegador identifica o módulo, como `Estoque | Loja`, `Financeiro | Loja` e `Produtos | Loja`.
 
 ## Atualizações
 
@@ -13,11 +13,11 @@ A plataforma utiliza somente o nome **Loja** e opera como painel interno de ferr
 
 ## Cadastro e operação
 
-No cadastro de produtos e contatos (clientes e fornecedores), **nenhum campo é obrigatório**. Se não informar nome, o sistema cria um nome provisório editável; produtos recebem categoria e unidade padrão e preços zerados. Os campos informados continuam sendo validados quanto a formato e limites.
+Nos contatos (clientes e fornecedores), nenhum campo de identificação é obrigatório. No cadastro manual de produtos, **a foto é obrigatória** (câmera ou arquivo, JPG/PNG/WebP até 3 MB); os demais campos são opcionais. Se não informar nome, o sistema cria um nome provisório editável; produtos recebem categoria e unidade padrão e preços zerados. Os campos informados continuam sendo validados quanto a formato e limites.
 
 O novo formulário de produtos não pede código. O backend gera um identificador técnico estável usado somente para integridade dos vínculos e histórico. Nome, categoria, unidade e preço de referência são campos de cadastro rápido; custo e observações ficam em opções adicionais. Produtos podem ser inativados e reativados. A edição não modifica códigos técnicos.
 
-O painel apresenta indicadores reais de produtos ativos, itens para reposição no local principal, vendas e valor confirmado no dia; cada cartão respeita as permissões. Busca e filtros permitem navegar sem menus extensos. As animações de fundo têm controle de pausa.
+O painel apresenta indicadores reais de produtos ativos, itens para reposição no local principal, vendas e valor confirmado no dia; cada cartão respeita as permissões. O menu lateral pode ser recolhido no computador e abre como gaveta no celular. A busca Ctrl+K permite chegar rapidamente aos módulos.
 
 A API histórica de clientes fica desabilitada por padrão com `CUSTOMER_PORTAL_ENABLED=false`, preservando os registros no PostgreSQL. A estrutura de checkout não foi apagada do banco.
 
@@ -58,11 +58,17 @@ Depois de entrar na porta 8080, abra **Usuários → Editar admin → Nova senha
 - Painel com elemento conectado animado discreto, opção de pausar movimento, indicador de atenção real e atalhos operacionais; sem dados simulados.
 - Atendimento em três etapas, com detalhes opcionais recolhidos e visibilidade do total antes de finalizar.
 - Dinheiro registrado automaticamente em sessão técnica ao movimentar: **sem precisar abrir ou fechar caixa** na rotina.
-- Financeiro reduzido a pendências, contas a pagar/receber e pagamentos; relatórios com períodos Hoje, 7 dias, Este mês, datas livres e visualização responsiva.
-- Assistente consulta dados reais restritos ao usuário. Para usar IA externa, é necessário configurar a chave e optar por enviá-los. Importação em lote de até 200 itens com prévia editável, confirmação e auditoria.
+- Financeiro concentra contas e pagamentos e o registro de dinheiro físico em abas da mesma página; relatórios têm períodos Hoje, 7 dias, Este mês, datas livres e visualização responsiva.
+- Assistente consulta dados reais restritos ao usuário, recomenda melhorias, exibe falhas internas HTTP 5xx para gestores e permite importar até 200 itens com prévia, confirmação e auditoria. Os exemplos pré-carregáveis têm o prefixo TESTE. Para IA externa, é necessário configurar a chave e optar explicitamente pelo envio de contexto autorizado.
 
 ## Preservação
 
 Nenhuma migração histórica do Flyway, saldo de estoque, pedido, conta, senha ou volume do PostgreSQL foi alterado por esta refatoração. O nome da loja comercial permanece configurável em **Loja e auditoria**, independentemente do nome do software.
 
 Para colocar a operação na internet, consulte [HOSPEDAGEM.md](HOSPEDAGEM.md). Pagamentos e emissão fiscal automáticos ainda exigem integrações externas.
+
+## Fluxo de fotos e quantidade inicial
+
+O cadastro manual cria um produto e sua foto em uma única transação, registrando a quantidade inicial no livro de movimentações quando informada. Se uma das etapas falhar, não há cadastro parcial. Fotos são armazenadas no PostgreSQL em tabela própria, protegidas pela autenticação; SVG, URL externa e arquivo maior que 3 MB não são aceitos. A busca do Google abre uma pesquisa externa: escolha e salve apenas imagens que tenha permissão para usar. Materiais importados anteriormente ou por lote podem não ter foto e exibem uma ilustração até a atualização.
+
+Não é possível fazer o assistente detectar todos os problemas do navegador sem um sistema de telemetria adicional. Os avisos cobrem respostas HTTP 5xx do backend e não enviam alertas por e-mail automaticamente.
