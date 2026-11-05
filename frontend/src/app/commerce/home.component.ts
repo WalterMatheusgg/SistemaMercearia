@@ -22,6 +22,7 @@ export class HomeComponent {
   readonly todaySales = signal<number | null>(null);
   readonly todayRevenue = signal<string | null>(null);
   readonly lastUpdated = signal('');
+  readonly todayLabel = new Intl.DateTimeFormat('pt-BR', { weekday: 'long', day: 'numeric', month: 'long', timeZone: 'America/Sao_Paulo' }).format(new Date());
   readonly filteredLinks = computed(() => {
     const search = this.searchTerm().toLocaleLowerCase('pt-BR');
     const group = this.activeGroup();
@@ -66,7 +67,9 @@ export class HomeComponent {
   }
 
   private todayLocal(): string {
-    return new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Sao_Paulo', year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date());
+    const parts = new Intl.DateTimeFormat('en-US', { timeZone: 'America/Sao_Paulo', year: 'numeric', month: '2-digit', day: '2-digit' }).formatToParts(new Date());
+    const part = (type: string) => parts.find((p) => p.type === type)!.value;
+    return part('year') + '-' + part('month') + '-' + part('day');
   }
 
   formattedRevenue(): string {
