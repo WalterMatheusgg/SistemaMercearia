@@ -1,4 +1,5 @@
 import { Component, inject, signal } from '@angular/core';
+import { ActivatedRoute, RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { CashComponent } from './cash.component';
 import { AuthService } from '../auth/auth.service';
@@ -7,18 +8,20 @@ import { ActionStatusComponent } from './action-status.component';
 import { Row, Page, createAction, money, date, label, decimal, detail, today } from './ui';
 @Component({
   standalone: true,
-  imports: [FormsModule, CashComponent, ActionStatusComponent],
+  imports: [FormsModule, RouterLink, CashComponent, ActionStatusComponent],
   templateUrl: './finance.component.html',
   styleUrls: ['./ui.scss','./finance.component.scss'],
 })
 export class FinanceComponent {
   private readonly http = inject(HttpClient);
   private readonly auth = inject(AuthService);
+  private readonly route = inject(ActivatedRoute);
   canSeeMoney(): boolean {
     return this.auth.currentUser()?.roles.some(r=>['OWNER','MANAGER'].includes(r)) ?? false;
   }
   readonly action = createAction();
   readonly rows = signal<Row[]>([]);
+  readonly summary = signal<Record<string,string|number> | null>(null);
   readonly section = signal<'accounts'|'cash'>('accounts');
   readonly filter = signal<'pending'|'receivable'|'payable'|'finished'|'all'>('pending');
   private requested = 0;
@@ -49,9 +52,20 @@ export class FinanceComponent {
   payment = { method: 'PIX', amount: '', note: '' };
   reason = '';
   constructor() {
-    this.load();
+    const initial = this.route.snapshot.queryParamMap.get('view');
+    if (['receivable','payable','finished','all'].includes(initial ?? '')) {
+      this.switchFilter(initial as 'receivable'|'payable'|'finished'|'all');
+    } else this.load();
+  }
+
+  loadSummary(): void {
+    this.http.get<Record<string,string|number>>('/api/admin/finance/summary').subscribe({
+      next: result => this.summary.set(result),
+      error: () => this.summary.set(null),
+    });
   }
   load() {
+    this.loadSummary();
     const request = ++this.requested;
     this.error.set('');
     this.http
