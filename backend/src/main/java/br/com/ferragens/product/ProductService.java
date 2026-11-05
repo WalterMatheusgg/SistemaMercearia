@@ -270,7 +270,7 @@ public class ProductService {
     private static final List<CategoryRule> CATEGORY_RULES = List.of(
             new CategoryRule(List.of("furadeira", "parafusadeira", "esmerilhadeira", "lixadeira",
                     "martelete", "serra circular", "politriz", "soprador termico", "tupia"),
-                    List.of("ferramenta eletr", "eletroportatil", "ferramenta a bateria")),
+                    List.of("ferramentas eletr", "ferramenta eletr", "eletroportatil", "ferramenta a bateria")),
             new CategoryRule(List.of("parafuso", "porca", "arruela", "bucha", "prego",
                     "rebite", "chumbador", "barra roscada"),
                     List.of("fixacao", "parafuso", "ferragem")),
@@ -282,7 +282,7 @@ public class ProductService {
                     List.of("eletric", "material eletr", "instalac eletr")),
             new CategoryRule(List.of("martelo", "alicate", "chave de fenda", "chave philips",
                     "chave de boca", "chave allen", "serrote", "trena", "estilete", "nivel de bolha"),
-                    List.of("ferramenta manual", "ferramenta")),
+                    List.of("ferramentas manua", "ferramenta manual")),
             new CategoryRule(List.of("tinta", "pincel", "rolo de pintura", "verniz",
                     "massa corrida", "solvente", "bandeja de pintura"),
                     List.of("pintura", "tintas")),
