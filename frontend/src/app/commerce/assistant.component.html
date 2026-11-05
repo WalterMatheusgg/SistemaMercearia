@@ -1,0 +1,97 @@
+<section class="assistant-page">
+  <header class="assistant-heading">
+    <div><p class="eyebrow">SUA OPERAÇÃO, MAIS INTELIGENTE</p><h1>Assistente <span>✦</span></h1>
+      <p>Pergunte sobre a Loja ou cadastre vários materiais de uma vez.</p></div>
+    <a routerLink="/admin/home">Voltar ao painel</a>
+  </header>
+  <div class="assistant-note">
+    <strong>{{ summary()?.aiEnabled ? 'IA externa conectada' : 'Consulta local disponível' }}</strong>
+    <span>O assistente respeita o acesso de cada usuário. Perguntas não alteram produtos, estoque nem dinheiro.</span>
+  </div>
+  <div class="assistant-tabs" role="group" aria-label="Função do assistente">
+    <button type="button" [class.active]="section() === 'ask'" [attr.aria-pressed]="section() === 'ask'"
+      (click)="section.set('ask'); error.set('')">Fazer pergunta</button>
+    <button type="button" [class.active]="section() === 'import'" [attr.aria-pressed]="section() === 'import'"
+      (click)="section.set('import'); error.set('')">Adicionar muitos produtos</button>
+  </div>
+  @if (error()) { <p class="assistant-error" role="alert">{{ error() }}</p> }
+  @if (success()) { <p class="assistant-success" role="status">{{ success() }}</p> }
+
+  @if (section() === 'ask') {
+    <section class="assistant-panel">
+      <p class="eyebrow">PERGUNTAS SOBRE SEU NEGÓCIO</p><h2>O que você quer saber?</h2>
+      <p>Os números são consultados no sistema e limitados às suas permissões.</p>
+      <div class="suggestions">
+        @for (example of ['Quantos produtos tenho?', 'Como está o estoque?',
+          'Quais as últimas atividades?', 'Quanto tenho a pagar e a receber?']; track example) {
+          <button type="button" [disabled]="busy()" (click)="ask(example)">{{ example }}</button>
+        }
+      </div>
+      <form (ngSubmit)="ask()">
+        <label for="assistant-question">Sua pergunta</label>
+        <textarea id="assistant-question" name="question" rows="3" maxlength="1000"
+          [(ngModel)]="question" placeholder="Ex.: Quais são as pendências de hoje?"></textarea>
+        <button class="assistant-primary" type="submit" [disabled]="busy() || !question.trim()">
+          {{ busy() ? 'Consultando...' : 'Perguntar' }}</button>
+      </form>
+      @if (answer()) {
+        <div class="assistant-answer" role="status">
+          <strong>{{ usedModel() ? 'Resposta com IA' : 'Resposta com dados locais' }}</strong>
+          <p>{{ answer() }}</p>
+        </div>
+      }
+      @if (!summary()?.aiEnabled) {
+        <p class="assistant-disclaimer">As perguntas livres exigem configurar uma chave de IA no servidor. Sem ela, o assistente responde às consultas locais disponíveis.</p>
+      }
+    </section>
+  } @else {
+    <section class="assistant-panel">
+      <p class="eyebrow">CADASTRO EM LOTE</p><h2>Importe até 200 materiais</h2>
+      <p>Um por linha, sem código. Preço e custo são opcionais. Revise tudo antes de cadastrar.</p>
+      <div class="import-example"><strong>Exemplo de lista</strong>
+        <code>Parafuso 8 mm;2,50;1,20
+Bucha 6 mm;0,80
+Luva soldável 25 mm</code>
+      </div>
+      <form (ngSubmit)="prepare()">
+        <label for="assistant-batch">Lista de materiais</label>
+        <textarea id="assistant-batch" rows="7" name="batch" [(ngModel)]="batch"
+          placeholder="Nome;preço;custo"></textarea>
+        <div class="import-actions">
+          <label class="file-input">Carregar CSV ou TXT
+            <input type="file" accept=".csv,.txt,text/csv,text/plain" (change)="chooseFile($event)" />
+          </label>
+          @if (summary()?.aiEnabled) {
+            <label class="ai-choice"><input type="checkbox" name="useAi" [(ngModel)]="useAi" />
+              IA organiza a lista</label>
+          }
+          <button class="assistant-primary" type="submit" [disabled]="busy() || !batch.trim()">
+            {{ busy() ? 'Preparando...' : 'Revisar importação' }}</button>
+        </div>
+      </form>
+      @if (preview().length > 0) {
+        <div class="preview-title">
+          <div><h3>Conferir materiais</h3><p>{{ preview().length }} itens prontos para revisão.</p></div>
+          <button type="button" (click)="preview.set([])">Descartar prévia</button>
+        </div>
+        <div class="import-rows">
+          @for (item of preview(); track $index; let i = $index) {
+            <div class="import-row">
+              <label>Nome<input [value]="item.name" [attr.aria-label]="'Nome '+(i+1)"
+                (input)="editItem(i,'name',$any($event.target).value)" /></label>
+              <label>Preço<input inputmode="decimal" [value]="item.price" [attr.aria-label]="'Preço '+(i+1)"
+                (input)="editItem(i,'price',$any($event.target).value)" /></label>
+              <label>Custo<input inputmode="decimal" [value]="item.cost" [attr.aria-label]="'Custo '+(i+1)"
+                (input)="editItem(i,'cost',$any($event.target).value)" /></label>
+              <button type="button" (click)="removeItem(i)" [attr.aria-label]="'Excluir linha '+(i+1)">Remover</button>
+            </div>
+          }
+        </div>
+        <p class="assistant-disclaimer">A confirmação cria cadastros, não movimenta estoque, não gera compras nem altera preços existentes. Nomes duplicados são ignorados.</p>
+        <button type="button" class="assistant-primary" [disabled]="submitting()" (click)="commit()">
+          {{ submitting() ? 'Cadastrando...' : 'Confirmar cadastro de ' + preview().length + ' produtos' }}
+        </button>
+      }
+    </section>
+  }
+</section>

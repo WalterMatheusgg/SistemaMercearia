@@ -35,6 +35,12 @@ export const routes: Routes = [
         loadComponent: () => import('./commerce/home.component').then((m) => m.HomeComponent),
       },
       {
+        path: 'assistant',
+        title: 'Assistente',
+        canActivate: [roleGuard('OWNER','MANAGER','STOCKKEEPER','SELLER','CASHIER','FINANCE')],
+        loadComponent: () => import('./commerce/assistant.component').then(m => m.AssistantComponent),
+      },
+      {
         path: 'products',
         title: 'Produtos',
         canActivate: [stock],
