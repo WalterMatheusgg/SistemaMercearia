@@ -19,7 +19,7 @@ import {
   standalone: true,
   imports: [FormsModule, ActionStatusComponent],
   templateUrl: './sales.component.html',
-  styleUrl: './ui.scss',
+  styleUrls: ['./ui.scss', './sales.component.scss'],
 })
 export class SalesComponent {
   private readonly http = inject(HttpClient);
