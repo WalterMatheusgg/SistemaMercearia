@@ -17,6 +17,16 @@ export class AdminLayoutComponent {
   private readonly router = inject(Router);
   readonly logoutPending = signal(false);
   readonly logoutError = signal('');
+  readonly menuOpen = signal(true);
+  readonly mobileMenuOpen = signal(false);
+  toggleMenu(): void {
+    if (typeof window !== 'undefined' && window.matchMedia('(max-width: 760px)').matches) {
+      this.mobileMenuOpen.update(open => !open);
+    } else {
+      this.menuOpen.update(open => !open);
+    }
+  }
+  closeMobileMenu(): void { this.mobileMenuOpen.set(false); }
 
   has(...roles: string[]): boolean {
     return this.auth.currentUser()?.roles.some((role) => roles.includes(role)) ?? false;

@@ -2,7 +2,7 @@
   <header>
     <div>
       <p class="eyebrow">ADMINISTRAÇÃO</p>
-      <h1>Loja, cadastros auxiliares e auditoria</h1>
+      <h1>Configurações da loja</h1>
     </div>
   </header>
   <app-action-status [action]="action" />
@@ -11,7 +11,7 @@
   }
   @if (loaded()) {
     <section class="panel">
-      <h2>Configurações da loja</h2>
+      <h2>Dados da loja</h2>
       <form (ngSubmit)="save()" #settingsForm="ngForm">
         <fieldset [disabled]="action.locked()">
           <div class="grid">
@@ -66,71 +66,6 @@
       </form>
     </section>
   }
-  <div class="grid">
-    <section class="panel">
-      <h2>Categorias</h2>
-      <form (ngSubmit)="createCategory()" #categoryForm="ngForm">
-        <fieldset [disabled]="action.locked()">
-          <label
-            >Nova categoria<input
-              name="category"
-              [(ngModel)]="category.name"
-              required
-              maxlength="100" /></label
-          ><button class="gap" [disabled]="categoryForm.invalid">Adicionar categoria</button>
-        </fieldset>
-      </form>
-      <ul>
-        @for (category of refs().categories; track category.id) {
-          <li>
-            {{ category.name }} · {{ category.active ? 'Ativa' : 'Inativa' }}
-            <button [disabled]="action.locked()" (click)="toggleCategory(category)">
-              {{ category.active ? 'Inativar' : 'Reativar' }}
-            </button>
-          </li>
-        }
-      </ul>
-    </section>
-    <section class="panel">
-      <h2>Unidades</h2>
-      <form (ngSubmit)="createUnit()" #unitForm="ngForm">
-        <fieldset [disabled]="action.locked()">
-          <div class="grid">
-            <label
-              >Código<input
-                name="code"
-                [(ngModel)]="unit.code"
-                required
-                pattern="[A-Za-z0-9]{1,12}" /></label
-            ><label
-              >Nome<input name="unitName" [(ngModel)]="unit.name" required maxlength="60" /></label
-            ><label
-              >Casas decimais<input
-                name="scale"
-                type="number"
-                [(ngModel)]="unit.quantityScale"
-                min="0"
-                max="4"
-                required /></label
-            ><label
-              >Incremento<input
-                name="step"
-                [(ngModel)]="unit.quantityStep"
-                required
-                pattern="[0-9]+([.,][0-9]{1,4})?"
-            /></label>
-          </div>
-          <button class="gap" [disabled]="unitForm.invalid">Adicionar unidade</button>
-        </fieldset>
-      </form>
-      <ul>
-        @for (unit of refs().units; track unit.code) {
-          <li>{{ unit.code }} · {{ unit.name }} · incremento {{ unit.quantityStep }}</li>
-        }
-      </ul>
-      <small>Unidades utilizadas são preservadas para manter o histórico das medidas.</small>
-    </section>
-  </div>
   <section class="panel">
     <h2>Histórico administrativo</h2>
     <div class="scroll">

@@ -15,8 +15,6 @@ export class HomeComponent {
   readonly auth = inject(AuthService);
   private readonly http = inject(HttpClient);
   readonly searchTerm = signal('');
-  readonly briefingOpen = signal(false);
-  readonly liveMotion = signal(true);
   readonly activeGroup = signal<'all' | 'estoque' | 'comercial' | 'financeiro'>('all');
   readonly motionPaused = signal(false);
   readonly updating = signal(false);
