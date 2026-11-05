@@ -7,3 +7,15 @@
 .finance-section-switch button.active{background:#1c5c47;color:#fff;box-shadow:0 5px 14px #1d523221}
 .money-page app-cash{display:block}
 @media(max-width:620px){.finance-section-switch{width:100%}.finance-section-switch button{flex:1;white-space:normal;padding:10px}}
+
+.finance-overview{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:11px;margin:5px 0 14px}
+.finance-overview>div{display:grid;gap:6px;background:#fff;border:1px solid #dcebe3;border-radius:13px;padding:15px}
+.finance-overview span{color:#5d796e;font-size:11px;font-weight:780}
+.finance-overview strong{color:#1b523f;font-size:clamp(16px,2vw,24px);letter-spacing:-.04em}
+.finance-overview small{color:#70887d;font-size:10px}
+.finance-overview .overdue{background:#fffaf4;border-color:#f3e2cb}
+.finance-overview .overdue strong{color:#9d6239}
+.finance-links{margin:0 0 17px;font-size:12px}
+.finance-links a{color:#23694e;font-weight:770;text-decoration:underline;text-underline-offset:3px}
+@media(max-width:800px){.finance-overview{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:440px){.finance-overview{grid-template-columns:1fr 1fr;gap:7px}.finance-overview>div{padding:11px}.finance-overview strong{font-size:16px}}
