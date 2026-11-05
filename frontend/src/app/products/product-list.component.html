@@ -58,6 +58,7 @@
         </div>
       </div>
       @if (referencesError()) { <p class="reference-error" role="alert">{{ referencesError() }}</p> }
+      @if (referencesSuccess()) { <p class="reference-success" role="status">{{ referencesSuccess() }}</p> }
     </details>
   }
 
@@ -133,22 +134,33 @@
           </mat-form-field>
           <mat-form-field appearance="outline">
             <mat-label>Categoria (opcional)</mat-label>
-            <mat-select formControlName="categoryId">
+            <mat-select formControlName="categoryId" (selectionChange)="categoryChanged()">
               <mat-option value="">Escolher automaticamente</mat-option>
               @for (category of categories(); track category.code) {
                 <mat-option [value]="category.code">{{ category.name }}</mat-option>
               }
             </mat-select>
+            @if (!form.controls.categoryId.value) {
+              <mat-hint>
+                @if (autoCategory(); as suggested) {
+                  Sugestão pelo nome: {{ suggested.name }}
+                } @else {
+                  Sem correspondência clara, será usada "Sem categoria".
+                }
+              </mat-hint>
+            }
           </mat-form-field>
           @if (canManageReferences()) {
             <div class="inline-add-category wide-field">
               <label for="inlineCategoryName">Nova categoria (se precisar)</label>
               <div>
                 <input #inlineCategory id="inlineCategoryName" maxlength="100" placeholder="Ex.: Ferramentas elétricas" />
-                <button type="button" [disabled]="addingCategory()" (click)="createCategoryFromEditor(inlineCategory.value); inlineCategory.value=''">Criar</button>
+                <button type="button" [disabled]="addingCategory()" (click)="createCategoryFromEditor(inlineCategory)">Criar</button>
               </div>
             </div>
           }
+          @if (referencesError()) { <p class="form-error wide-field" role="alert">{{ referencesError() }}</p> }
+          @if (referencesSuccess()) { <p class="reference-success wide-field" role="status">{{ referencesSuccess() }}</p> }
           <mat-form-field appearance="outline">
             <mat-label>Unidade (opcional)</mat-label>
             <mat-select formControlName="baseUnitCode">
@@ -199,7 +211,7 @@
             </mat-form-field>
           </div>
         }
-        <p class="form-hint">Se deixar o nome vazio, o sistema cria um material provisório para renomear depois. Categoria e unidade recebem valores padrão.</p>
+        <p class="form-hint">Sem nome, será criado um material provisório. Se deixar a categoria em "Escolher automaticamente", o sistema procura uma categoria existente pelo nome do material; se não tiver certeza, usa "Sem categoria". Você pode escolher manualmente a qualquer momento.</p>
         @if (formError()) { <p class="form-error" role="alert">{{ formError() }}</p> }
         <div class="form-actions">
           <button type="button" class="cancel-button" [disabled]="saving()" (click)="closeForm()">Cancelar</button>
