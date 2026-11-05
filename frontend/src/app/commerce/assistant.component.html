@@ -86,20 +86,22 @@
   } @else {
     <section class="assistant-panel">
       <p class="eyebrow">CADASTRO EM LOTE</p><h2>Importe até 200 materiais</h2>
-      <p>Um por linha, sem código. Preço e custo são opcionais. Revise tudo antes de cadastrar.</p>
+      <p>Informe Nome;Preço;Custo;Quantidade, nessa ordem, separados por ponto e vírgula. Todos os campos são opcionais. Quantidades são números inteiros; campo vazio significa zero.</p>
       <div class="demo-products">
         <div><strong>Quer testar com ferramentas?</strong><span>Prepara dez itens de exemplo com valores zerados. Nada é salvo sem sua confirmação.</span></div>
         <button type="button" (click)="fillDemo()">Carregar exemplos de ferragens</button>
       </div>
       <div class="import-example"><strong>Exemplo de lista</strong>
-        <code>Parafuso 8 mm;2,50;1,20
-Bucha 6 mm;0,80
-Luva soldável 25 mm</code>
+        <code>Nome;Preço;Custo;Quantidade
+Parafuso 8 mm;2,50;1,20;24
+Bucha 6 mm;0,80;;50
+Luva soldável 25 mm;;;12
+;9,90;;3</code>
       </div>
       <form (ngSubmit)="prepare()">
         <label for="assistant-batch">Lista de materiais</label>
         <textarea id="assistant-batch" rows="7" name="batch" [(ngModel)]="batch"
-          placeholder="Nome;preço;custo"></textarea>
+          placeholder="Nome;Preço;Custo;Quantidade"></textarea>
         <div class="import-actions">
           <label class="file-input">Carregar CSV ou TXT
             <input type="file" accept=".csv,.txt,text/csv,text/plain" (change)="chooseFile($event)" />
@@ -126,11 +128,13 @@ Luva soldável 25 mm</code>
                 (input)="editItem(i,'price',$any($event.target).value)" /></label>
               <label>Custo<input inputmode="decimal" [value]="item.cost" [attr.aria-label]="'Custo '+(i+1)"
                 (input)="editItem(i,'cost',$any($event.target).value)" /></label>
+              <label>Quantidade<input inputmode="numeric" [value]="item.quantity" [attr.aria-label]="'Quantidade '+(i+1)"
+                (input)="editItem(i,'quantity',$any($event.target).value)" /></label>
               <button type="button" (click)="removeItem(i)" [attr.aria-label]="'Excluir linha '+(i+1)">Remover</button>
             </div>
           }
         </div>
-        <p class="assistant-disclaimer">A confirmação cria cadastros, não movimenta estoque, não gera compras nem altera preços existentes. Nomes duplicados são ignorados. Itens importados sem foto aparecerão com imagem provisória e poderão receber uma foto em Produtos.</p>
+        <p class="assistant-disclaimer">Ao confirmar, cada produto novo recebe a quantidade inicial informada no estoque. Quantidade vazia vira zero. Não são geradas compras ou vendas, e materiais existentes não são alterados. Sem nome, o produto recebe um nome provisório. Fotos podem ser adicionadas depois em Produtos.</p>
         <button type="button" class="assistant-primary" [disabled]="submitting()" (click)="commit()">
           {{ submitting() ? 'Cadastrando...' : 'Confirmar cadastro de ' + preview().length + ' produtos' }}
         </button>
