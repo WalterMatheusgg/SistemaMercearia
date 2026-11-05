@@ -38,11 +38,14 @@ public class ProductController {
     public PageResponse<ProductResponse> list(
             @RequestParam(required = false) String query,
             @RequestParam(required = false) Boolean active,
+            @RequestParam(required = false) UUID categoryId,
+            @RequestParam(required = false) String brand,
+            @RequestParam(defaultValue = "false") boolean incomplete,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size) {
         int boundedPage = Math.max(page, 0);
         int boundedSize = Math.clamp(size, 1, 100);
-        return PageResponse.from(products.search(query, active,
+        return PageResponse.from(products.search(query, active, categoryId, brand, incomplete,
                 PageRequest.of(boundedPage, boundedSize, Sort.by("name").ascending())));
     }
 
@@ -83,6 +86,11 @@ public class ProductController {
     public List<LookupResponse> categories() {
         return categories.findAllByActiveTrueOrderByNameAsc().stream()
                 .map(category -> new LookupResponse(category.getId().toString(), category.getName())).toList();
+    }
+
+    @GetMapping("/products/brands")
+    public List<String> brands() {
+        return products.brands();
     }
 
     @GetMapping("/units")
