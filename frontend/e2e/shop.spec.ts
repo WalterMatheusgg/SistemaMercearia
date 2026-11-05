@@ -231,15 +231,12 @@ test('cadastro rápido permite criar e editar sem código manual', async ({ page
   await expect(stockCard.locator('app-product-photo img')).toBeVisible();
 });
 
-test('cadastro de produto sem preencher nenhum campo gera um material provisório', async ({ page }) => {
+test('cadastro de produto sem campos nem foto gera material provisório', async ({ page }) => {
   await login(page);
   await page.goto('/admin/products');
   await page.getByRole('button', { name: /Novo produto/ }).click();
   const form = page.getByRole('dialog', { name: 'Novo produto' });
   await expect(form.getByLabel('Nome do produto (opcional)')).toHaveCount(1);
-  await form.getByRole('button', { name: 'Cadastrar produto' }).click();
-  await expect(form.getByRole('alert')).toContainText('foto');
-  await uploadDemoPhoto(form);
   await form.getByRole('button', { name: 'Cadastrar produto' }).click();
   await expect(page.locator('.success-notice')).toContainText('Material sem nome');
   await expect(page.locator('.product-form')).toHaveCount(0);
@@ -265,7 +262,7 @@ test('assistente consulta dados e prepara importação em lote com prévia', asy
   await expect(page.locator('.assistant-answer')).toContainText('produtos ativos');
   await page.getByRole('button', { name: 'Adicionar muitos produtos' }).click();
   const name = 'Material E2E ' + randomUUID().slice(0, 8);
-  await page.getByLabel('Lista de materiais').fill(name + ';9,90;4,00');
+  await page.getByLabel('Lista de materiais').fill(name + ';9,90;4,00;12');
   await page.getByRole('button', { name: 'Revisar importação' }).click();
   await expect(page.locator('.import-row input[aria-label^="Nome"]')).toHaveValue(name);
   page.once('dialog', dialog => dialog.accept());
@@ -274,6 +271,10 @@ test('assistente consulta dados e prepara importação em lote com prévia', asy
   await page.goto('/admin/products');
   await page.getByRole('searchbox', { name: 'Buscar produto' }).fill(name);
   await expect(page.locator('tr').filter({ hasText: name })).toBeVisible();
+  await page.goto('/admin/inventory');
+  await page.getByLabel('Nome do produto').fill(name);
+  await page.getByRole('button', { name: 'Buscar', exact: true }).click();
+  await expect(page.locator('.stock-card').filter({ hasText: name })).toContainText('12');
 });
 
 test('financeiro e relatórios oferecem filtros simples', async ({ page }) => {
