@@ -2,6 +2,9 @@ package br.com.ferragens.product;
 
 import br.com.ferragens.auth.CurrentActorService.Actor;
 import br.com.ferragens.commerce.Db;
+import br.com.ferragens.inventory.InventoryModels;
+import br.com.ferragens.inventory.InventoryService;
+import jakarta.persistence.EntityManager;
 import br.com.ferragens.shared.BusinessRuleException;
 import br.com.ferragens.shared.ConflictException;
 import br.com.ferragens.shared.NotFoundException;
@@ -29,17 +32,21 @@ public class ProductService {
     private final UnitRepository units;
     private final JdbcTemplate jdbc;
     private final Db database;
+    private final InventoryService inventory;
+    private final EntityManager entityManager;
 
     public ProductService(
             ProductRepository products,
             CategoryRepository categories,
             UnitRepository units,
-            JdbcTemplate jdbc, Db database) {
+            JdbcTemplate jdbc, Db database, InventoryService inventory, EntityManager entityManager) {
         this.products = products;
         this.categories = categories;
         this.units = units;
         this.jdbc = jdbc;
         this.database = database;
+        this.inventory = inventory;
+        this.entityManager = entityManager;
     }
 
     @Transactional(readOnly = true)
@@ -138,32 +145,49 @@ public class ProductService {
         return ProductResponse.from(product);
     }
 
-    /** Importa materiais revisados, de modo transacional, sem mexer no saldo do estoque. */
+    /** Importa materiais revisados e registra o saldo inicial, quando informado, em uma única transação. */
     public Map<String, Integer> importReviewed(Actor actor, List<BulkItem> items) {
         if (items == null || items.isEmpty() || items.size() > 200)
             throw new BusinessRuleException("Envie de 1 a 200 materiais por lote.");
         var seen = new java.util.HashSet<String>();
         var prepared = new java.util.ArrayList<BulkItem>();
-        // Validar tudo antes da primeira gravação: um item inválido não produz lote parcial.
+        // Validar antes de gravar: qualquer erro desfaz integralmente o lote.
         for (BulkItem item : items) {
-            if (item == null || !StringUtils.hasText(item.name()) || item.name().trim().length() > 160)
-                throw new BusinessRuleException("Todo material do lote precisa de nome (até 160 caracteres).");
+            if (item == null || (item.name() != null && item.name().trim().length() > 160))
+                throw new BusinessRuleException("O nome pode ter no máximo 160 caracteres.");
             validatePrice(item.price());
             validatePrice(item.cost());
             if (StringUtils.hasText(item.unit()) && item.unit().length() > 12)
                 throw new BusinessRuleException("Unidade inválida para " + item.name());
+            validateQuantity(item.quantity(), item.unit());
             prepared.add(item);
         }
+        // A importação usa um local cadastrado somente quando há quantidade positiva.
+        boolean hasQuantity = prepared.stream().anyMatch(item ->
+                item.quantity() != null && item.quantity().signum() > 0);
+        var locations = hasQuantity ? inventory.locations(actor) : List.<InventoryModels.Location>of();
+        if (hasQuantity && locations.isEmpty())
+            throw new BusinessRuleException("Nenhum local de estoque ativo para registrar a quantidade inicial.");
+
         int created = 0, skipped = 0;
         for (BulkItem item : prepared) {
-            String name = item.name().trim();
+            String name = StringUtils.hasText(item.name()) ? item.name().trim()
+                    : "Material sem nome " + UUID.randomUUID().toString().substring(0, 8);
             String normalized = name.toLowerCase(Locale.ROOT);
             if (!seen.add(normalized) || products.existsByNameIgnoreCase(name)) {
                 skipped++;
                 continue;
             }
-            create(new ProductRequest(null, name, null, null,
+            ProductResponse product = create(new ProductRequest(null, name, null, null,
                     item.unit(), item.cost(), item.price()));
+            BigDecimal quantity = item.quantity() == null ? BigDecimal.ZERO : item.quantity();
+            if (quantity.signum() > 0) {
+                // O inventário usa JDBC e exige que o produto JPA já tenha sido persistido.
+                entityManager.flush();
+                inventory.execute(actor, UUID.randomUUID(), new InventoryModels.Command(
+                        product.id(), locations.getFirst().id(), InventoryModels.Kind.INITIAL,
+                        quantity, "Quantidade inicial do cadastro em lote", null, null));
+            }
             created++;
         }
         database.audit(actor, "PRODUCT_BULK_IMPORT", null,
@@ -171,7 +195,19 @@ public class ProductService {
         return Map.of("created", created, "skipped", skipped, "total", items.size());
     }
 
-    public record BulkItem(String name, BigDecimal price, BigDecimal cost, String unit) {}
+    /** Omitir qualquer campo significa usar os valores padrão; estoque inicial padrão é zero. */
+    public record BulkItem(String name, BigDecimal price, BigDecimal cost, String unit,
+                           BigDecimal quantity) {}
+
+    private void validateQuantity(BigDecimal quantity, String unit) {
+        if (quantity == null) return;
+        if (quantity.signum() < 0 || quantity.scale() > 4
+                || quantity.precision() - quantity.scale() > 15)
+            throw new BusinessRuleException("Quantidade inválida. Informe um valor não negativo.");
+        if ((!StringUtils.hasText(unit) || "UN".equalsIgnoreCase(unit.trim()))
+                && quantity.stripTrailingZeros().scale() > 0)
+            throw new BusinessRuleException("Para unidade padrão, informe quantidade inteira (ex.: 10).");
+    }
 
     private void validatePrice(BigDecimal value) {
         if (value != null && (value.signum() < 0 || value.scale() > 2
