@@ -52,7 +52,14 @@ public class ProductService {
 
     @Transactional(readOnly = true)
     public Page<ProductResponse> search(String query, Boolean active, Pageable pageable) {
+        return search(query, active, null, null, false, pageable);
+    }
+
+    @Transactional(readOnly = true)
+    public Page<ProductResponse> search(String query, Boolean active, UUID categoryId,
+                                       String brand, boolean incomplete, Pageable pageable) {
         String normalizedQuery = StringUtils.hasText(query) ? query.trim() : null;
+        String normalizedBrand = StringUtils.hasText(brand) ? brand.trim().toLowerCase(Locale.ROOT) : null;
         Specification<Product> specification =
                 (root, criteriaQuery, builder) -> {
                     var predicates =
@@ -67,6 +74,13 @@ public class ProductService {
                     if (active != null) {
                         predicates.add(builder.equal(root.get("active"), active));
                     }
+                    if (categoryId != null) predicates.add(builder.equal(root.get("category").get("id"), categoryId));
+                    if (normalizedBrand != null)
+                        predicates.add(builder.equal(builder.lower(root.get("brand")), normalizedBrand));
+                    if (incomplete)
+                        predicates.add(builder.or(
+                            builder.like(builder.lower(root.get("name")), "material sem nome%"),
+                            builder.equal(root.get("price"), BigDecimal.ZERO)));
                     return builder.and(
                             predicates.toArray(jakarta.persistence.criteria.Predicate[]::new));
                 };
@@ -83,17 +97,17 @@ public class ProductService {
         if (products.existsByCodeIgnoreCase(code)) {
             throw new ConflictException("Já existe um produto com este código.");
         }
-        return ProductResponse.from(
-                products.save(
-                        new Product(
-                                code,
-                                StringUtils.hasText(request.name()) ? request.name().trim()
-                                        : "Material sem nome " + UUID.randomUUID().toString().substring(0, 8),
-                                request.description(),
-                                categoryOrSuggested(request.categoryId(), request.name()),
-                                unitOrDefault(request.baseUnitCode()),
-                                request.cost() == null ? BigDecimal.ZERO : request.cost(),
-                                request.price() == null ? BigDecimal.ZERO : request.price())));
+        Product product = new Product(
+                code,
+                StringUtils.hasText(request.name()) ? request.name().trim()
+                        : "Material sem nome " + UUID.randomUUID().toString().substring(0, 8),
+                request.description(),
+                categoryOrSuggested(request.categoryId(), request.name()),
+                unitOrDefault(request.baseUnitCode()),
+                request.cost() == null ? BigDecimal.ZERO : request.cost(),
+                request.price() == null ? BigDecimal.ZERO : request.price());
+        product.setBrand(normalizeBrand(request.brand()));
+        return ProductResponse.from(products.save(product));
     }
 
     public ProductResponse update(UUID id, ProductRequest request) {
@@ -134,7 +148,8 @@ public class ProductService {
                         : findCategory(request.categoryId()),
                 unit,
                 request.cost() == null ? product.getCost() : request.cost(),
-                request.price() == null ? product.getPrice() : request.price());
+                request.price() == null ? product.getPrice() : request.price(),
+                normalizeBrand(request.brand()));
         return ProductResponse.from(product);
     }
 
@@ -210,6 +225,17 @@ public class ProductService {
         if ((!StringUtils.hasText(unit) || "UN".equalsIgnoreCase(unit.trim()))
                 && quantity.stripTrailingZeros().scale() > 0)
             throw new BusinessRuleException("Para unidade padrão, informe quantidade inteira (ex.: 10).");
+    }
+
+    private String normalizeBrand(String brand) {
+        return StringUtils.hasText(brand) ? brand.trim() : null;
+    }
+
+    @Transactional(readOnly = true)
+    public List<String> brands() {
+        return jdbc.queryForList(
+                "SELECT DISTINCT brand FROM product WHERE brand IS NOT NULL AND trim(brand) <> '' "
+                + "ORDER BY brand", String.class);
     }
 
     private void validatePrice(BigDecimal value) {
