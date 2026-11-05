@@ -30,6 +30,9 @@ public class Product {
     @Column(length = 2000)
     private String description;
 
+    @Column(length = 80)
+    private String brand;
+
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "category_id", nullable = false)
     private Category category;
@@ -71,7 +74,7 @@ public class Product {
     }
 
     public void update(String code, String name, String description, Category category, Unit baseUnit,
-                       BigDecimal cost, BigDecimal price) {
+                       BigDecimal cost, BigDecimal price, String brand) {
         this.code = code;
         this.name = name;
         this.description = description;
@@ -79,6 +82,7 @@ public class Product {
         this.baseUnit = baseUnit;
         this.cost = cost;
         this.price = price;
+        this.brand = brand;
         this.updatedAt = Instant.now();
     }
 
@@ -96,6 +100,8 @@ public class Product {
     public String getCode() { return code; }
     public String getName() { return name; }
     public String getDescription() { return description; }
+    public String getBrand() { return brand; }
+    public void setBrand(String brand) { this.brand = brand; }
     public Category getCategory() { return category; }
     public Unit getBaseUnit() { return baseUnit; }
     public BigDecimal getCost() { return cost; }
