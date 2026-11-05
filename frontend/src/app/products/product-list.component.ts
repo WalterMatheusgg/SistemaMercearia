@@ -1,5 +1,8 @@
 import { CurrencyPipe } from '@angular/common';
-import { Component, OnInit, inject, signal } from '@angular/core';
+import { Component, OnInit, inject, signal, OnDestroy } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
+import { AuthService } from '../auth/auth.service';
+import { ProductPhotoComponent } from './product-photo.component';
 import { RouterLink } from '@angular/router';
 import { A11yModule } from '@angular/cdk/a11y';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
@@ -19,14 +22,26 @@ type StatusFilter = 'active' | 'inactive' | 'all';
   selector: 'app-product-list',
   standalone: true,
   providers: [{ provide: MatPaginatorIntl, useFactory: portuguesePaginator }],
-  imports: [A11yModule, CurrencyPipe, RouterLink, ReactiveFormsModule, MatButtonModule, MatFormFieldModule,
+  imports: [ProductPhotoComponent, A11yModule, CurrencyPipe, RouterLink, ReactiveFormsModule, MatButtonModule, MatFormFieldModule,
     MatInputModule, MatPaginatorModule, MatProgressBarModule, MatSelectModule, MatTableModule],
   templateUrl: './product-list.component.html',
   styleUrl: './product-list.component.scss',
 })
-export class ProductListComponent implements OnInit {
+export class ProductListComponent implements OnInit, OnDestroy {
   private readonly fb = inject(FormBuilder);
   private readonly api = inject(ProductsApi);
+  private readonly http = inject(HttpClient);
+  private readonly auth = inject(AuthService);
+  selectedPhoto: File | null = null;
+  categoryName = '';
+  unitName = '';
+  unitScale = 0;
+  unitStep = '1';
+  readonly photoPreview = signal<string | null>(null);
+  readonly managingReferences = signal(false);
+  readonly addingCategory = signal(false);
+  readonly addingUnit = signal(false);
+  readonly referencesError = signal('');
   private requestId = 0;
 
   readonly products = signal<Product[]>([]);
@@ -47,6 +62,7 @@ export class ProductListComponent implements OnInit {
   readonly filter = signal<StatusFilter>('active');
   readonly columns = ['product', 'category', 'price', 'status', 'actions'];
   readonly form = this.fb.nonNullable.group({
+    initialQuantity: ['', Validators.pattern(/^(?:\\d+(?:[.,]\\d{1,4})?)?$/)],
     name: ['', Validators.maxLength(160)],
     description: ['', Validators.maxLength(2000)],
     categoryId: [''],
@@ -54,6 +70,75 @@ export class ProductListComponent implements OnInit {
     cost: ['', Validators.pattern(/^(?:\d+(?:[.,]\d{1,2})?)?$/)],
     price: ['', Validators.pattern(/^(?:\d+(?:[.,]\d{1,2})?)?$/)],
   });
+
+  canManageReferences(): boolean {
+    return this.auth.currentUser()?.roles.some(role => ['OWNER','MANAGER'].includes(role)) ?? false;
+  }
+
+  ngOnDestroy(): void { this.clearPhoto(); }
+
+  private clearPhoto(): void {
+    const previous = this.photoPreview();
+    if (previous) URL.revokeObjectURL(previous);
+    this.photoPreview.set(null);
+    this.selectedPhoto = null;
+  }
+
+  selectPhoto(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const photo = input.files?.[0];
+    if (!photo) return;
+    if (!['image/jpeg','image/png','image/webp'].includes(photo.type) || photo.size > 3 * 1024 * 1024) {
+      this.formError.set('Escolha uma imagem JPG, PNG ou WebP com até 3 MB.');
+      input.value = '';
+      return;
+    }
+    this.clearPhoto();
+    this.selectedPhoto = photo;
+    this.photoPreview.set(URL.createObjectURL(photo));
+    this.formError.set('');
+  }
+
+  imageSearchUrl(): string {
+    return 'https://www.google.com/search?tbm=isch&q=' +
+      encodeURIComponent((this.form.controls.name.value || 'ferragens ferramentas') + ' produto');
+  }
+
+  createCategory(): void {
+    const name = this.categoryName.trim();
+    if (!this.canManageReferences() || !name || this.addingCategory()) return;
+    this.referencesError.set(''); this.addingCategory.set(true);
+    this.http.post<{id:string;name:string}>('/api/admin/references/categories',
+      { name, active: true, quantityScale: 0, quantityStep: '1' },
+      { headers: { 'Idempotency-Key': crypto.randomUUID() } }).subscribe({
+      next: value => {
+        this.categories.update(items => [...items, {code:value.id,name:value.name}]
+          .sort((a,b)=>a.name.localeCompare(b.name)));
+        this.form.controls.categoryId.setValue(value.id);
+        this.categoryName=''; this.addingCategory.set(false);
+      },
+      error: e => {this.addingCategory.set(false);
+        this.referencesError.set(e.error?.detail ?? 'Não foi possível criar a categoria.');},
+    });
+  }
+
+  createUnit(): void {
+    const name = this.unitName.trim();
+    if (!this.canManageReferences() || !name || this.addingUnit()) return;
+    this.referencesError.set(''); this.addingUnit.set(true);
+    const code = 'U' + crypto.randomUUID().slice(0,8).toUpperCase();
+    this.http.post<{code:string;name:string}>('/api/admin/references/units',
+      {code,name,active:true,quantityScale:this.unitScale,quantityStep:this.unitStep.replace(',','.')}).subscribe({
+      next: item => {
+        this.units.update(items => [...items,{code:item.code,name:item.name}]
+          .sort((a,b)=>a.name.localeCompare(b.name)));
+        this.form.controls.baseUnitCode.setValue(item.code);
+        this.unitName=''; this.addingUnit.set(false);
+      },
+      error: e=> {this.addingUnit.set(false);
+        this.referencesError.set(e.error?.detail ?? 'Confira nome, casas decimais e incremento da unidade.');},
+    });
+  }
 
   ngOnInit(): void {
     this.loadLookups();
@@ -105,7 +190,9 @@ export class ProductListComponent implements OnInit {
     this.editingId.set(null);
     this.formError.set('');
     this.showDetails.set(false);
+    this.clearPhoto();
     this.form.reset({
+      initialQuantity: '',
       name: '',
       description: '',
       categoryId: '',
@@ -118,9 +205,11 @@ export class ProductListComponent implements OnInit {
 
   startEdit(product: Product): void {
     this.editingId.set(product.id);
+    this.clearPhoto();
     this.formError.set('');
     this.showDetails.set(!!product.description || product.cost !== '0.00');
     this.form.reset({
+      initialQuantity: '',
       name: product.name,
       description: product.description ?? '',
       categoryId: product.categoryId,
@@ -135,6 +224,7 @@ export class ProductListComponent implements OnInit {
     if (this.saving()) return;
     if (this.form.dirty && !window.confirm('Descartar as alterações não salvas?')) return;
     this.formOpen.set(false);
+    this.clearPhoto();
     this.formError.set('');
   }
 
@@ -144,6 +234,10 @@ export class ProductListComponent implements OnInit {
     if (this.form.invalid) {
       this.form.markAllAsTouched();
       this.formError.set('Revise os valores informados. Os campos podem ficar vazios.');
+      return;
+    }
+    if (!this.editingId() && !this.selectedPhoto) {
+      this.formError.set('Para cadastrar, tire uma foto ou selecione uma imagem do produto.');
       return;
     }
     const raw = this.form.getRawValue();
@@ -158,15 +252,18 @@ export class ProductListComponent implements OnInit {
     this.saving.set(true);
     const isEditing = !!this.editingId();
     const request = this.editingId()
-      ? this.api.update(this.editingId()!, input)
-      : this.api.create(input);
+      ? this.api.updateComplete(this.editingId()!, input, this.selectedPhoto ?? undefined)
+      : this.api.createComplete(input,
+          raw.initialQuantity.trim() ? raw.initialQuantity.replace(',', '.') : '0', this.selectedPhoto!);
     request.subscribe({
       next: (saved) => {
         this.saving.set(false);
         this.formOpen.set(false);
+        this.clearPhoto();
         this.successMessage.set(isEditing
           ? 'Produto atualizado: ' + saved.name
-          : 'Produto cadastrado: ' + saved.name + '. Para informar o saldo, abra Estoque.');
+          : 'Produto e foto cadastrados: ' + saved.name +
+            (Number(raw.initialQuantity.replace(',','.')) > 0 ? '. Saldo inicial registrado.' : '. Saldo inicial: zero.'));
         this.loadProducts();
       },
       error: (error: { error?: { detail?: string } }) => {
