@@ -81,19 +81,28 @@ jobs:
       - run: npx playwright install --with-deps chromium
         working-directory: frontend
       - name: Testar desktop e celular com serviços reais
-        # A API limita 20 logins por minuto/IP. Reiniciar apenas a aplicação
-        # entre perfis impede que a carga artificial do CI esgote esse limite.
+        # A API protege contra mais de 20 logins/minuto/IP. O CI divide
+        # cenários por arquivo, reiniciando o app entre lotes de teste,
+        # sem reduzir a proteção real de autenticação.
         run: |
-          npm run e2e -- --project=desktop
-          docker compose -f ../compose.yaml --profile app restart app
-          for attempt in $(seq 1 40); do
-            if curl -fsS http://localhost:8080/actuator/health 2>/dev/null | grep -q '"UP"'; then
-              break
-            fi
-            sleep 2
+          first=1
+          for project in desktop mobile; do
+            for spec in e2e/*.spec.ts; do
+              if [ "$first" = 0 ]; then
+                docker compose -f ../compose.yaml --profile app restart app
+                for attempt in $(seq 1 40); do
+                  if curl -fsS http://localhost:8080/actuator/health 2>/dev/null | grep -q '"UP"'; then
+                    break
+                  fi
+                  sleep 2
+                done
+                curl -fsS http://localhost:8080/actuator/health | grep -q '"UP"'
+              fi
+              first=0
+              echo "Executando Playwright: $project / $spec"
+              npm run e2e -- --project="$project" "$spec"
+            done
           done
-          curl -fsS http://localhost:8080/actuator/health | grep -q '"UP"'
-          npm run e2e -- --project=mobile
         working-directory: frontend
         env:
           E2E_BASE_URL: http://localhost:8080
