@@ -18,6 +18,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
 import java.math.BigDecimal;
+import java.text.Normalizer;
 import java.util.List;
 import java.util.Map;
 import java.util.Locale;
@@ -89,7 +90,7 @@ public class ProductService {
                                 StringUtils.hasText(request.name()) ? request.name().trim()
                                         : "Material sem nome " + UUID.randomUUID().toString().substring(0, 8),
                                 request.description(),
-                                categoryOrDefault(request.categoryId()),
+                                categoryOrSuggested(request.categoryId(), request.name()),
                                 unitOrDefault(request.baseUnitCode()),
                                 request.cost() == null ? BigDecimal.ZERO : request.cost(),
                                 request.price() == null ? BigDecimal.ZERO : request.price())));
@@ -220,13 +221,73 @@ public class ProductService {
                 .orElseThrow(() -> new NotFoundException("Produto não encontrado."));
     }
 
-    private Category categoryOrDefault(UUID id) {
-        if (id != null) return findCategory(id);
-        return categories.findByNameIgnoreCaseAndActiveTrue("Sem categoria")
-                .orElseGet(() -> categories.findAllByActiveTrueOrderByNameAsc().stream()
-                .findFirst().orElseThrow(() ->
-                        new ConflictException("Nenhuma categoria ativa disponível para cadastrar materiais.")));
+    /** "Escolher automaticamente" analisa o nome, mas nunca inventa uma categoria.
+     * Se a associação não for segura, usa Sem categoria (não a primeira da lista).
+     */
+    public Category suggestCategory(String name) {
+        var available = categories.findAllByActiveTrueOrderByNameAsc();
+        String material = normalized(name);
+        if (!material.isBlank()) {
+            for (CategoryRule rule : CATEGORY_RULES) {
+                if (rule.materialTerms().stream().anyMatch(term -> material.contains(term))) {
+                    for (String alias : rule.categoryTerms()) {
+                        for (Category candidate : available) {
+                            if (normalized(candidate.getName()).contains(alias))
+                                return candidate;
+                        }
+                    }
+                    break; // Não inferir outra categoria se a indicada não estiver cadastrada.
+                }
+            }
+            // O próprio nome do material também pode mencionar o nome de uma categoria cadastrada.
+            for (Category candidate : available) {
+                String categoryName = normalized(candidate.getName());
+                if (categoryName.length() >= 5 && !categoryName.equals("sem categoria")
+                        && material.contains(categoryName)) return candidate;
+            }
+        }
+        return available.stream()
+                .filter(category -> normalized(category.getName()).equals("sem categoria"))
+                .findFirst()
+                .orElseThrow(() -> new ConflictException(
+                        "Cadastre ou reative a categoria 'Sem categoria' para produtos não classificados."));
     }
+
+    private Category categoryOrSuggested(UUID id, String productName) {
+        return id != null ? findCategory(id) : suggestCategory(productName);
+    }
+
+    private static String normalized(String text) {
+        return Normalizer.normalize(text == null ? "" : text, Normalizer.Form.NFD)
+                .replaceAll("\\p{M}+", "").toLowerCase(Locale.ROOT)
+                .replaceAll("[^a-z0-9]+", " ").trim();
+    }
+
+    private record CategoryRule(List<String> materialTerms, List<String> categoryTerms) {}
+
+    private static final List<CategoryRule> CATEGORY_RULES = List.of(
+            new CategoryRule(List.of("furadeira", "parafusadeira", "esmerilhadeira", "lixadeira",
+                    "martelete", "serra circular", "politriz", "soprador termico", "tupia"),
+                    List.of("ferramenta eletr", "eletroportatil", "ferramenta a bateria")),
+            new CategoryRule(List.of("parafuso", "porca", "arruela", "bucha", "prego",
+                    "rebite", "chumbador", "barra roscada"),
+                    List.of("fixacao", "parafuso", "ferragem")),
+            new CategoryRule(List.of("torneira", "cano", "tubo pvc", "joelho", "sifao",
+                    "registro", "luva soldavel", "conexao", "valvula hidraulica"),
+                    List.of("hidraul", "encanamento", "tubulac")),
+            new CategoryRule(List.of("tomada", "interruptor", "disjuntor", "lampada",
+                    "fio eletrico", "cabo eletrico", "eletroduto", "fita isolante", "plugue"),
+                    List.of("eletric", "material eletr", "instalac eletr")),
+            new CategoryRule(List.of("martelo", "alicate", "chave de fenda", "chave philips",
+                    "chave de boca", "chave allen", "serrote", "trena", "estilete", "nivel de bolha"),
+                    List.of("ferramenta manual", "ferramenta")),
+            new CategoryRule(List.of("tinta", "pincel", "rolo de pintura", "verniz",
+                    "massa corrida", "solvente", "bandeja de pintura"),
+                    List.of("pintura", "tintas")),
+            new CategoryRule(List.of("capacete de seguranca", "oculos de protecao",
+                    "luva de protecao", "protetor auricular", "mascara de protecao"),
+                    List.of("epi", "protecao", "seguranca"))
+    );
 
     private Unit unitOrDefault(String code) {
         if (StringUtils.hasText(code)) return findUnit(code);
