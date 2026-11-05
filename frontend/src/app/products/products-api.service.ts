@@ -60,6 +60,10 @@ export class ProductsApi {
     return this.http.get<PageResult<Product>>('/api/admin/products', { params });
   }
 
+  get(id: string): Observable<Product> {
+    return this.http.get<Product>(`/api/admin/products/${id}`);
+  }
+
   brands(): Observable<string[]> {
     return this.http.get<string[]>('/api/admin/products/brands');
   }
