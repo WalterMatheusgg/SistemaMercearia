@@ -62,6 +62,13 @@ export class ProductsApi {
     return this.http.get<Lookup[]>('/api/admin/units');
   }
 
+  /** A mesma regra determinística usada pelo servidor ao salvar com categoria automática. */
+  suggestCategory(name: string): Observable<Lookup> {
+    return this.http.get<Lookup>('/api/admin/products/suggest-category', {
+      params: new HttpParams().set('name', name),
+    });
+  }
+
 
   /** Novo cadastro único: foto e quantidade inicial opcionais. */
   createComplete(product: ProductInput, quantity: string, photo?: File): Observable<Product> {
