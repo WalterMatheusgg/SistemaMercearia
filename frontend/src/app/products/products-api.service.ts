@@ -4,7 +4,6 @@ import { Observable } from 'rxjs';
 
 export interface Product {
   id: string;
-  code: string;
   name: string;
   description: string | null;
   categoryId: string;
@@ -47,9 +46,10 @@ export interface Lookup {
 export class ProductsApi {
   constructor(private readonly http: HttpClient) {}
 
-  list(page: number, size: number, query: string): Observable<PageResult<Product>> {
+  list(page: number, size: number, query: string, active: boolean | null = null): Observable<PageResult<Product>> {
     let params = new HttpParams().set('page', page).set('size', size);
     if (query.trim()) params = params.set('query', query.trim());
+    if (active !== null) params = params.set('active', active);
     return this.http.get<PageResult<Product>>('/api/admin/products', { params });
   }
 
@@ -67,6 +67,10 @@ export class ProductsApi {
 
   update(id: string, product: ProductInput): Observable<Product> {
     return this.http.put<Product>(`/api/admin/products/${id}`, product);
+  }
+
+  reactivate(id: string): Observable<Product> {
+    return this.http.post<Product>(`/api/admin/products/${id}/reactivate`, {});
   }
 
   deactivate(id: string): Observable<void> {
