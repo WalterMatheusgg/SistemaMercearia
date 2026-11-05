@@ -65,6 +65,54 @@ public class InventoryController {
                 categoryId);
     }
 
+    /**
+     * Sugestões somente de leitura: quando o disponível chega ao mínimo,
+     * propõe recompor até duas vezes o mínimo já configurado pela loja.
+     * A loja sempre confirma fornecedor, preço, quantidade e pedido.
+     */
+    @GetMapping("/replenishment")
+    public List<java.util.Map<String, Object>> replenishment(
+            Authentication authentication,
+            @RequestParam UUID locationId,
+            @RequestParam(required = false) UUID categoryId) {
+        var actor = actors.require(authentication);
+        // Não usar recomendação como autorização: validar o local da loja.
+        inventory.locations(actor).stream()
+                .filter(location -> location.id().equals(locationId))
+                .findFirst().orElseThrow(() ->
+                        new br.com.ferragens.shared.NotFoundException("Local de estoque não encontrado."));
+        String sql = """
+            SELECT p.id AS product_id, p.name, p.brand, c.name AS category_name,
+                u.code AS unit,
+                b.minimum_quantity,
+                (b.physical-b.reserved-b.unavailable) AS available,
+                (ceil(greatest(2*b.minimum_quantity-
+                      (b.physical-b.reserved-b.unavailable),0)/u.quantity_step)
+                      *u.quantity_step)::numeric(19,4) AS suggested_quantity,
+                last_order.supplier_id, last_order.supplier_name,
+                last_order.unit_cost AS last_unit_cost
+            FROM inventory_balance b
+            JOIN product p ON p.id=b.product_id
+            JOIN category c ON c.id=p.category_id
+            JOIN unit u ON u.code=p.base_unit_code
+            LEFT JOIN LATERAL (
+                SELECT o.supplier_id, o.supplier_name, i.unit_cost
+                FROM purchase_item i JOIN purchase_order o ON o.id=i.purchase_id
+                WHERE i.product_id=p.id AND o.store_id=? AND o.status<>'CANCELLED'
+                ORDER BY o.created_at DESC,o.id DESC LIMIT 1
+            ) last_order ON true
+            WHERE b.location_id=? AND p.active AND b.minimum_quantity>0
+              AND b.physical-b.reserved-b.unavailable<=b.minimum_quantity
+            """;
+        if (categoryId != null) {
+            sql += " AND p.category_id=? ";
+            return db.rows(sql + " ORDER BY b.physical-b.reserved-b.unavailable, p.name LIMIT 30",
+                    actor.storeId(), locationId, categoryId);
+        }
+        return db.rows(sql + " ORDER BY b.physical-b.reserved-b.unavailable, p.name LIMIT 30",
+                actor.storeId(), locationId);
+    }
+
     @GetMapping("/movements")
     public Page<Movement> history(
             Authentication authentication,
