@@ -1,7 +1,7 @@
 <a class="skip-link" href="#workspace">Pular para o conteúdo</a>
 <div class="admin-shell" [class.menu-collapsed]="!menuOpen()" [class.mobile-menu-open]="mobileMenuOpen()">
   <header class="topbar">
-    <button class="menu-toggle" type="button" (click)="toggleMenu()" [attr.aria-expanded]="mobileMenuOpen() || menuOpen()" aria-controls="primary-navigation" aria-label="Abrir ou recolher menu">☰</button>
+    <button class="menu-toggle" type="button" (click)="toggleMenu()" [attr.aria-expanded]="menuExpanded()" aria-controls="primary-navigation" aria-label="Abrir ou recolher menu">☰</button>
     <a class="brand" routerLink="/admin/home" aria-label="Loja, início">
       <span class="brand-mark" aria-hidden="true">L</span>
       <span class="brand-copy"><strong>Loja</strong><small>CONTROLE INTERNO</small></span>
@@ -26,6 +26,9 @@
   </header>
   @if (logoutError()) { <p class="logout-error" role="alert">{{ logoutError() }}</p> }
   <div class="admin-body">
+    @if (mobileMenuOpen()) {
+      <button class="menu-backdrop" type="button" aria-label="Fechar menu" (click)="closeMobileMenu()"></button>
+    }
     <nav id="primary-navigation" class="side-nav" aria-label="Navegação principal">
       <p class="nav-caption">MENU PRINCIPAL</p>
       <a class="nav-item" (click)="closeMobileMenu()" routerLink="/admin/home" routerLinkActive="active">

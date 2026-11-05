@@ -105,3 +105,6 @@
 .error-indicator{display:inline-flex;align-items:center;gap:7px;padding:8px 11px;border:1px solid #f2c9bb;background:#fff3ed;color:#a14f3b;text-decoration:none;border-radius:10px;font-size:11px;font-weight:790}
 .error-indicator span{display:grid;place-items:center;background:#d47c51;color:#fff;border-radius:50%;width:18px;height:18px;font-size:12px}
 @media(max-width:760px){.error-indicator{font-size:0;padding:6px}.error-indicator span{font-size:11px}}
+
+.menu-backdrop{display:none}
+@media(max-width:760px){.menu-backdrop{display:block;position:fixed;top:63px;left:0;right:0;bottom:0;z-index:79;background:#0a232c88;border:0;border-radius:0!important;backdrop-filter:blur(3px)}}

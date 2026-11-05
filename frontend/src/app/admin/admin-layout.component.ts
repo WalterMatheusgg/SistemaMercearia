@@ -19,6 +19,9 @@ export class AdminLayoutComponent {
   private readonly router = inject(Router);
   private readonly http = inject(HttpClient);
   readonly failures24h = signal<number | null>(null);
+  readonly isMobile = signal(typeof window !== 'undefined' && window.innerWidth <= 760);
+  @HostListener('window:resize') onResize(): void { this.isMobile.set(window.innerWidth <= 760); }
+  menuExpanded(): boolean { return this.isMobile() ? this.mobileMenuOpen() : this.menuOpen(); }
   constructor() {
     if (this.has('OWNER','MANAGER')) {
       timer(0,90000).pipe(
@@ -35,7 +38,7 @@ export class AdminLayoutComponent {
   readonly menuOpen = signal(true);
   readonly mobileMenuOpen = signal(false);
   toggleMenu(): void {
-    if (typeof window !== 'undefined' && window.matchMedia('(max-width: 760px)').matches) {
+    if (this.isMobile()) {
       this.mobileMenuOpen.update(open => !open);
     } else {
       this.menuOpen.update(open => !open);

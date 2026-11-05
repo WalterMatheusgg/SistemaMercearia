@@ -325,3 +325,21 @@ test('financeiro apresenta movimentações de dinheiro em aba própria sem outro
   await page.getByRole('button', { name: 'Contas e pagamentos' }).click();
   await expect(page.getByRole('button', { name: 'A receber', exact: true })).toBeVisible();
 });
+
+test('dono consegue abrir cada área principal sem página vazia', async ({page}) => {
+  await login(page);
+  const routes = [
+    ['home','Painel'], ['products','Produtos'], ['inventory','Estoque'],
+    ['suppliers','Fornecedores'], ['customers','Clientes'],
+    ['sales','Vendas e pedidos'], ['purchases','Compras'],
+    ['finance','Financeiro'], ['reports','Relatórios'],
+    ['users','Usuários'], ['notifications','Alertas por e-mail'],
+    ['settings','Loja e auditoria'], ['assistant','Assistente'],
+  ];
+  for (const [route,title] of routes) {
+    await page.goto('/admin/' + route);
+    await expect(page).toHaveTitle(title + ' | Loja');
+    await expect(page.locator('.workspace').getByRole('heading').first()).toBeVisible();
+    await expect(page.locator('.workspace').getByRole('heading').first()).not.toBeEmpty();
+  }
+});

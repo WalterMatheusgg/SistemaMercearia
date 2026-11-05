@@ -203,7 +203,7 @@ public class AssistantController {
         if (q.contains("caixa") || q.contains("dinheiro"))
             return facts.containsKey("cashRecorded")
                 ? "Dinheiro registrado nas movimentações atuais: R$ " + facts.get("cashRecorded")
-                  + ". Consulte a área Dinheiro para ver entradas e retiradas. Não é um saldo bancário."
+                  + ". Consulte Financeiro > Dinheiro físico para ver entradas e retiradas. Não é um saldo bancário."
                 : "Seu perfil não tem acesso ao controle de dinheiro.";
         if (q.contains("pagar") || q.contains("receber") || q.contains("financeiro"))
             return facts.containsKey("openReceivables")
@@ -216,8 +216,8 @@ public class AssistantController {
         if (q.contains("atividade") || q.contains("aconteceu") || q.contains("histórico"))
             return facts.containsKey("recentActivity") ? "As últimas atividades auditadas estão disponíveis no resumo abaixo. "
                 + "Abra Configurações para consultar o histórico completo." : "O histórico completo de auditoria é restrito à gerência.";
-        return "Consigo consultar os números atuais autorizados de produtos, estoque, fornecedores, caixa e contas. "
-                + "Experimente perguntar: 'Quantos produtos tenho?', 'Como está o estoque?' ou 'O caixa está aberto?'. "
+        return "Consigo consultar os números atuais autorizados de produtos, estoque, fornecedores, dinheiro físico e contas. "
+                + "Experimente perguntar: 'Quantos produtos tenho?', 'Como está o estoque?' ou 'Quanto tenho registrado em dinheiro?'. "
                 + "Para interpretar perguntas mais livres, configure a integração opcional de IA no servidor.";
     }
 
