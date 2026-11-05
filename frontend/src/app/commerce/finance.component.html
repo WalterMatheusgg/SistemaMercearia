@@ -11,6 +11,15 @@
       {{ open ? 'Fechar cadastro' : '+ Registrar conta' }}
     </button>
   </header>
+  <section class="finance-overview" aria-label="Resumo das contas">
+    @if (summary(); as values) {
+      <div><span>A receber</span><strong>{{ money(values['receivables']) }}</strong><small>Saldo pendente atual</small></div>
+      <div><span>A pagar</span><strong>{{ money(values['payables']) }}</strong><small>Saldo pendente atual</small></div>
+      <div class="overdue"><span>Vencido a receber</span><strong>{{ money(values['overdueReceivables']) }}</strong><small>Clientes em atraso</small></div>
+      <div class="overdue"><span>Vencido a pagar</span><strong>{{ money(values['overduePayables']) }}</strong><small>Despesas em atraso</small></div>
+    }
+  </section>
+  <div class="finance-links"><a routerLink="/admin/reports">Ver lucro estimado, margem e vendas nos Relatórios</a></div>
   <app-action-status [action]="action"/>
   @if (error()) { <p class="money-error" role="alert">{{ error() }}</p> }
 
