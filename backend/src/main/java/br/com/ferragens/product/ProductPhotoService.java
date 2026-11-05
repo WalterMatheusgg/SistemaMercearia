@@ -70,7 +70,7 @@ public class ProductPhotoService {
         if (results.isEmpty()) throw new NotFoundException("Foto não cadastrada.");
         Photo photo = results.getFirst();
         return ResponseEntity.ok()
-            .header(HttpHeaders.X_CONTENT_TYPE_OPTIONS,"nosniff")
+            .header("X-Content-Type-Options","nosniff")
             .cacheControl(CacheControl.noStore())
             .contentType(MediaType.parseMediaType(photo.mime()))
             .body(photo.bytes());
