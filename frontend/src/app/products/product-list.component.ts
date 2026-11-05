@@ -5,7 +5,7 @@ import { debounceTime, distinctUntilChanged } from 'rxjs';
 import { HttpClient } from '@angular/common/http';
 import { AuthService } from '../auth/auth.service';
 import { ProductPhotoComponent } from './product-photo.component';
-import { RouterLink } from '@angular/router';
+import { ActivatedRoute, RouterLink } from '@angular/router';
 import { A11yModule } from '@angular/cdk/a11y';
 import { FormBuilder, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
@@ -34,6 +34,7 @@ export class ProductListComponent implements OnInit, OnDestroy {
   private readonly api = inject(ProductsApi);
   private readonly http = inject(HttpClient);
   private readonly auth = inject(AuthService);
+  private readonly route = inject(ActivatedRoute);
   private readonly destroyRef = inject(DestroyRef);
   selectedPhoto: File | null = null;
   categoryName = '';
@@ -54,6 +55,10 @@ export class ProductListComponent implements OnInit, OnDestroy {
   readonly products = signal<Product[]>([]);
   readonly categories = signal<Lookup[]>([]);
   readonly units = signal<Lookup[]>([]);
+  readonly brands = signal<string[]>([]);
+  readonly categoryFilter = signal('');
+  readonly brandFilter = signal('');
+  readonly onlyIncomplete = signal(false);
   readonly loading = signal(true);
   readonly saving = signal(false);
   readonly errorMessage = signal('');
@@ -72,6 +77,7 @@ export class ProductListComponent implements OnInit, OnDestroy {
     initialQuantity: ['', Validators.pattern(/^(?:\d+(?:[.,]\d{1,4})?)?$/)],
     name: ['', Validators.maxLength(160)],
     description: ['', Validators.maxLength(2000)],
+    brand: ['', Validators.maxLength(80)],
     categoryId: [''],
     baseUnitCode: [''],
     cost: ['', Validators.pattern(/^(?:\d+(?:[.,]\d{1,2})?)?$/)],
@@ -207,6 +213,11 @@ export class ProductListComponent implements OnInit, OnDestroy {
   ngOnInit(): void {
     this.loadLookups();
     this.loadProducts();
+    const editing = this.route.snapshot.queryParamMap.get('editar');
+    if (editing) this.api.get(editing).subscribe({
+      next: item => this.startEdit(item),
+      error: () => this.errorMessage.set('Não foi possível abrir o material solicitado.'),
+    });
     this.form.controls.name.valueChanges.pipe(debounceTime(250), distinctUntilChanged(),
       takeUntilDestroyed(this.destroyRef)).subscribe(name => this.refreshAutoCategory(name));
   }
@@ -219,7 +230,8 @@ export class ProductListComponent implements OnInit, OnDestroy {
     const request = ++this.requestId;
     this.loading.set(true);
     this.errorMessage.set('');
-    this.api.list(this.pageIndex(), this.pageSize(), this.query(), this.selectedActive()).subscribe({
+    this.api.list(this.pageIndex(), this.pageSize(), this.query(), this.selectedActive(),
+      this.categoryFilter(), this.brandFilter(), this.onlyIncomplete()).subscribe({
       next: (result) => {
         if (request !== this.requestId) return;
         this.products.set(result.content);
@@ -246,6 +258,37 @@ export class ProductListComponent implements OnInit, OnDestroy {
     this.loadProducts();
   }
 
+  setCategoryFilter(value: string): void {
+    this.categoryFilter.set(value);
+    this.pageIndex.set(0);
+    this.loadProducts();
+  }
+
+  setBrandFilter(value: string): void {
+    this.brandFilter.set(value);
+    this.pageIndex.set(0);
+    this.loadProducts();
+  }
+
+  setIncompleteFilter(value: boolean): void {
+    this.onlyIncomplete.set(value);
+    this.pageIndex.set(0);
+    this.loadProducts();
+  }
+
+  clearCatalogFilters(): void {
+    this.categoryFilter.set('');
+    this.brandFilter.set('');
+    this.onlyIncomplete.set(false);
+    this.query.set('');
+    this.pageIndex.set(0);
+    this.loadProducts();
+  }
+
+  needsReview(product: Product): boolean {
+    return product.name.toLowerCase().startsWith('material sem nome') || Number(product.price) === 0;
+  }
+
   changePage(event: PageEvent): void {
     this.pageIndex.set(event.pageIndex);
     this.pageSize.set(event.pageSize);
@@ -261,6 +304,7 @@ export class ProductListComponent implements OnInit, OnDestroy {
       initialQuantity: '',
       name: '',
       description: '',
+      brand: '',
       categoryId: '',
       baseUnitCode: '',
       cost: '',
@@ -276,11 +320,12 @@ export class ProductListComponent implements OnInit, OnDestroy {
     this.editingId.set(product.id);
     this.clearPhoto();
     this.formError.set('');
-    this.showDetails.set(!!product.description || product.cost !== '0.00');
+    this.showDetails.set(!!product.description || !!product.brand || product.cost !== '0.00');
     this.form.reset({
       initialQuantity: '',
       name: product.name,
       description: product.description ?? '',
+      brand: product.brand ?? '',
       categoryId: product.categoryId,
       baseUnitCode: product.baseUnitCode,
       cost: product.cost,
@@ -313,6 +358,7 @@ export class ProductListComponent implements OnInit, OnDestroy {
     const input: ProductInput = {
       name: raw.name.trim(),
       description: raw.description.trim() || null,
+      ...(raw.brand.trim() ? {brand: raw.brand.trim()} : {}),
       categoryId: raw.categoryId || null,
       baseUnitCode: raw.baseUnitCode,
       cost: raw.cost.trim() ? raw.cost.replace(',', '.') : '0.00',
@@ -334,6 +380,7 @@ export class ProductListComponent implements OnInit, OnDestroy {
           : 'Produto cadastrado: ' + saved.name +
             (Number(raw.initialQuantity.replace(',','.')) > 0 ? '. Saldo inicial registrado.' : '. Saldo inicial: zero.'));
         this.loadProducts();
+        this.loadBrands();
       },
       error: (error: { error?: { detail?: string } }) => {
         this.saving.set(false);
@@ -375,8 +422,16 @@ export class ProductListComponent implements OnInit, OnDestroy {
     });
   }
 
+  private loadBrands(): void {
+    this.api.brands().subscribe({
+      next: names => this.brands.set(names),
+      error: () => this.errorMessage.set('Não foi possível carregar as marcas.'),
+    });
+  }
+
   private loadLookups(): void {
     this.loadCategories();
+    this.loadBrands();
     this.api.units().subscribe({
       next: (items) => this.units.set(items),
       error: () => this.errorMessage.set('Não foi possível carregar as unidades.'),
