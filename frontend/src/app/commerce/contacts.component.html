@@ -3,7 +3,7 @@
     <div>
       <p class="eyebrow">CADASTROS</p>
       <h1>{{ title }}</h1>
-      <small>Dados de contato e histórico preservado.</small>
+      <small>Preencha apenas o que souber. Você poderá completar o cadastro depois.</small>
     </div>
     <button class="primary" (click)="edit()" [disabled]="action.locked()">Novo cadastro</button>
   </header>
@@ -14,10 +14,11 @@
   @if (open) {
     <section class="panel">
       <h2>{{ editing ? 'Editar cadastro' : 'Novo cadastro' }}</h2>
+      <p class="muted">Nenhum campo obrigatório. Dados faltantes podem ser informados posteriormente.</p>
       <form (ngSubmit)="save()" #contactForm="ngForm">
         <fieldset [disabled]="action.locked()">
           <div class="grid">
-            <label>Nome<input [(ngModel)]="form.name" name="name" required maxlength="160" /></label
+            <label>Nome (opcional)<input [(ngModel)]="form.name" name="name" maxlength="160" placeholder="Se vazio, gera um nome provisório" /></label
             ><label
               >E-mail<input
                 [(ngModel)]="form.email"

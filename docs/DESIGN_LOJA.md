@@ -13,11 +13,15 @@ A plataforma utiliza somente o nome **Loja** e opera como painel interno de ferr
 
 ## Cadastro e operação
 
+No cadastro de produtos e contatos (clientes e fornecedores), **nenhum campo é obrigatório**. Se não informar nome, o sistema cria um nome provisório editável; produtos recebem categoria e unidade padrão e preços zerados. Os campos informados continuam sendo validados quanto a formato e limites.
+
 O novo formulário de produtos não pede código. O backend gera um identificador técnico estável usado somente para integridade dos vínculos e histórico. Nome, categoria, unidade e preço de referência são campos de cadastro rápido; custo e observações ficam em opções adicionais. Produtos podem ser inativados e reativados. A edição não modifica códigos técnicos.
 
 O painel apresenta indicadores reais de produtos ativos, itens para reposição no local principal, vendas e valor confirmado no dia; cada cartão respeita as permissões. Busca e filtros permitem navegar sem menus extensos. As animações de fundo têm controle de pausa.
 
 A API histórica de clientes fica desabilitada por padrão com `CUSTOMER_PORTAL_ENABLED=false`, preservando os registros no PostgreSQL. A estrutura de checkout não foi apagada do banco.
+
+Movimentações de estoque, lançamentos financeiros e credenciais de acesso ainda exigem dados mínimos necessários para proteger o histórico, os saldos e as pessoas. Não é seguro executar uma operação financeira ou de estoque totalmente vazia.
 
 ## Senhas
 

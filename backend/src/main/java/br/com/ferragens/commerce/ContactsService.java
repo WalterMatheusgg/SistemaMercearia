@@ -22,7 +22,7 @@ public class ContactsService {
     }
 
     public record Contact(
-            @NotBlank @Size(max = 160) String name,
+            @Size(max = 160) String name,
             @Email @Size(max = 254) String email,
             @Size(max = 40) String phone,
             @Size(max = 30) String document,
@@ -66,7 +66,13 @@ public class ContactsService {
                         body,
                         () -> {
                             UUID target = id == null ? UUID.randomUUID() : id;
-                            String name = Db.required(body.name(), 160, "o nome");
+                            String name = body.name() != null && !body.name().isBlank()
+                                    ? body.name().trim()
+                                    : id == null
+                                        ? (kind.equals("SUPPLIER") ? "Fornecedor " : "Cliente ")
+                                          + target.toString().substring(0, 8)
+                                        : db.one("SELECT name FROM party WHERE id=? AND store_id=? AND kind=?",
+                                            id, actor.storeId(), kind).get("name").toString();
                             if (id == null)
                                 db.jdbc.update(
                                         "INSERT INTO"

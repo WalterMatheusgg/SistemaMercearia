@@ -187,7 +187,7 @@ test('cadastro rápido permite criar e editar sem código manual', async ({ page
   const editor = page.getByRole('dialog', { name: 'Novo produto' });
   await expect(editor.getByLabel('Código')).toHaveCount(0);
   await editor.getByLabel('Nome do produto').fill(name);
-  await editor.getByLabel('Preço de referência (R$)').fill('9,50');
+  await editor.getByLabel('Preço de referência (R$) — opcional').fill('9,50');
   await editor.getByRole('button', { name: 'Cadastrar produto' }).click();
   await expect(page.locator('.success-notice')).toContainText('Produto cadastrado');
   const search = page.getByRole('searchbox', { name: 'Buscar produto' });
@@ -195,7 +195,18 @@ test('cadastro rápido permite criar e editar sem código manual', async ({ page
   const row = page.locator('tr').filter({ hasText: name });
   await expect(row.first()).toBeVisible();
   await row.getByRole('button', { name: 'Editar' }).click();
-  await page.getByRole('dialog').getByLabel('Preço de referência (R$)').fill('11,90');
+  await page.getByRole('dialog').getByLabel('Preço de referência (R$) — opcional').fill('11,90');
   await page.getByRole('dialog').getByRole('button', { name: 'Salvar alterações' }).click();
   await expect(row.first()).toContainText('R$ 11,90');
+});
+
+test('cadastro de produto sem preencher nenhum campo gera um material provisório', async ({ page }) => {
+  await login(page);
+  await page.goto('/admin/products');
+  await page.getByRole('button', { name: /Novo produto/ }).click();
+  const form = page.getByRole('dialog', { name: 'Novo produto' });
+  await expect(form.getByLabel('Nome do produto (opcional)')).toHaveCount(1);
+  await form.getByRole('button', { name: 'Cadastrar produto' }).click();
+  await expect(page.locator('.success-notice')).toContainText('Material sem nome');
+  await expect(page.locator('.product-form')).toHaveCount(0);
 });
