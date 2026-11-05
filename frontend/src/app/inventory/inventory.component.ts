@@ -15,6 +15,7 @@ import { A11yModule } from '@angular/cdk/a11y';
 import {
   InventoryApi,
   InventoryBalance,
+  InventoryCategory,
   InventoryLocation,
   InventoryMovement,
   MovementCommand,
@@ -51,6 +52,8 @@ export class InventoryComponent implements OnInit {
   private operationKey = '';
   private submitted: MovementCommand | null = null;
   readonly locations = signal<InventoryLocation[]>([]);
+  readonly categories = signal<InventoryCategory[]>([]);
+  readonly categoryId = signal('');
   readonly locationId = signal('');
   readonly rows = signal<InventoryBalance[]>([]);
   readonly movements = signal<InventoryMovement[]>([]);
@@ -109,6 +112,7 @@ export class InventoryComponent implements OnInit {
   }
 
   ngOnInit(): void {
+    this.loadCategories();
     this.typedSearch.pipe(debounceTime(240), distinctUntilChanged(),
       takeUntilDestroyed(this.destroyRef)).subscribe(value => this.search(value));
     this.query.set(this.route.snapshot.queryParamMap.get('produto')?.trim() ?? '');
@@ -128,8 +132,23 @@ export class InventoryComponent implements OnInit {
   }
 
   refresh(): void {
+    this.loadCategories();
     this.loadBalances();
     this.loadHistory();
+  }
+
+  private loadCategories(): void {
+    this.api.categories().pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
+      next: items => this.categories.set(items),
+      error: () => this.error.set('Não foi possível carregar as categorias do estoque.'),
+    });
+  }
+
+  setCategory(id: string): void {
+    if (id === this.categoryId()) return;
+    this.categoryId.set(id);
+    this.page.set(0);
+    this.loadBalances();
   }
 
   changeLocation(id: string): void {
@@ -161,6 +180,7 @@ export class InventoryComponent implements OnInit {
         this.onlyLow(),
         this.includeInactive(),
         this.page(),
+        this.categoryId(),
       )
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
