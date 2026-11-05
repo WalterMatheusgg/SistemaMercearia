@@ -55,13 +55,14 @@
             }
             @if (mode === 'register' || mode === 'reset') {
               <label
-                >Senha (mínimo 12 caracteres)<input
+                >Senha (mínimo 4 caracteres e 1 número)<input
                   name="password"
                   type="password"
                   [(ngModel)]="password"
                   required
-                  minlength="12"
+                  minlength="4"
                   maxlength="72"
+                  pattern="(?=.*[0-9]).{4,72}"
                   autocomplete="new-password" /></label
               ><label
                 >Confirmar senha<input
@@ -69,8 +70,9 @@
                   type="password"
                   [(ngModel)]="confirmPassword"
                   required
-                  minlength="12"
+                  minlength="4"
                   maxlength="72"
+                  pattern="(?=.*[0-9]).{4,72}"
                   autocomplete="new-password"
               /></label>
             }

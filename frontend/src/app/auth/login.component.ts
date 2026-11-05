@@ -42,10 +42,15 @@ export class LoginComponent {
 
     this.busy.set(true);
     this.auth.login(this.form.getRawValue()).subscribe({
-      next: (user) =>
-        void this.router.navigateByUrl(
-          '/admin/home',
-        ),
+      next: (user) => {
+        if (user.roles.includes('CUSTOMER')) {
+          this.auth.logout().subscribe();
+          this.errorMessage.set('Este ambiente é exclusivo para o controle interno. Solicite acesso à administração.');
+          this.busy.set(false);
+          return;
+        }
+        void this.router.navigateByUrl('/admin/home');
+      },
       error: (error: { error?: { detail?: string } }) => {
         this.errorMessage.set(
           error.error?.detail ?? 'Não foi possível entrar. Verifique a conexão e tente novamente.',

@@ -101,103 +101,28 @@ test('venda pelo navegador baixa de 50 para 35 e aparece no estoque', async ({ p
   ).toBeTruthy();
 });
 
-test('cliente verifica e-mail, envia pedido, acompanha confirmação e vê apenas sua compra', async ({
-  page,
-  context,
-  browser,
-}) => {
-  await login(page);
-  const product = await seed(context);
-  await page.getByRole('button', { name: 'Sair', exact: true }).click();
-  await expect(page).toHaveURL(/\/login/);
-  const username = 'buyer-' + randomUUID().slice(0, 8),
-    email = username + '@ferragens.local';
-  await page.goto('/register');
-  await page.getByLabel('Nome completo').fill('Cliente ' + username);
-  await page.getByLabel('E-mail', { exact: true }).fill(email);
-  await page.getByLabel('Usuário', { exact: true }).fill(username);
-  await page.getByLabel('Senha (mínimo 12 caracteres)', { exact: true }).fill(password);
-  await page.getByLabel('Confirmar senha').fill(password);
-  await page.getByRole('button', { name: 'Criar minha conta' }).click();
-  await expect(page).toHaveURL(/\/account/);
-  const verify = await mailLink(page, email, 'verify-email');
-  await page.goto(verify);
-  await page.getByRole('button', { name: 'Confirmar e-mail' }).click();
-  await expect(page.getByRole('status')).toContainText('E-mail verificado');
-  await page.goto('/store');
-  await page.getByLabel('Buscar produto ou código').fill(product.code);
-  await page.getByRole('button', { name: 'Buscar', exact: true }).click();
-  const card = page.locator('article').filter({ hasText: product.code });
-  await card.getByLabel('Quantidade em UN').fill('2');
-  await card.getByRole('button', { name: 'Adicionar ao carrinho' }).click();
-  await page.goto('/cart');
-  await page.getByRole('button', { name: 'Calcular pedido' }).click();
-  await expect(page.getByText('R$ 4,00', { exact: true }).first()).toBeVisible();
-  await page.getByRole('button', { name: 'Confirmar pedido e reservar estoque' }).click();
-  await expect(page).toHaveURL(/\/account\?order=/);
-  await expect(page.getByText('Aguardando pagamento', { exact: true }).first()).toBeVisible();
-  const id = new URL(page.url()).searchParams.get('order')!;
-  const staff = await browser.newContext({ baseURL: test.info().project.use.baseURL });
-  const staffPage = await staff.newPage();
-  await login(staffPage);
-  await command(staff, '/api/admin/sales/' + id + '/confirm', {
-    payments: [{ method: 'PIX', amount: '4.00', note: 'Pix conferido no teste' }],
-  });
-  await staff.close();
-  await page.getByRole('button', { name: 'Atualizar', exact: true }).click();
-  await expect(page.getByText('Pago', { exact: true }).first()).toBeVisible();
-  const catalog = await (
-    await context.request.get('/api/catalog', { params: { query: product.code } })
-  ).json();
-  expect(catalog.content[0]).not.toHaveProperty('cost');
-  expect(catalog.content[0].available).toMatch(/^48([.]0+)?$/);
-});
-
 test('recuperação usa link recebido no Mailpit e invalida a senha antiga', async ({
   page,
   context,
 }) => {
   const username = 'reset-' + randomUUID().slice(0, 8),
     email = username + '@ferragens.local';
-  await command(context, '/api/auth/register', {
-    username,
-    email,
-    name: 'Recuperação',
-    password,
-    phone: '',
+  await login(page);
+  await command(context, '/api/admin/users', {
+    username, email, password, roles: ['STOCKKEEPER'], enabled: true,
   });
+  await page.getByRole('button', { name: 'Sair', exact: true }).click();
   await page.goto('/forgot-password');
   await page.getByLabel('Usuário ou e-mail').fill(username);
   await page.getByRole('button', { name: 'Enviar instruções' }).click();
   await expect(page.getByRole('status')).toContainText('Se houver conta ativa');
   const link = await mailLink(page, email, 'reset-password');
   await page.goto(link);
-  await page.getByLabel('Senha (mínimo 12 caracteres)', { exact: true }).fill(password + '-nova');
+  await page.getByLabel('Senha (mínimo 4 caracteres e 1 número)', { exact: true }).fill(password + '-nova');
   await page.getByLabel('Confirmar senha').fill(password + '-nova');
   await page.getByRole('button', { name: 'Salvar nova senha' }).click();
   await expect(page.getByRole('status')).toContainText('Senha atualizada');
   await login(page, username, password + '-nova');
-});
-
-test('ao alterar quantidade o carrinho exige novo cálculo dos totais', async ({ page, context }) => {
-  await login(page);
-  const product = await seed(context);
-  await page.goto('/store');
-  await page.getByLabel('Buscar produto ou código').fill(product.code);
-  await page.getByRole('button', { name: 'Buscar', exact: true }).click();
-  const card = page.locator('article').filter({ hasText: product.code });
-  await card.getByLabel('Quantidade em UN').fill('2');
-  await card.getByRole('button', { name: 'Adicionar ao carrinho' }).click();
-  await page.goto('/cart');
-
-  await page.getByRole('button', { name: 'Calcular pedido' }).click();
-  await expect(page.getByText('R$ 4,00', { exact: true }).first()).toBeVisible();
-
-  await page.getByLabel('Quantidade', { exact: true }).fill('3');
-  await expect(page.getByText('R$ 4,00', { exact: true })).toHaveCount(0);
-
-  await page.getByRole('button', { name: 'Calcular pedido' }).click();
-  await expect(page.getByText('R$ 6,00', { exact: true }).first()).toBeVisible();
 });
 
 test('estoquista não acessa financeiro nem gestão de usuários', async ({ page, context }) => {
@@ -234,18 +159,43 @@ test('estoquista não acessa financeiro nem gestão de usuários', async ({ page
   await expect(page).toHaveURL(/\/admin\/home/);
 });
 
-test('cada aba exibe seu módulo seguido do nome Loja', async ({ page }) => {
-  await page.goto('/store');
-  await expect(page).toHaveTitle('Loja virtual | Loja');
-  await expect(page.getByRole('link', { name: 'Loja, página inicial' })).toBeVisible();
-  await page.goto('/cart');
-  await expect(page).toHaveTitle('Meu carrinho | Loja');
-  await page.goto('/login');
+test('controle abre no login, identifica cada aba e oculta vitrine', async ({ page }) => {
+  await page.goto('/');
+  await expect(page).toHaveURL(/\/login/);
   await expect(page).toHaveTitle('Entrar | Loja');
+  await expect(page.getByRole('link', { name: 'Criar conta de cliente' })).toHaveCount(0);
+  await page.goto('/store');
+  await expect(page).toHaveURL(/\/login/);
   await login(page);
   await expect(page).toHaveTitle('Painel | Loja');
+  await expect(page.getByRole('link', { name: 'Produtos', exact: true })).toBeVisible();
+  await page.goto('/admin/products');
+  await expect(page).toHaveTitle('Produtos | Loja');
+  await expect(page.getByText('Seus produtos,')).toBeVisible();
+  await expect(page.getByText('Código', { exact: true })).toHaveCount(0);
   await page.goto('/admin/inventory');
   await expect(page).toHaveTitle('Estoque | Loja');
   await page.goto('/admin/sales');
   await expect(page).toHaveTitle('Vendas e pedidos | Loja');
+});
+
+test('cadastro rápido permite criar e editar sem código manual', async ({ page }) => {
+  await login(page);
+  await page.goto('/admin/products');
+  const name = 'Parafuso controle ' + randomUUID().slice(0, 8);
+  await page.getByRole('button', { name: /Novo produto/ }).click();
+  const editor = page.getByRole('dialog', { name: 'Novo produto' });
+  await expect(editor.getByLabel('Código')).toHaveCount(0);
+  await editor.getByLabel('Nome do produto').fill(name);
+  await editor.getByLabel('Preço de referência (R$)').fill('9,50');
+  await editor.getByRole('button', { name: 'Cadastrar produto' }).click();
+  await expect(page.getByRole('status')).toContainText('Produto cadastrado');
+  const search = page.getByRole('searchbox', { name: 'Buscar produto' });
+  await search.fill(name);
+  const row = page.locator('tr').filter({ hasText: name });
+  await expect(row.first()).toBeVisible();
+  await row.getByRole('button', { name: 'Editar' }).click();
+  await page.getByRole('dialog').getByLabel('Preço de referência (R$)').fill('11,90');
+  await page.getByRole('dialog').getByRole('button', { name: 'Salvar alterações' }).click();
+  await expect(row.first()).toContainText('R$ 11,90');
 });

@@ -42,8 +42,9 @@
                 [(ngModel)]="form.password"
                 type="password"
                 [required]="!editing"
-                minlength="12"
+                minlength="4"
                 maxlength="72"
+                pattern="(?=.*[0-9]).{4,72}"
                 autocomplete="new-password" /></label
             ><label
               >Papéis (Ctrl/Cmd para selecionar mais de um)<select
@@ -64,8 +65,7 @@
             >
           </div>
           <p class="muted">
-            Contas de cliente devem ter apenas o papel Cliente. Senhas exigem ao menos 12 caracteres
-            e no máximo 72 bytes; prefira uma frase longa.
+            Contas de cliente devem ter apenas o papel Cliente. Senhas exigem no mínimo 4 caracteres e pelo menos 1 número. Para contas de dono, prefira senhas longas e exclusivas.
           </p>
           <div class="actions gap">
             <button type="button" (click)="open = false; form.password = ''">Cancelar</button
