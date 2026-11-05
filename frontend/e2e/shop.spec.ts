@@ -199,7 +199,13 @@ test('cadastro rápido permite criar e editar sem código manual', async ({ page
   await editor.getByLabel('Preço de referência (R$) — opcional').fill('9,50');
   await editor.getByLabel('Quantidade inicial em estoque (opcional)').fill('8');
   await uploadDemoPhoto(editor);
+  const createResponsePromise = page.waitForResponse(res =>
+    res.url().includes('/api/admin/products/complete') && res.request().method() === 'POST',
+    {timeout: 12000});
   await editor.getByRole('button', { name: 'Cadastrar produto' }).click();
+  const createResponse = await createResponsePromise;
+  const serverReply = (await createResponse.text()).slice(0,1500);
+  expect(createResponse.status(), 'Cadastro completo respondeu: ' + serverReply).toBe(201);
   await expect(page.locator('.success-notice')).toContainText('Produto e foto cadastrados');
   const search = page.getByRole('searchbox', { name: 'Buscar produto' });
   await search.fill(name);
