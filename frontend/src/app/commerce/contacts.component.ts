@@ -15,7 +15,6 @@ export class ContactsComponent {
   private readonly http = inject(HttpClient);
   private readonly route = inject(ActivatedRoute);
   private readonly auth = inject(AuthService);
-  readonly explanation = this.kind === 'SUPPLIER' ? 'Empresas que fornecem materiais. Quantidades e movimentações ficam em Estoque.' : 'Contatos de clientes e seu histórico.';
   canManageMaterials(): boolean { return this.auth.currentUser()?.roles.some(r=>['OWNER','MANAGER','STOCKKEEPER'].includes(r)) ?? false; }
   readonly action = createAction();
   readonly rows = signal<Row[]>([]);
@@ -23,6 +22,8 @@ export class ContactsComponent {
   readonly error = signal('');
   readonly loading = signal(false);
   readonly kind = this.route.snapshot.data['kind'] as string;
+  readonly explanation = this.kind === 'SUPPLIER' ? 'Empresas que fornecem materiais. Quantidades e movimentações ficam em Estoque.' : 'Contatos de clientes e seu histórico.';
+
   readonly title = this.kind === 'CUSTOMER' ? 'Clientes' : 'Fornecedores';
   readonly money = money;
   readonly date = date;
