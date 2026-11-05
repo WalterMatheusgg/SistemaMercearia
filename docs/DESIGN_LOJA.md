@@ -13,9 +13,9 @@ A plataforma utiliza somente o nome **Loja** e opera como painel interno de ferr
 
 ## Cadastro e operação
 
-Nos contatos (clientes e fornecedores), nenhum campo de identificação é obrigatório. No cadastro manual de produtos, **a foto é obrigatória** (câmera ou arquivo, JPG/PNG/WebP até 3 MB); os demais campos são opcionais. Se não informar nome, o sistema cria um nome provisório editável; produtos recebem categoria e unidade padrão e preços zerados. Os campos informados continuam sendo validados quanto a formato e limites.
+Nos contatos (clientes e fornecedores), nenhum campo de identificação é obrigatório. No cadastro manual de produtos, **a foto é opcional** (câmera ou arquivo, JPG/PNG/WebP até 3 MB), assim como os demais campos. Se não informar nome, o sistema cria um nome provisório editável; produtos recebem categoria e unidade padrão e preços zerados. Os campos informados continuam sendo validados quanto a formato e limites.
 
-O novo formulário de produtos não pede código. O backend gera um identificador técnico estável usado somente para integridade dos vínculos e histórico. Nome, categoria, unidade e preço de referência são campos de cadastro rápido; custo e observações ficam em opções adicionais. Produtos podem ser inativados e reativados. A edição não modifica códigos técnicos.
+O novo formulário de produtos não pede código. O backend gera um identificador técnico estável usado somente para integridade dos vínculos e histórico. Nome, categoria, unidade e preço de referência são campos de cadastro rápido; marca, custo e observações ficam em opções adicionais. Produtos podem ser inativados e reativados. A edição não modifica códigos técnicos.
 
 O painel apresenta indicadores reais de produtos ativos, itens para reposição no local principal, vendas e valor confirmado no dia; cada cartão respeita as permissões. O menu lateral pode ser recolhido no computador e abre como gaveta no celular. A busca Ctrl+K permite chegar rapidamente aos módulos.
 
@@ -69,6 +69,6 @@ Para colocar a operação na internet, consulte [HOSPEDAGEM.md](HOSPEDAGEM.md). 
 
 ## Fluxo de fotos e quantidade inicial
 
-O cadastro manual cria um produto e sua foto em uma única transação, registrando a quantidade inicial no livro de movimentações quando informada. Se uma das etapas falhar, não há cadastro parcial. Fotos são armazenadas no PostgreSQL em tabela própria, protegidas pela autenticação; SVG, URL externa e arquivo maior que 3 MB não são aceitos. A busca do Google abre uma pesquisa externa: escolha e salve apenas imagens que tenha permissão para usar. Materiais importados anteriormente ou por lote podem não ter foto e exibem uma ilustração até a atualização.
+O cadastro manual cria um produto, sua foto opcional e o saldo inicial em uma única transação, registrando a quantidade inicial no livro de movimentações quando informada. Se uma das etapas falhar, não há cadastro parcial. Fotos são armazenadas no PostgreSQL em tabela própria, protegidas pela autenticação; SVG, URL externa e arquivo maior que 3 MB não são aceitos. A busca do Google abre uma pesquisa externa: escolha e salve apenas imagens que tenha permissão para usar. Materiais importados anteriormente ou por lote podem não ter foto e exibem uma ilustração até a atualização.
 
 Não é possível fazer o assistente detectar todos os problemas do navegador sem um sistema de telemetria adicional. Os avisos cobrem respostas HTTP 5xx do backend e não enviam alertas por e-mail automaticamente.
