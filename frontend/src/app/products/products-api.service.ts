@@ -6,6 +6,7 @@ export interface Product {
   id: string;
   code: string;
   name: string;
+  brand?: string | null;
   description: string | null;
   categoryId: string;
   categoryName: string;
@@ -21,6 +22,7 @@ export interface Product {
 export interface ProductInput {
   code?: string;
   name: string;
+  brand?: string | null;
   description: string | null;
   categoryId: string | null;
   baseUnitCode: string;
@@ -47,11 +49,19 @@ export interface Lookup {
 export class ProductsApi {
   constructor(private readonly http: HttpClient) {}
 
-  list(page: number, size: number, query: string, active: boolean | null = null): Observable<PageResult<Product>> {
+  list(page: number, size: number, query: string, active: boolean | null = null,
+       categoryId = '', brand = '', incomplete = false): Observable<PageResult<Product>> {
     let params = new HttpParams().set('page', page).set('size', size);
     if (query.trim()) params = params.set('query', query.trim());
     if (active !== null) params = params.set('active', active);
+    if (categoryId) params = params.set('categoryId', categoryId);
+    if (brand) params = params.set('brand', brand);
+    if (incomplete) params = params.set('incomplete', true);
     return this.http.get<PageResult<Product>>('/api/admin/products', { params });
+  }
+
+  brands(): Observable<string[]> {
+    return this.http.get<string[]>('/api/admin/products/brands');
   }
 
   categories(): Observable<Lookup[]> {
