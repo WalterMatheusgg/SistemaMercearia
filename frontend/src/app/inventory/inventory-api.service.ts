@@ -5,6 +5,12 @@ import { Observable } from 'rxjs';
 export type MovementKind = 'INITIAL' | 'ENTRY' | 'EXIT' | 'LOSS' | 'COUNT' | 'MINIMUM' | 'REVERSAL';
 export interface InventoryLocation { id: string; name: string; }
 export interface InventoryCategory { id: string; name: string; }
+export interface ReplenishmentSuggestion {
+  productId: string; name: string; brand: string | null; categoryName: string;
+  unit: string; minimumQuantity: string; available: string; suggestedQuantity: string;
+  supplierId: string | null; supplierName: string | null; lastUnitCost: string | null;
+}
+
 export interface InventoryBalance {
   productId: string; locationId: string; code: string; name: string; unit: string;
   quantityScale: number; quantityStep: string; physical: string; reserved: string;
@@ -41,6 +47,12 @@ export class InventoryApi {
       .set('onlyLow', onlyLow).set('includeInactive', includeInactive).set('page', page).set('size', 20);
     if (categoryId) params = params.set('categoryId', categoryId);
     return this.http.get<InventoryPage<InventoryBalance>>('/api/admin/inventory/balances', { params });
+  }
+
+  replenishment(locationId: string, categoryId = ''): Observable<ReplenishmentSuggestion[]> {
+    let params = new HttpParams().set('locationId', locationId);
+    if (categoryId) params = params.set('categoryId', categoryId);
+    return this.http.get<ReplenishmentSuggestion[]>('/api/admin/inventory/replenishment', { params });
   }
 
   history(locationId: string, productId: string | null, kind: MovementKind | '', page: number): Observable<InventoryPage<InventoryMovement>> {
