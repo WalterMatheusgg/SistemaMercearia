@@ -45,6 +45,14 @@ public class InventoryService {
                 actor.storeId());
     }
 
+    /** Compatibilidade para consultas existentes; filtro de categoria é opcional. */
+    @Transactional(readOnly = true)
+    public Page<Balance> balances(
+            Actor actor, UUID locationId, String query, boolean onlyLow,
+            boolean includeInactive, int page, int size) {
+        return balances(actor, locationId, query, onlyLow, includeInactive, page, size, null);
+    }
+
     @Transactional(readOnly = true)
     public Page<Balance> balances(
             Actor actor,
@@ -53,7 +61,8 @@ public class InventoryService {
             boolean onlyLow,
             boolean includeInactive,
             int page,
-            int size) {
+            int size,
+            UUID categoryId) {
         requireLocation(actor, locationId);
         int boundedPage = Math.max(0, page);
         int boundedSize = Math.clamp(size, 1, 100);
@@ -76,6 +85,11 @@ public class InventoryService {
                             + "%";
             args.add(pattern);
             args.add(pattern);
+        }
+        // Filtrar antes da paginação garante contagem e páginas corretas por categoria.
+        if (categoryId != null) {
+            from += " AND p.category_id = ? ";
+            args.add(categoryId);
         }
         if (onlyLow)
             from +=
