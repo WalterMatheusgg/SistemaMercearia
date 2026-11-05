@@ -5,6 +5,7 @@ import { AuthService } from '../auth/auth.service';
 import { Row, createAction, money, date, label, decimal, detail } from './ui';
 import { ActionStatusComponent } from './action-status.component';
 @Component({
+  selector: 'app-cash',
   standalone: true,
   imports: [FormsModule, ActionStatusComponent],
   templateUrl: './cash.component.html',

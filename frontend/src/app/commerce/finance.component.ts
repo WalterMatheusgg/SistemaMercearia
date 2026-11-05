@@ -1,13 +1,13 @@
 import { Component, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { RouterLink } from '@angular/router';
+import { CashComponent } from './cash.component';
 import { AuthService } from '../auth/auth.service';
 import { HttpClient } from '@angular/common/http';
 import { ActionStatusComponent } from './action-status.component';
 import { Row, Page, createAction, money, date, label, decimal, detail, today } from './ui';
 @Component({
   standalone: true,
-  imports: [FormsModule, RouterLink, ActionStatusComponent],
+  imports: [FormsModule, CashComponent, ActionStatusComponent],
   templateUrl: './finance.component.html',
   styleUrls: ['./ui.scss','./finance.component.scss'],
 })
@@ -19,6 +19,7 @@ export class FinanceComponent {
   }
   readonly action = createAction();
   readonly rows = signal<Row[]>([]);
+  readonly section = signal<'accounts'|'cash'>('accounts');
   readonly filter = signal<'pending'|'receivable'|'payable'|'finished'|'all'>('pending');
   private requested = 0;
   filterLabel(): string {

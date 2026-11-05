@@ -1,8 +1,12 @@
 <section class="page money-page">
+  <div class="finance-section-switch" role="group" aria-label="Área do financeiro">
+    <button type="button" [class.active]="section() === 'accounts'" [attr.aria-pressed]="section() === 'accounts'" (click)="section.set('accounts')">Contas e pagamentos</button>
+    @if (canSeeMoney()) { <button type="button" [class.active]="section() === 'cash'" [attr.aria-pressed]="section() === 'cash'" (click)="section.set('cash')">Dinheiro físico</button> }
+  </div>
+  @if (section() === 'accounts') {
   <header class="money-head">
-    <div><p class="eyebrow">DINHEIRO DA LOJA</p><h1>Financeiro, sem complicação.</h1>
+    <div><p class="eyebrow">DINHEIRO DA LOJA</p><h1>Financeiro</h1>
       <p>Contas a pagar, a receber e pagamentos registrados.</p></div>
-    @if (canSeeMoney()) { <a class="money-cash-link" routerLink="/admin/cash">Movimentações em dinheiro</a> }
     <button type="button" class="money-new" (click)="open = !open" [disabled]="action.locked()">
       {{ open ? 'Fechar cadastro' : '+ Registrar conta' }}
     </button>
@@ -125,4 +129,5 @@
   }
 
   <p class="money-footnote">O financeiro registra valores conferidos. Pix/cartão não são cobrados automaticamente e o saldo bancário não é conciliado pelo sistema.</p>
+  } @else if (canSeeMoney()) { <app-cash /> }
 </section>
