@@ -11,12 +11,11 @@ const product: Product = {
   createdAt: '2026-01-01T00:00:00Z', updatedAt: '2026-01-01T00:00:00Z',
 };
 
-describe('Cadastro de produtos', () => {
+describe('Cadastro simples de produtos', () => {
   const api = {
     list: vi.fn(), categories: vi.fn(), units: vi.fn(),
-    create: vi.fn(), update: vi.fn(), deactivate: vi.fn(),
+    create: vi.fn(), update: vi.fn(), deactivate: vi.fn(), reactivate: vi.fn(),
   };
-
   beforeEach(async () => {
     vi.resetAllMocks();
     api.list.mockReturnValue(of({ content: [product], page: 0, size: 20, totalElements: 1, totalPages: 1 }));
@@ -27,8 +26,7 @@ describe('Cadastro de produtos', () => {
       providers: [...appConfig.providers, { provide: ProductsApi, useValue: api }],
     }).compileComponents();
   });
-
-  it('renderiza um produto com preço em reais e locale brasileiro', async () => {
+  it('mostra os preços e não exige nem exibe código', async () => {
     const fixture = TestBed.createComponent(ProductListComponent);
     fixture.detectChanges();
     await fixture.whenStable();
@@ -36,27 +34,50 @@ describe('Cadastro de produtos', () => {
     const text = fixture.nativeElement.textContent.replace(/\s/g, '');
     expect(text).toContain('Furadeira');
     expect(text).toContain('R$199,90');
+    expect(text).not.toContain('FUR-001');
+    expect(fixture.componentInstance.form.contains('code')).toBe(false);
   });
-
-  it('envia valores decimais sem converter para ponto flutuante', () => {
+  it('salva produtos sem código manual com valores decimais exatos', () => {
     api.create.mockReturnValue(of(product));
     const fixture = TestBed.createComponent(ProductListComponent);
     fixture.detectChanges();
     const component = fixture.componentInstance;
     component.startCreate();
-    component.form.setValue({ code: ' FUR-001 ', name: ' Furadeira ', description: '',
-      categoryId: 'category-1', baseUnitCode: 'UN', cost: '120,00', price: '199,90' });
+    component.form.patchValue({ name: ' Bucha 8 mm ', categoryId: 'category-1',
+      baseUnitCode: 'UN', cost: '5,00', price: '12,90' });
     component.save();
-    expect(api.create).toHaveBeenCalledWith(expect.objectContaining({
-      code: 'FUR-001', name: 'Furadeira', cost: '120.00', price: '199.90',
-    }));
+    expect(api.create).toHaveBeenCalledWith({
+      name: 'Bucha 8 mm', description: null, categoryId: 'category-1',
+      baseUnitCode: 'UN', cost: '5.00', price: '12.90',
+    });
   });
-
-  it('mostra falha de carregamento sem representar uma lista vazia como sucesso', () => {
+  it('permite editar sem alterar o identificador interno do produto', () => {
+    api.update.mockReturnValue(of(product));
+    const fixture = TestBed.createComponent(ProductListComponent);
+    fixture.detectChanges();
+    const component = fixture.componentInstance;
+    component.startEdit(product);
+    component.form.patchValue({ price: '219,50' });
+    component.save();
+    expect(api.update).toHaveBeenCalledWith('product-1',
+      expect.objectContaining({ price: '219.50', name: 'Furadeira' }));
+  });
+  it('permite consultar inativos e reativar', () => {
+    api.reactivate.mockReturnValue(of(product));
+    const fixture = TestBed.createComponent(ProductListComponent);
+    fixture.detectChanges();
+    const component = fixture.componentInstance;
+    component.setFilter('inactive');
+    expect(api.list).toHaveBeenLastCalledWith(0, 20, '', false);
+    component.reactivate({ ...product, active: false });
+    expect(api.reactivate).toHaveBeenCalledWith('product-1');
+  });
+  it('mostra erro de carregamento sem simular lista vazia', () => {
     api.list.mockReturnValue(throwError(() => ({ error: { detail: 'Serviço indisponível' } })));
     const fixture = TestBed.createComponent(ProductListComponent);
     fixture.detectChanges();
-    expect(fixture.nativeElement.querySelector('[role="alert"]').textContent).toContain('Serviço indisponível');
+    expect(fixture.nativeElement.querySelector('[role="alert"]').textContent)
+      .toContain('Serviço indisponível');
     expect(fixture.nativeElement.textContent).not.toContain('Nenhum produto encontrado');
   });
 });
