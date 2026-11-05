@@ -78,6 +78,26 @@
     </div>
   </div>
 
+  <div class="catalog-advanced" aria-label="Filtrar catálogo de produtos">
+    <label>Categoria
+      <select [value]="categoryFilter()" (change)="setCategoryFilter($any($event.target).value)" aria-label="Filtrar categoria dos produtos">
+        <option value="">Todas as categorias</option>
+        @for (category of categories(); track category.code) {
+          <option [value]="category.code">{{ category.name }}</option>
+        }
+      </select>
+    </label>
+    <label>Marca
+      <select [value]="brandFilter()" (change)="setBrandFilter($any($event.target).value)" aria-label="Filtrar marca dos produtos">
+        <option value="">Todas as marcas</option>
+        @for (brand of brands(); track brand) { <option [value]="brand">{{ brand }}</option> }
+      </select>
+    </label>
+    <label class="catalog-review"><input type="checkbox" [checked]="onlyIncomplete()"
+      (change)="setIncompleteFilter($any($event.target).checked)" /> Precisam de revisão</label>
+    <button type="button" class="clear-catalog" (click)="clearCatalogFilters()">Limpar filtros</button>
+  </div>
+
   @if (errorMessage()) { <div class="notice error-notice" role="alert">{{ errorMessage() }}</div> }
   @if (successMessage()) {
     <div class="notice success-notice" role="status">
@@ -202,6 +222,10 @@
         @if (showDetails()) {
           <div class="form-grid extra-fields">
             <mat-form-field appearance="outline">
+              <mat-label>Marca (opcional)</mat-label>
+              <input matInput formControlName="brand" maxlength="80" placeholder="Ex.: Bosch, Tramontina" />
+            </mat-form-field>
+            <mat-form-field appearance="outline">
               <mat-label>Custo de compra (R$)</mat-label>
               <input matInput formControlName="cost" inputmode="decimal" placeholder="0,00" />
               @if (form.controls.cost.invalid && form.controls.cost.touched) {
@@ -234,7 +258,7 @@
       <div class="empty-state">
         <div class="empty-icon" aria-hidden="true">▦</div>
         <h2>Nenhum produto encontrado</h2>
-        <p>Tente outra busca ou cadastre seu primeiro material.</p>
+        <p>Tente outra busca, limpe os filtros ou cadastre seu primeiro material.</p>
         <button class="empty-action" type="button" (click)="startCreate()">+ Cadastrar produto</button>
       </div>
     }
@@ -246,7 +270,10 @@
             <td mat-cell *matCellDef="let product">
               <div class="product-name-cell">
                 <app-product-photo class="product-thumb" [id]="product.id" [alt]="product.name" />
-                <span><strong>{{ product.name }}</strong><small>{{ product.baseUnitName }}</small></span>
+                <span><strong>{{ product.name }}</strong>
+                  <small>{{ product.brand ? product.brand + ' · ' : '' }}{{ product.baseUnitName }}</small>
+                  @if (needsReview(product)) { <small class="review-label">Revisar nome ou preço</small> }
+                </span>
               </div>
             </td>
           </ng-container>
@@ -269,6 +296,10 @@
             <td mat-cell *matCellDef="let product" class="actions-cell">
               <button class="action-edit" type="button" (click)="startEdit(product)">Editar</button>
               <a class="action-stock" [routerLink]="['/admin/inventory']" [queryParams]="{ produto: product.name }">Estoque</a>
+              @if (product.active) {
+                <a class="action-stock" [routerLink]="['/admin/inventory']"
+                  [queryParams]="{ produto: product.name, acao: 'entrada' }">+ Entrada</a>
+              }
               @if (product.active) {
                 <button class="action-toggle" type="button" (click)="deactivate(product)">Inativar</button>
               } @else {
