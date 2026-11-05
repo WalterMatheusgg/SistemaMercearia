@@ -29,12 +29,12 @@ public class ProductWorkflowService {
 
     public record NewMaterial(@jakarta.validation.Valid ProductRequest product, BigDecimal initialQuantity) { }
 
-    /** Produto, fotografia e quantidade inicial são confirmados na mesma transação. */
+    /** Produto, foto opcional e quantidade inicial são confirmados na mesma transação. */
     @Transactional
     public ProductResponse create(Actor actor, NewMaterial data, MultipartFile photo) {
         if (data == null || data.product() == null)
             throw new BusinessRuleException("Dados do material não informados.");
-        ProductPhotoService.Photo validated=photos.validate(photo);
+        ProductPhotoService.Photo validated=photo!=null && !photo.isEmpty()?photos.validate(photo):null;
         BigDecimal quantity=data.initialQuantity()==null?BigDecimal.ZERO:data.initialQuantity();
         if (quantity.signum()<0 || quantity.scale()>4 || quantity.precision()-quantity.scale()>15)
             throw new BusinessRuleException("Informe uma quantidade inicial válida.");
@@ -42,7 +42,7 @@ public class ProductWorkflowService {
         // JdbcTemplate registra a foto e o saldo na mesma transação; antes,
         // a entidade JPA precisa existir fisicamente para satisfazer as FKs.
         entityManager.flush();
-        photos.store(product.id(),validated);
+        if (validated!=null) photos.store(product.id(),validated);
         if (quantity.signum()>0) {
             var locations=inventory.locations(actor);
             if (locations.isEmpty()) throw new BusinessRuleException(
