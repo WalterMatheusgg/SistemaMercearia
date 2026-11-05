@@ -4,7 +4,7 @@
       <p class="eyebrow">OPERAÇÃO DA LOJA</p>
       <h1>Estoque</h1>
       <p>Quantidades, entradas e saídas com histórico.</p>
-      <div class="stock-shortcuts"><a href="/admin/products">Produtos</a><a href="/admin/suppliers">Fornecedores</a><a href="/admin/purchases">Compras e recebimentos</a></div>
+      <div class="stock-shortcuts"><a routerLink="/admin/products">Produtos</a><a routerLink="/admin/suppliers">Fornecedores</a><a routerLink="/admin/purchases">Compras e recebimentos</a></div>
     </div>
     <button mat-stroked-button type="button" (click)="refresh()" [disabled]="loading() || saving()">
       Atualizar
@@ -32,7 +32,7 @@
     </mat-form-field>
     <mat-form-field appearance="outline" class="search"
       ><mat-label>Nome do produto</mat-label
-      ><input #searchInput matInput [value]="query()" (keyup.enter)="search(searchInput.value)"
+      ><input #searchInput matInput [value]="query()" (input)="searchTyping(searchInput.value)" (keyup.enter)="search(searchInput.value)"
     /></mat-form-field>
     <button mat-button type="button" (click)="search(searchInput.value)">Buscar</button>
   </div>
@@ -50,7 +50,9 @@
   </div>
 
   @if (formOpen() && selected(); as item) {
-    <section class="movement-form" aria-labelledby="movement-title">
+    <div class="stock-form-backdrop" aria-hidden="true"></div>
+    <section class="movement-form" role="dialog" aria-modal="true" cdkTrapFocus
+      [cdkTrapFocusAutoCapture]="true" aria-labelledby="movement-title">
       <div class="form-heading">
         <div>
           <h2 id="movement-title">
@@ -99,7 +101,7 @@
               ({{ item.unit }})</mat-label
             >
             <input
-              matInput
+              matInput cdkFocusInitial
               inputmode="decimal"
               formControlName="quantity"
               [readonly]="!!reverse()"
@@ -194,6 +196,26 @@
           }
         </tbody>
       </table>
+    </div>
+    <div class="mobile-stock-cards" aria-label="Produtos e quantidades">
+      @for (row of rows(); track row.productId) {
+        <article class="stock-card">
+          <div class="stock-card-header"><div><strong>{{ row.name }}</strong>
+            <small>{{ row.unit }}{{ row.active ? '' : ' · Inativo' }}</small></div>
+            <span class="status" [class.low]="row.status !== 'NORMAL'">{{ status(row.status) }}</span>
+          </div>
+          <div class="stock-card-numbers">
+            <div><span>Disponível</span><strong>{{ number(row.available) }} <small>{{ row.unit }}</small></strong></div>
+            <div><span>Estoque físico</span><strong>{{ number(row.physical) }}</strong></div>
+            <div><span>Mínimo</span><strong>{{ number(row.minimumQuantity) }}</strong></div>
+          </div>
+          <div class="stock-card-actions">
+            @if (canWrite()) { <button mat-flat-button type="button" [disabled]="saving()" (click)="open(row)">Movimentar</button> }
+            <button mat-button type="button" (click)="showHistory(row)">Ver histórico</button>
+            @if (canWrite()) { <button mat-button type="button" [disabled]="saving()" (click)="open(row,'MINIMUM')">Definir mínimo</button> }
+          </div>
+        </article>
+      }
     </div>
     @if (!loading() && rows().length === 0) {
       <p class="empty">Nenhum produto encontrado. Cadastre produtos ou ajuste os filtros.</p>
@@ -303,6 +325,19 @@
             }
           </tbody>
         </table>
+      </div>
+      <div class="mobile-history-cards" aria-label="Histórico de estoque">
+        @for (movement of movements(); track movement.id) {
+          <article class="stock-history-card">
+            <header><strong>{{ movement.productName }}</strong><small>{{ date(movement.occurredAt) }}</small></header>
+            <div><span>{{ labels[movement.kind] }}</span>
+              <strong>{{ movement.delta.startsWith('-') ? '' : '+' }}{{ number(movement.delta) }} {{ movement.unit }}</strong></div>
+            <p>Saldo: {{ number(movement.balanceBefore) }} → {{ number(movement.balanceAfter) }} · {{ movement.actorName }}</p>
+            <p>{{ movement.reason }}</p>
+            @if (movement.reversed) { <span class="history-status">Estornada</span> }
+            @else if (canReverse(movement)) { <button mat-button type="button" (click)="startReversal(movement)">Estornar</button> }
+          </article>
+        }
       </div>
       @if (!loadingHistory() && movements().length === 0) {
         <p class="empty">Nenhuma movimentação para este filtro.</p>

@@ -7,9 +7,10 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
-import { finalize } from 'rxjs';
+import { finalize, Subject, debounceTime, distinctUntilChanged } from 'rxjs';
 import { AuthService } from '../auth/auth.service';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, RouterLink } from '@angular/router';
+import { A11yModule } from '@angular/cdk/a11y';
 import {
   InventoryApi,
   InventoryBalance,
@@ -24,6 +25,8 @@ import {
   standalone: true,
   imports: [
     ReactiveFormsModule,
+    A11yModule,
+    RouterLink,
     MatButtonModule,
     MatCheckboxModule,
     MatFormFieldModule,
@@ -40,6 +43,7 @@ export class InventoryComponent implements OnInit {
   private readonly destroyRef = inject(DestroyRef);
   private readonly fb = inject(FormBuilder);
   private readonly route = inject(ActivatedRoute);
+  private readonly typedSearch = new Subject<string>();
   private balanceRequest = 0;
   private historyRequest = 0;
   private operationKey = '';
@@ -96,6 +100,8 @@ export class InventoryComponent implements OnInit {
   }
 
   ngOnInit(): void {
+    this.typedSearch.pipe(debounceTime(240), distinctUntilChanged(),
+      takeUntilDestroyed(this.destroyRef)).subscribe(value => this.search(value));
     this.query.set(this.route.snapshot.queryParamMap.get('produto')?.trim() ?? '');
     this.api
       .locations()
@@ -125,6 +131,8 @@ export class InventoryComponent implements OnInit {
     this.formOpen.set(false);
     this.refresh();
   }
+
+  searchTyping(query: string): void { this.typedSearch.next(query); }
 
   search(query: string): void {
     this.query.set(query.trim());
