@@ -108,3 +108,10 @@
 
 .menu-backdrop{display:none}
 @media(max-width:760px){.menu-backdrop{display:block;position:fixed;top:63px;left:0;right:0;bottom:0;z-index:79;background:#0a232c88;border:0;border-radius:0!important;backdrop-filter:blur(3px)}}
+
+@media(max-width:760px){
+  .topbar-user .assistant-cta,.topbar-user .user-avatar{display:none}
+  .brand-copy small{display:none}
+  .topbar-user{gap:6px}
+  .topbar{gap:7px}
+}
