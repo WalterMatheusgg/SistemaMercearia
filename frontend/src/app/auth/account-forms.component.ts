@@ -2,12 +2,11 @@ import { Component, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { AuthService } from './auth.service';
-import { StoreNavComponent } from '../store/store-nav.component';
 import { ActionStatusComponent } from '../commerce/action-status.component';
 import { createAction, detail } from '../commerce/ui';
 @Component({
   standalone: true,
-  imports: [FormsModule, RouterLink, StoreNavComponent, ActionStatusComponent],
+  imports: [FormsModule, RouterLink, ActionStatusComponent],
   templateUrl: './account-forms.component.html',
   styleUrls: ['../commerce/ui.scss', '../store/store.scss'],
 })

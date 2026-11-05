@@ -19,7 +19,7 @@ export interface Product {
 }
 
 export interface ProductInput {
-  code: string;
+  code?: string;
   name: string;
   description: string | null;
   categoryId: string;
