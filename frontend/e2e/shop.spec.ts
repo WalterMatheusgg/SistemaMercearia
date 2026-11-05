@@ -74,22 +74,20 @@ async function mailLink(page: Page, email: string, route: string) {
 test('venda pelo navegador baixa de 50 para 35 e aparece no estoque', async ({ page, context }) => {
   await login(page);
   const product = await seed(context);
-  const current = await (await context.request.get('/api/admin/cash')).json();
-  if (!current.current.id) await command(context, '/api/admin/cash/open', { amount: '100.00' });
   await page.goto('/admin/sales');
-  await page.getByRole('button', { name: 'Nova venda / orçamento' }).click();
-  await page.getByLabel('Buscar produto', { exact: true }).fill(product.name);
-  await page.getByRole('button', { name: 'Buscar produto', exact: true }).click();
+  await page.getByRole('button', { name: /Nova venda ou orçamento/ }).click();
+  await page.getByLabel('Nome do material', { exact: true }).fill(product.name);
+  await page.getByRole('button', { name: 'Buscar', exact: true }).click();
   await expect(
     page.getByLabel('Produto', { exact: true }).locator('option[value="' + product.id + '"]'),
   ).toHaveCount(1);
   await page.getByLabel('Produto', { exact: true }).selectOption(product.id);
   await page.getByLabel('Quantidade', { exact: true }).fill('15');
-  await page.getByRole('button', { name: 'Adicionar item', exact: true }).click();
-  await page.getByRole('button', { name: 'Calcular valores' }).click();
-  await expect(page.getByText('Total calculado pelo sistema')).toBeVisible();
-  await page.getByRole('button', { name: 'Adicionar recebimento' }).click();
-  await page.getByRole('button', { name: 'Concluir venda e baixar estoque' }).click();
+  await page.getByRole('button', { name: '+ Adicionar', exact: true }).click();
+  await page.getByRole('button', { name: 'Calcular total' }).click();
+  await expect(page.getByText('Total conferido')).toBeVisible();
+  await page.getByRole('button', { name: '+ Registrar um recebimento' }).click();
+  await page.getByRole('button', { name: 'Concluir venda' }).click();
   await expect(page.getByRole('status')).toContainText('Operação confirmada');
   await page.goto('/admin/inventory');
   await page.getByLabel('Nome do produto').fill(product.name);
@@ -171,7 +169,7 @@ test('controle abre no login, identifica cada aba e oculta vitrine', async ({ pa
   await expect(page.getByRole('link', { name: 'Produtos', exact: true })).toBeVisible();
   await page.goto('/admin/products');
   await expect(page).toHaveTitle('Produtos | Loja');
-  await expect(page.getByText('Seus produtos,')).toBeVisible();
+  await expect(page.getByRole('heading', { name: /Seus produtos/ })).toBeVisible();
   await expect(page.getByText('Código', { exact: true })).toHaveCount(0);
   await page.goto('/admin/inventory');
   await expect(page).toHaveTitle('Estoque | Loja');
@@ -186,7 +184,7 @@ test('cadastro rápido permite criar e editar sem código manual', async ({ page
   await page.getByRole('button', { name: /Novo produto/ }).click();
   const editor = page.getByRole('dialog', { name: 'Novo produto' });
   await expect(editor.getByLabel('Código')).toHaveCount(0);
-  await editor.getByLabel('Nome do produto').fill(name);
+  await editor.getByLabel('Nome do produto (opcional)').fill(name);
   await editor.getByLabel('Preço de referência (R$) — opcional').fill('9,50');
   await editor.getByRole('button', { name: 'Cadastrar produto' }).click();
   await expect(page.locator('.success-notice')).toContainText('Produto cadastrado');
@@ -209,4 +207,46 @@ test('cadastro de produto sem preencher nenhum campo gera um material provisóri
   await form.getByRole('button', { name: 'Cadastrar produto' }).click();
   await expect(page.locator('.success-notice')).toContainText('Material sem nome');
   await expect(page.locator('.product-form')).toHaveCount(0);
+});
+
+
+test('busca rápida navega entre áreas com Ctrl+K', async ({ page }) => {
+  await login(page);
+  await page.keyboard.press('Control+k');
+  const dialog = page.getByRole('dialog', { name: 'Busca rápida' });
+  await expect(dialog).toBeVisible();
+  await dialog.getByRole('searchbox', { name: 'Buscar área ou tarefa' }).fill('fornecedor');
+  await dialog.getByRole('button', { name: /Fornecedores/ }).click();
+  await expect(page).toHaveURL(/\/admin\/suppliers/);
+  await expect(dialog).toHaveCount(0);
+});
+
+test('assistente consulta dados e prepara importação em lote com prévia', async ({ page }) => {
+  await login(page);
+  await page.goto('/admin/assistant');
+  await expect(page).toHaveTitle('Assistente | Loja');
+  await page.getByRole('button', { name: 'Quantos produtos tenho?' }).click();
+  await expect(page.locator('.assistant-answer')).toContainText('produtos ativos');
+  await page.getByRole('button', { name: 'Adicionar muitos produtos' }).click();
+  const name = 'Material E2E ' + randomUUID().slice(0, 8);
+  await page.getByLabel('Lista de materiais').fill(name + ';9,90;4,00');
+  await page.getByRole('button', { name: 'Revisar importação' }).click();
+  await expect(page.locator('.import-row')).toContainText(name);
+  page.once('dialog', dialog => dialog.accept());
+  await page.getByRole('button', { name: 'Confirmar cadastro de 1 produtos' }).click();
+  await expect(page.getByRole('status')).toContainText('1 produtos cadastrados');
+  await page.goto('/admin/products');
+  await page.getByRole('searchbox', { name: 'Buscar produto' }).fill(name);
+  await expect(page.locator('tr').filter({ hasText: name })).toBeVisible();
+});
+
+test('financeiro e relatórios oferecem filtros simples', async ({ page }) => {
+  await login(page);
+  await page.goto('/admin/finance');
+  await expect(page.getByRole('button', { name: 'A receber', exact: true })).toBeVisible();
+  await page.getByRole('button', { name: 'A receber', exact: true }).click();
+  await expect(page.getByRole('heading', { name: 'A receber' })).toBeVisible();
+  await page.goto('/admin/reports');
+  await page.getByRole('button', { name: '7 dias' }).click();
+  await expect(page.getByRole('heading', { name: 'Vendas por dia' })).toBeVisible();
 });
