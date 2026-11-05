@@ -281,11 +281,17 @@ test('financeiro e relatórios oferecem filtros simples', async ({ page }) => {
   await login(page);
   await page.goto('/admin/finance');
   await expect(page.getByRole('button', { name: 'A receber', exact: true })).toBeVisible();
+  await expect(page.getByText('Vencido a receber')).toBeVisible();
+  await expect(page.getByText('Vencido a pagar')).toBeVisible();
   await page.getByRole('button', { name: 'A receber', exact: true }).click();
   await expect(page.getByRole('heading', { name: 'A receber' })).toBeVisible();
   await page.goto('/admin/reports');
   await page.getByRole('button', { name: '7 dias' }).click();
   await expect(page.getByRole('heading', { name: 'Vendas por dia' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Quanto sobra das vendas de mercadorias?' })).toBeVisible();
+  await expect(page.getByText('Lucro bruto estimado', { exact: true })).toBeVisible();
+  await expect(page.getByText('Valor do estoque físico a custo')).toBeVisible();
+  await expect(page.getByText('Materiais parados há 90 dias')).toBeVisible();
 });
 
 test('estoque alterna entre quadradinhos e lista', async ({ page }) => {
