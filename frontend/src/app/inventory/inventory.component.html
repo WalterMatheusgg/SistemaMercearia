@@ -200,6 +200,10 @@
               </td>
               <td class="row-actions">
                 @if (canWrite()) {
+                  <a class="stock-edit-link" [routerLink]="['/admin/products']"
+                    [queryParams]="{ editar: row.productId }">Editar</a>
+                }
+                @if (canWrite()) {
                   <button mat-button type="button" [disabled]="saving()" (click)="open(row)">
                     Movimentar
                   </button>
@@ -242,6 +246,10 @@
                 [attr.aria-label]="'Registrar saída de ' + row.name">− Saída</button>
             }
             <button class="quick-history" type="button" (click)="showHistory(row)">Histórico</button>
+            @if (canWrite()) {
+              <a class="stock-edit-link" [routerLink]="['/admin/products']"
+                [queryParams]="{ editar: row.productId }">Editar cadastro</a>
+            }
             @if (canWrite()) {
               <button class="quick-minimum" type="button" [disabled]="saving()" (click)="open(row,'MINIMUM')"
                 aria-label="Definir estoque mínimo">Mínimo</button>
