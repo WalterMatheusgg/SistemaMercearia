@@ -62,7 +62,7 @@ export class ProductListComponent implements OnInit, OnDestroy {
   readonly filter = signal<StatusFilter>('active');
   readonly columns = ['product', 'category', 'price', 'status', 'actions'];
   readonly form = this.fb.nonNullable.group({
-    initialQuantity: ['', Validators.pattern(/^(?:\\d+(?:[.,]\\d{1,4})?)?$/)],
+    initialQuantity: ['', Validators.pattern(/^(?:\d+(?:[.,]\d{1,4})?)?$/)],
     name: ['', Validators.maxLength(160)],
     description: ['', Validators.maxLength(2000)],
     categoryId: [''],

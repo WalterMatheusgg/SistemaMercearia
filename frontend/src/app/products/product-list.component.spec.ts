@@ -69,6 +69,19 @@ describe('Cadastro simples de produtos', () => {
       name: '', categoryId: null, baseUnitCode: '', cost: '0.00', price: '0.00',
     }), '0', image);
   });
+  it('aceita quantidade inicial inteira ou decimal sem rejeitar números válidos', () => {
+    const fixture = TestBed.createComponent(ProductListComponent);
+    fixture.detectChanges();
+    const control = fixture.componentInstance.form.controls.initialQuantity;
+    for (const valid of ['8', '24', '1,5', '2.25', '0', '']) {
+      control.setValue(valid);
+      expect(control.valid, 'Quantidade deveria ser válida: ' + valid).toBe(true);
+    }
+    for (const invalid of ['abc', '-2', '1,12345']) {
+      control.setValue(invalid);
+      expect(control.invalid, 'Quantidade deveria ser inválida: ' + invalid).toBe(true);
+    }
+  });
   it('permite editar sem alterar o identificador interno do produto', () => {
     api.updateComplete.mockReturnValue(of(product));
     const fixture = TestBed.createComponent(ProductListComponent);
