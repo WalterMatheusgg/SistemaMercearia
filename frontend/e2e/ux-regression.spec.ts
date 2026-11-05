@@ -148,7 +148,7 @@ test('reposição sugere quantidade e prepara compra sem criar pedido', async ({
   await page.getByRole('button', { name: 'Buscar', exact: true }).click();
   const card = page.locator('.stock-card').filter({ hasText: name });
   await expect(card).toBeVisible();
-  await card.getByRole('button', { name: 'Mínimo' }).click();
+  await card.getByRole('button', { name: 'Definir estoque mínimo' }).click();
   const movement = page.getByRole('dialog', { name: 'Registrar movimentação' });
   await movement.getByLabel('Estoque mínimo (UN)').fill('5');
   await movement.getByLabel('Motivo').fill('Definir mínimo para reposição');
@@ -161,7 +161,7 @@ test('reposição sugere quantidade e prepara compra sem criar pedido', async ({
   await expect(suggestion).toContainText('+7');
   await suggestion.getByRole('link', { name: 'Preparar pedido' }).click();
   await expect(page).toHaveURL(/\/admin\/purchases/);
-  await expect(page.getByRole('status')).toContainText('Sugestão de reposição carregada');
+  await expect(page.getByText(/Sugestão de reposição carregada/)).toBeVisible();
   await expect(page.getByRole('button', { name: 'Registrar pedido de compra' })).toBeDisabled();
 });
 
