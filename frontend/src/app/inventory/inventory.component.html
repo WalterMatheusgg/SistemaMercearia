@@ -160,6 +160,32 @@
         [class.selected]="viewMode() === 'list'" (click)="setViewMode('list')">☷ Lista</button>
     </div>
   </div>
+  <details class="stock-replenishment" aria-label="Sugestões de reposição">
+    <summary>Reposição sugerida <strong>{{ replenishment().length }}</strong>
+      <small>Materiais que atingiram o mínimo · até 30 sugestões</small></summary>
+    <p>Proposta de compra até duas vezes o estoque mínimo configurado. Os valores e o fornecedor são apenas referências; nenhuma compra é registrada automaticamente.</p>
+    @if (replenishmentError()) { <p role="alert">{{ replenishmentError() }}</p> }
+    <div class="replenishment-items">
+      @for (item of replenishment(); track item.productId) {
+        <article class="replenishment-item">
+          <div>
+            <strong>{{ item.name }}</strong>
+            <span>{{ item.categoryName }} · Disponível: {{ number(item.available) }} {{ item.unit }} · Mínimo: {{ number(item.minimumQuantity) }}</span>
+            <small>Último fornecedor: {{ item.supplierName || 'Nenhum histórico de compras' }}</small>
+          </div>
+          <div class="replenishment-action">
+            <strong>+{{ number(item.suggestedQuantity) }} {{ item.unit }}</strong>
+            @if (canAdjust()) {
+              <a [routerLink]="['/admin/purchases']" [queryParams]="{
+                produto: item.productId, quantidade: item.suggestedQuantity,
+                fornecedor: item.supplierId || '', custo: item.lastUnitCost || ''
+              }">Preparar pedido</a>
+            }
+          </div>
+        </article>
+      } @empty { <p class="empty">Nenhuma sugestão no filtro atual. Defina um estoque mínimo para receber recomendações.</p> }
+    </div>
+  </details>
   <section class="data-section" aria-label="Saldos do estoque"
     [class.mode-cards]="viewMode() === 'cards'" [class.mode-list]="viewMode() === 'list'">
     @if (loading()) {
