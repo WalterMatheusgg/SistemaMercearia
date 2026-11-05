@@ -1,5 +1,7 @@
 import { CurrencyPipe } from '@angular/common';
-import { Component, OnInit, inject, signal, OnDestroy } from '@angular/core';
+import { Component, OnInit, inject, signal, OnDestroy, DestroyRef } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { debounceTime, distinctUntilChanged } from 'rxjs';
 import { HttpClient } from '@angular/common/http';
 import { AuthService } from '../auth/auth.service';
 import { ProductPhotoComponent } from './product-photo.component';
@@ -32,6 +34,7 @@ export class ProductListComponent implements OnInit, OnDestroy {
   private readonly api = inject(ProductsApi);
   private readonly http = inject(HttpClient);
   private readonly auth = inject(AuthService);
+  private readonly destroyRef = inject(DestroyRef);
   selectedPhoto: File | null = null;
   categoryName = '';
   unitName = '';
@@ -42,7 +45,11 @@ export class ProductListComponent implements OnInit, OnDestroy {
   readonly addingCategory = signal(false);
   readonly addingUnit = signal(false);
   readonly referencesError = signal('');
+  readonly referencesSuccess = signal('');
+  readonly autoCategory = signal<Lookup | null>(null);
   private requestId = 0;
+  private categoriesRequest = 0;
+  private suggestionRequest = 0;
 
   readonly products = signal<Product[]>([]);
   readonly categories = signal<Lookup[]>([]);
@@ -104,25 +111,79 @@ export class ProductListComponent implements OnInit, OnDestroy {
       encodeURIComponent((this.form.controls.name.value || 'ferragens ferramentas') + ' produto');
   }
 
-  createCategoryFromEditor(name: string): void { this.categoryName=name; this.createCategory(); }
+  /** A caixa inline só é limpa depois que o servidor realmente confirmar a criação. */
+  createCategoryFromEditor(input: HTMLInputElement): void {
+    this.createCategory(input.value, () => { input.value = ''; });
+  }
 
-  createCategory(): void {
-    const name = this.categoryName.trim();
-    if (!this.canManageReferences() || !name || this.addingCategory()) return;
-    this.referencesError.set(''); this.addingCategory.set(true);
+  createCategory(rawName = this.categoryName, onSuccess?: () => void): void {
+    const name = rawName.trim();
+    this.referencesError.set('');
+    this.referencesSuccess.set('');
+    if (!this.canManageReferences()) {
+      this.referencesError.set('Apenas o dono ou gerente pode criar categorias.');
+      return;
+    }
+    if (!name) {
+      this.referencesError.set('Informe o nome da nova categoria.');
+      return;
+    }
+    if (this.addingCategory()) return;
+
+    const existing = this.categories().find(item =>
+      item.name.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLocaleLowerCase('pt-BR') ===
+      name.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLocaleLowerCase('pt-BR'));
+    if (existing) {
+      this.form.controls.categoryId.setValue(existing.code);
+      this.referencesSuccess.set('A categoria já existe e foi selecionada: ' + existing.name);
+      this.categoryName = '';
+      onSuccess?.();
+      return;
+    }
+
+    this.addingCategory.set(true);
     this.http.post<{id:string;name:string}>('/api/admin/references/categories',
       { name, active: true, quantityScale: 0, quantityStep: '1' },
       { headers: { 'Idempotency-Key': crypto.randomUUID() } }).subscribe({
       next: value => {
-        this.categories.update(items => [...items, {code:value.id,name:value.name}]
-          .sort((a,b)=>a.name.localeCompare(b.name)));
+        this.categories.update(items => [...items.filter(item => item.code !== value.id),
+          {code:value.id,name:value.name}].sort((a,b)=>a.name.localeCompare(b.name)));
         this.form.controls.categoryId.setValue(value.id);
-        this.categoryName=''; this.addingCategory.set(false); this.formError.set('');
+        this.categoryName='';
+        onSuccess?.();
+        this.addingCategory.set(false);
+        this.formError.set('');
+        this.referencesSuccess.set('Categoria criada e selecionada: ' + value.name);
+        this.loadCategories();
       },
-      error: e => {this.addingCategory.set(false);
-        this.referencesError.set(e.error?.detail ?? 'Não foi possível criar a categoria.');
-        this.formError.set(this.referencesError());},
+      error: e => {
+        this.addingCategory.set(false);
+        const detail = e.error?.detail ?? 'Não foi possível criar a categoria. Verifique as permissões ou se o nome já existe.';
+        this.referencesError.set(detail);
+        if (this.formOpen()) this.formError.set(detail);
+      },
     });
+  }
+
+  private refreshAutoCategory(name: string): void {
+    const request = ++this.suggestionRequest;
+    if (!this.formOpen() || this.form.controls.categoryId.value) {
+      this.autoCategory.set(null);
+      return;
+    }
+    this.api.suggestCategory(name).subscribe({
+      next: item => {
+        if (request === this.suggestionRequest && !this.form.controls.categoryId.value)
+          this.autoCategory.set(item);
+      },
+      error: () => {
+        if (request === this.suggestionRequest) this.autoCategory.set(null);
+      },
+    });
+  }
+
+  categoryChanged(): void {
+    this.refreshAutoCategory(this.form.controls.name.value);
   }
 
   createUnit(): void {
@@ -146,6 +207,8 @@ export class ProductListComponent implements OnInit, OnDestroy {
   ngOnInit(): void {
     this.loadLookups();
     this.loadProducts();
+    this.form.controls.name.valueChanges.pipe(debounceTime(250), distinctUntilChanged(),
+      takeUntilDestroyed(this.destroyRef)).subscribe(name => this.refreshAutoCategory(name));
   }
 
   private selectedActive(): boolean | null {
@@ -204,6 +267,9 @@ export class ProductListComponent implements OnInit, OnDestroy {
       price: '',
     });
     this.formOpen.set(true);
+    this.referencesError.set('');
+    this.referencesSuccess.set('');
+    this.refreshAutoCategory(this.form.controls.name.value);
   }
 
   startEdit(product: Product): void {
@@ -221,6 +287,9 @@ export class ProductListComponent implements OnInit, OnDestroy {
       price: product.price,
     });
     this.formOpen.set(true);
+    this.referencesError.set('');
+    this.referencesSuccess.set('');
+    this.autoCategory.set(null);
   }
 
   closeForm(): void {
@@ -229,6 +298,7 @@ export class ProductListComponent implements OnInit, OnDestroy {
     this.formOpen.set(false);
     this.clearPhoto();
     this.formError.set('');
+    this.autoCategory.set(null);
   }
 
   save(): void {
@@ -295,13 +365,18 @@ export class ProductListComponent implements OnInit, OnDestroy {
     });
   }
 
-  private loadLookups(): void {
+  private loadCategories(): void {
+    const request = ++this.categoriesRequest;
     this.api.categories().subscribe({
-      next: (items) => {
-        this.categories.set(items);
+      next: items => {
+        if (request === this.categoriesRequest) this.categories.set(items);
       },
       error: () => this.errorMessage.set('Não foi possível carregar as categorias.'),
     });
+  }
+
+  private loadLookups(): void {
+    this.loadCategories();
     this.api.units().subscribe({
       next: (items) => this.units.set(items),
       error: () => this.errorMessage.set('Não foi possível carregar as unidades.'),
