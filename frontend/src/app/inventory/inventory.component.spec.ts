@@ -1,5 +1,6 @@
 import { TestBed } from '@angular/core/testing';
 import { signal } from '@angular/core';
+import { provideRouter } from '@angular/router';
 import { of, throwError } from 'rxjs';
 import { InventoryComponent } from './inventory.component';
 import { InventoryApi, InventoryBalance, InventoryMovement } from './inventory-api.service';
@@ -24,6 +25,7 @@ describe('Operação de estoque', () => {
     api.balances.mockReturnValue(of({ content: [balance], totalElements: 1 }));
     api.history.mockReturnValue(of({ content: [], totalElements: 0 }));
     await TestBed.configureTestingModule({ imports: [InventoryComponent], providers: [
+      provideRouter([]),
       { provide: InventoryApi, useValue: api },
       { provide: AuthService, useValue: { currentUser: signal({ username: 'dono', roles: ['OWNER'] }) } },
     ] }).compileComponents();
