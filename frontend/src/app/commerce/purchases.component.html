@@ -48,7 +48,7 @@
                 <option value="">Selecione</option>
                 @for (product of products(); track product.id) {
                   <option [value]="product.id">
-                    {{ product['code'] }} · {{ product['name'] }} ({{ product['unit'] }})
+                    {{ product['name'] }} ({{ product['unit'] }})
                   </option>
                 }
               </select></label

@@ -38,7 +38,7 @@
                 <option value="">Selecione</option>
                 @for (product of products(); track product.id) {
                   <option [value]="product.id">
-                    {{ product['code'] }} · {{ product['name'] }} · {{ money(product['price']) }} ·
+                    {{ product['name'] }} · {{ money(product['price']) }} ·
                     disponível {{ quantity(product['available']) }} {{ product['unit'] }}
                   </option>
                 }
@@ -282,7 +282,7 @@
             @for (item of sale['items']; track item.id) {
               <tr>
                 <td>
-                  {{ item.name }}<small>{{ item.code }}</small>
+                  {{ item.name }}
                 </td>
                 <td>{{ quantity(item.quantity) }} {{ item.unitCode }}</td>
                 <td>{{ money(item.unitPrice) }}</td>
