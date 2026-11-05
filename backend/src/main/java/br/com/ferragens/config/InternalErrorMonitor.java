@@ -35,11 +35,12 @@ public class InternalErrorMonitor extends OncePerRequestFilter {
         } finally {
             if ((failed || response.getStatus() >= 500) && request.getRequestURI().startsWith("/api/")) {
                 try {
-                    String endpoint=request.getRequestURI()
-                        .replaceAll("(?i)[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}","{id}")
-                        .replaceAll("/[0-9]+(?=/|$)","/{n}")
-                        .replaceAll("[\\p{Cntrl}]","");
-                    if (endpoint.length()>200) endpoint=endpoint.substring(0,200);
+                    // Padrão de rota resolvido pelo Spring, sem IDs ou tokens do usuário.
+                    Object route=request.getAttribute(
+                        org.springframework.web.servlet.HandlerMapping.BEST_MATCHING_PATTERN_ATTRIBUTE);
+                    String endpoint=route instanceof String pattern && pattern.startsWith("/api/")
+                        ? pattern : "/api/unmatched";
+                    if(endpoint.length()>200) endpoint=endpoint.substring(0,200);
                     jdbc.update("INSERT INTO internal_error_event(id,request_method,endpoint,http_status) "
                             + "VALUES(?,?,?,?)",UUID.randomUUID(),request.getMethod(),
                             endpoint,failed?500:response.getStatus());

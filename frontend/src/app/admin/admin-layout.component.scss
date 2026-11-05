@@ -101,3 +101,7 @@
 }
 @keyframes menu-slide{from{opacity:.5;transform:translateY(-12px)}to{opacity:1;transform:translateY(0)}}
 @media(prefers-reduced-motion:reduce){.admin-body,.side-nav{transition:none}.mobile-menu-open .side-nav{animation:none}}
+
+.error-indicator{display:inline-flex;align-items:center;gap:7px;padding:8px 11px;border:1px solid #f2c9bb;background:#fff3ed;color:#a14f3b;text-decoration:none;border-radius:10px;font-size:11px;font-weight:790}
+.error-indicator span{display:grid;place-items:center;background:#d47c51;color:#fff;border-radius:50%;width:18px;height:18px;font-size:12px}
+@media(max-width:760px){.error-indicator{font-size:0;padding:6px}.error-indicator span{font-size:11px}}

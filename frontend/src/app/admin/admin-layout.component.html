@@ -8,6 +8,12 @@
     </a>
     <div class="topbar-user">
       <app-quick-nav />
+      @if (failures24h() !== null && failures24h()! > 0) {
+        <a class="error-indicator" routerLink="/admin/assistant"
+          [attr.aria-label]="failures24h() + ' falha(s) internas nas últimas 24 horas; consultar diagnóstico'">
+          <span aria-hidden="true">!</span> {{ failures24h() }} falha(s)
+        </a>
+      }
       @if (has('OWNER', 'MANAGER', 'STOCKKEEPER', 'FINANCE', 'SELLER', 'CASHIER')) {
         <a class="assistant-cta" routerLink="/admin/assistant"><span aria-hidden="true">✦</span> Assistente</a>
       }

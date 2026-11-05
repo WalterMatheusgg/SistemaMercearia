@@ -24,7 +24,7 @@ public class ProductWorkflowService {
         this.inventory=inventory;
     }
 
-    public record NewMaterial(ProductRequest product, BigDecimal initialQuantity) { }
+    public record NewMaterial(@jakarta.validation.Valid ProductRequest product, BigDecimal initialQuantity) { }
 
     /** Produto, fotografia e quantidade inicial são confirmados na mesma transação. */
     @Transactional
