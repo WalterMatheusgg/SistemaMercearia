@@ -54,7 +54,7 @@ describe('Cadastro simples de produtos', () => {
     }, '0', image);
   });
   it('permite nome/categoria/valores vazios, exigindo apenas uma foto', () => {
-    api.create.mockReturnValue(of(product));
+    api.createComplete.mockReturnValue(of(product));
     const fixture = TestBed.createComponent(ProductListComponent);
     fixture.detectChanges();
     const component = fixture.componentInstance;
