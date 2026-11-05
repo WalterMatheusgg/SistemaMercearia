@@ -51,6 +51,12 @@ public class ProductController {
         return products.get(id);
     }
 
+    @GetMapping("/products/suggest-category")
+    public LookupResponse suggestCategory(@RequestParam(defaultValue = "") String name) {
+        var category = products.suggestCategory(name);
+        return new LookupResponse(category.getId().toString(), category.getName());
+    }
+
     @PostMapping("/products")
     @ResponseStatus(HttpStatus.CREATED)
     public ProductResponse create(@Valid @RequestBody ProductRequest request) {
