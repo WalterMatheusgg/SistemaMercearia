@@ -16,7 +16,7 @@ const product: Product = {
 
 describe('Cadastro simples de produtos', () => {
   const api = {
-    list: vi.fn(), categories: vi.fn(), units: vi.fn(),
+    list: vi.fn(), categories: vi.fn(), units: vi.fn(), brands: vi.fn(), get: vi.fn(),
     create: vi.fn(), update: vi.fn(), createComplete: vi.fn(), updateComplete: vi.fn(), deactivate: vi.fn(), reactivate: vi.fn(), suggestCategory: vi.fn(),
   };
   beforeEach(async () => {
@@ -24,6 +24,7 @@ describe('Cadastro simples de produtos', () => {
     api.list.mockReturnValue(of({ content: [product], page: 0, size: 20, totalElements: 1, totalPages: 1 }));
     api.categories.mockReturnValue(of([{ code: 'category-1', name: 'Ferramentas' }]));
     api.units.mockReturnValue(of([{ code: 'UN', name: 'Unidade' }]));
+    api.brands.mockReturnValue(of([]));
     api.suggestCategory.mockReturnValue(of({code:'category-1',name:'Ferramentas'}));
     await TestBed.configureTestingModule({
       imports: [ProductListComponent],
@@ -142,7 +143,7 @@ describe('Cadastro simples de produtos', () => {
     fixture.detectChanges();
     const component = fixture.componentInstance;
     component.setFilter('inactive');
-    expect(api.list).toHaveBeenLastCalledWith(0, 20, '', false);
+    expect(api.list).toHaveBeenLastCalledWith(0, 20, '', false, '', '', false);
     component.reactivate({ ...product, active: false });
     expect(api.reactivate).toHaveBeenCalledWith('product-1');
   });
