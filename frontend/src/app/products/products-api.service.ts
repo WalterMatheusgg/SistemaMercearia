@@ -62,6 +62,23 @@ export class ProductsApi {
     return this.http.get<Lookup[]>('/api/admin/units');
   }
 
+
+  /** Novo cadastro único: foto obrigatória, quantidade inicial opcional. */
+  createComplete(product: ProductInput, quantity: string, photo: File): Observable<Product> {
+    const data = new FormData();
+    data.append('data', new Blob([JSON.stringify({ product, initialQuantity: quantity || '0' })],
+      { type: 'application/json' }), 'data.json');
+    data.append('photo', photo, photo.name);
+    return this.http.post<Product>('/api/admin/products/complete', data);
+  }
+
+  updateComplete(id: string, product: ProductInput, photo?: File): Observable<Product> {
+    const data = new FormData();
+    data.append('data', new Blob([JSON.stringify(product)], { type: 'application/json' }), 'data.json');
+    if (photo) data.append('photo', photo, photo.name);
+    return this.http.put<Product>(`/api/admin/products/${id}/complete`, data);
+  }
+
   create(product: ProductInput): Observable<Product> {
     return this.http.post<Product>('/api/admin/products', product);
   }
