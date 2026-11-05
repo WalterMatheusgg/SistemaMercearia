@@ -260,6 +260,12 @@ public class CommerceController {
         return finance.list(actor(auth), direction, status, page);
     }
 
+    @GetMapping("/finance/summary")
+    @PreAuthorize("hasAnyRole('OWNER','MANAGER','FINANCE')")
+    public Map<String, Object> financeSummary(Authentication auth) {
+        return finance.summary(actor(auth));
+    }
+
     @GetMapping("/finance/{id}")
     @PreAuthorize("hasAnyRole('OWNER','MANAGER','FINANCE')")
     public Map<String, Object> account(Authentication auth, @PathVariable UUID id) {
