@@ -1,8 +1,40 @@
 <section class="page control-dashboard">
+  <section class="command-hero" [class.motion-off]="!liveMotion()" aria-label="Central de controle da Loja">
+    <div class="hero-graphic" aria-hidden="true">
+      <span class="hero-grid"></span><span class="hero-ring ring-one"></span>
+      <span class="hero-ring ring-two"></span><span class="hero-ring ring-three"></span>
+      <span class="hero-core"><app-ui-icon name="package" /></span>
+      <span class="hero-particle particle-a"></span><span class="hero-particle particle-b"></span>
+      <span class="hero-techline"></span>
+    </div>
+    <div class="hero-text">
+      <span class="hero-eyebrow"><span class="hero-led"></span> SUA CENTRAL DE CONTROLE</span>
+      <h1>Mais controle. <em>Menos trabalho.</em></h1>
+      <p>Tudo o que você precisa para cuidar dos materiais e do seu negócio, sem etapas complicadas.</p>
+      <div class="hero-controls">
+        <button type="button" class="hero-briefing" (click)="briefingOpen.set(!briefingOpen())"
+          [attr.aria-expanded]="briefingOpen()">{{ briefingOpen() ? 'Ocultar resumo' : 'O que precisa de atenção?' }} <span aria-hidden="true">↗</span></button>
+        <a routerLink="/admin/assistant"><app-ui-icon name="spark" /> Conversar com o assistente</a>
+      </div>
+    </div>
+    <button class="hero-pause" type="button" (click)="liveMotion.set(!liveMotion())"
+      [attr.aria-label]="liveMotion() ? 'Pausar movimento visual' : 'Retomar movimento visual'"
+      [attr.aria-pressed]="!liveMotion()">{{ liveMotion() ? 'Ⅱ Pausar' : '▶ Retomar' }}</button>
+  </section>
+  @if (briefingOpen()) {
+    <div class="briefing-detail" role="status">
+      <div><app-ui-icon name="alert" /><strong>Resumo operacional</strong></div>
+      @if (lowStockTotal() !== null) {
+        <p>{{ lowStockTotal() === 0 ? 'Não há itens abaixo do mínimo no local monitorado.' : lowStockTotal() + ' item(ns) abaixo do mínimo. Consulte Estoque para conferir.' }}</p>
+      } @else { <p>Os dados de reposição não estão disponíveis para seu perfil ou não puderam ser consultados.</p> }
+      @if (todaySales() !== null) { <p>{{ todaySales() }} venda(s) confirmada(s) hoje.</p> }
+      <a routerLink="/admin/inventory">Ir para o estoque <span aria-hidden="true">↗</span></a>
+    </div>
+  }
   <header class="dashboard-heading">
     <div>
       <p class="eyebrow">PAINEL DE CONTROLE</p>
-      <h1>Bom trabalho, {{ auth.currentUser()?.username }}.</h1>
+      <h2>Olá, {{ auth.currentUser()?.username }}. Vamos organizar seu dia.</h2>
       <p>As informações importantes da sua loja, sem complicação.</p>
     </div>
     <button class="refresh-button" type="button" (click)="refreshDashboard()" [disabled]="updating()">
@@ -12,13 +44,13 @@
 
   <section class="dash-actions" aria-label="Ações rápidas">
     @if (has(['OWNER','MANAGER','STOCKKEEPER'])) {
-      <a class="dash-primary" routerLink="/admin/products"><strong>+ Novo produto</strong><span>Cadastro sem código nem campos obrigatórios</span></a>
+      <a class="dash-primary" routerLink="/admin/products"><app-ui-icon name="plus" /><strong>Novo produto</strong><span>Rápido, sem códigos nem campos obrigatórios</span></a>
     }
     @if (has(['OWNER','MANAGER','SELLER','CASHIER'])) {
-      <a routerLink="/admin/sales"><strong>Nova venda</strong><span>Registre o atendimento</span></a>
-      <a routerLink="/admin/cash"><strong>Ver caixa</strong><span>Abertura e fechamento</span></a>
+      <a routerLink="/admin/sales"><app-ui-icon name="cart" /><strong>Nova venda</strong><span>Atenda e registre em poucos passos</span></a>
+      <a routerLink="/admin/cash"><app-ui-icon name="coins" /><strong>Dinheiro</strong><span>Entradas e retiradas, sem abertura de caixa</span></a>
     }
-    <a routerLink="/admin/assistant"><strong>✦ Assistente</strong><span>Pergunte e importe produtos em lote</span></a>
+    <a routerLink="/admin/assistant"><app-ui-icon name="wand" /><strong>Assistente</strong><span>Pergunte ou cadastre até 200 materiais</span></a>
   </section>
 
   <div class="section-top">
@@ -43,7 +75,7 @@
       <div><p class="eyebrow">ÁREAS DA LOJA</p><h2 id="workspace-title">Encontre o que precisa</h2></div>
       <label class="dashboard-search">
         <span aria-hidden="true">⌕</span><input type="search" [value]="searchTerm()"
-          (input)="filterModules($any($event.target).value)" placeholder="Buscar uma função..."
+          (input)="filterModules($any($event.target).value)" placeholder="Encontrar qualquer área..."
           aria-label="Buscar uma função" />
       </label>
     </div>
@@ -60,7 +92,7 @@
     <div class="task-grid">
       @for (link of filteredLinks(); track link.path) {
         <a [routerLink]="link.path" class="task-card">
-          <span class="task-symbol" aria-hidden="true">{{ link.icon }}</span>
+          <span class="task-symbol" aria-hidden="true"><app-ui-icon [name]="link.icon" /></span>
           <strong>{{ link.title }}</strong>
           <span>{{ link.description }}</span>
           <span class="task-arrow" aria-hidden="true">↗</span>

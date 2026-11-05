@@ -3,10 +3,11 @@ import { HttpClient } from '@angular/common/http';
 import { switchMap, of, forkJoin, catchError } from 'rxjs';
 import { RouterLink } from '@angular/router';
 import { AuthService } from '../auth/auth.service';
+import { UiIconComponent } from '../shared/ui-icon.component';
 
 @Component({
   standalone: true,
-  imports: [RouterLink],
+  imports: [RouterLink, UiIconComponent],
   templateUrl: './home.component.html',
   styleUrls: ['./ui.scss', './home.component.scss'],
 })
@@ -14,6 +15,8 @@ export class HomeComponent {
   readonly auth = inject(AuthService);
   private readonly http = inject(HttpClient);
   readonly searchTerm = signal('');
+  readonly briefingOpen = signal(false);
+  readonly liveMotion = signal(true);
   readonly activeGroup = signal<'all' | 'estoque' | 'comercial' | 'financeiro'>('all');
   readonly motionPaused = signal(false);
   readonly updating = signal(false);
@@ -84,13 +87,13 @@ export class HomeComponent {
     return this.auth.currentUser()?.roles.some((role) => roles.includes(role)) ?? false;
   }
   readonly links = [
-    { group: 'comercial', path: '/admin/sales', icon: '▤', title: 'Vendas e pedidos', description: 'Orçamentos, vendas e pedidos em um só lugar.', roles: ['OWNER', 'MANAGER', 'SELLER', 'CASHIER'] },
-    { group: 'comercial', path: '/admin/cash', icon: '▣', title: 'Dinheiro', description: 'Entradas e retiradas de dinheiro físico.', roles: ['OWNER', 'MANAGER', 'SELLER', 'CASHIER'] },
-    { group: 'estoque', path: '/admin/inventory', icon: '▥', title: 'Estoque', description: 'Saldos, mínimos e movimentações auditadas.', roles: ['OWNER', 'MANAGER', 'SELLER', 'CASHIER', 'STOCKKEEPER'] },
-    { group: 'estoque', path: '/admin/products', icon: '▦', title: 'Produtos', description: 'Organize o catálogo e os preços da loja.', roles: ['OWNER', 'MANAGER', 'STOCKKEEPER'] },
-    { group: 'estoque', path: '/admin/purchases', icon: '⇄', title: 'Compras', description: 'Pedidos ao fornecedor e recebimentos.', roles: ['OWNER', 'MANAGER', 'STOCKKEEPER'] },
-    { group: 'financeiro', path: '/admin/finance', icon: '◫', title: 'Financeiro', description: 'Contas a pagar, a receber e liquidações.', roles: ['OWNER', 'MANAGER', 'FINANCE'] },
-    { group: 'financeiro', path: '/admin/reports', icon: '▧', title: 'Relatórios', description: 'Acompanhe o resultado das operações.', roles: ['OWNER', 'MANAGER', 'FINANCE'] },
-    { group: 'comercial', path: '/admin/customers', icon: '◎', title: 'Clientes', description: 'Consulte e organize os contatos.', roles: ['OWNER', 'MANAGER', 'SELLER', 'CASHIER', 'FINANCE'] },
+    { group: 'comercial', path: '/admin/sales', icon: 'cart', title: 'Vendas e pedidos', description: 'Orçamentos, vendas e pedidos em um só lugar.', roles: ['OWNER', 'MANAGER', 'SELLER', 'CASHIER'] },
+    { group: 'comercial', path: '/admin/cash', icon: 'coins', title: 'Dinheiro', description: 'Entradas e retiradas de dinheiro físico.', roles: ['OWNER', 'MANAGER', 'SELLER', 'CASHIER'] },
+    { group: 'estoque', path: '/admin/inventory', icon: 'package', title: 'Estoque', description: 'Saldos, mínimos e movimentações auditadas.', roles: ['OWNER', 'MANAGER', 'SELLER', 'CASHIER', 'STOCKKEEPER'] },
+    { group: 'estoque', path: '/admin/products', icon: 'boxes', title: 'Produtos', description: 'Organize o catálogo e os preços da loja.', roles: ['OWNER', 'MANAGER', 'STOCKKEEPER'] },
+    { group: 'estoque', path: '/admin/purchases', icon: 'vendors', title: 'Compras', description: 'Pedidos ao fornecedor e recebimentos.', roles: ['OWNER', 'MANAGER', 'STOCKKEEPER'] },
+    { group: 'financeiro', path: '/admin/finance', icon: 'graph', title: 'Financeiro', description: 'Contas a pagar, a receber e liquidações.', roles: ['OWNER', 'MANAGER', 'FINANCE'] },
+    { group: 'financeiro', path: '/admin/reports', icon: 'file', title: 'Relatórios', description: 'Acompanhe o resultado das operações.', roles: ['OWNER', 'MANAGER', 'FINANCE'] },
+    { group: 'comercial', path: '/admin/customers', icon: 'people', title: 'Clientes', description: 'Consulte e organize os contatos.', roles: ['OWNER', 'MANAGER', 'SELLER', 'CASHIER', 'FINANCE'] },
   ];
 }
