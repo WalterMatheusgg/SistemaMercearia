@@ -186,9 +186,10 @@ public class ProductService {
 
     private Category categoryOrDefault(UUID id) {
         if (id != null) return findCategory(id);
-        return categories.findAllByActiveTrueOrderByNameAsc().stream()
+        return categories.findByNameIgnoreCaseAndActiveTrue("Sem categoria")
+                .orElseGet(() -> categories.findAllByActiveTrueOrderByNameAsc().stream()
                 .findFirst().orElseThrow(() ->
-                        new ConflictException("Nenhuma categoria ativa disponível para cadastrar materiais."));
+                        new ConflictException("Nenhuma categoria ativa disponível para cadastrar materiais.")));
     }
 
     private Unit unitOrDefault(String code) {
