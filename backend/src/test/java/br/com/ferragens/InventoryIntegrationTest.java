@@ -55,6 +55,35 @@ class InventoryIntegrationTest {
     }
 
     @Test
+    void categorizesFromMaterialNameAndFiltersInventoryBeforePagination() {
+        UUID powerTools = UUID.randomUUID();
+        jdbc.update("INSERT INTO category(id,name,active) VALUES (?,?,true)",
+                powerTools, "Ferramentas elétricas " + powerTools.toString().substring(0, 8));
+
+        // Regras são vinculadas às categorias existentes, nunca criadas automaticamente.
+        assertThat(productService.suggestCategory("Parafuso sextavado 8mm").getName())
+                .isEqualTo("Fixação");
+        assertThat(productService.suggestCategory("Torneira de cozinha").getName())
+                .isEqualTo("Hidráulica");
+        assertThat(productService.suggestCategory("Furadeira de impacto 650W").getId())
+                .isEqualTo(powerTools);
+        assertThat(productService.suggestCategory("Produto desconhecido 123").getName())
+                .isEqualTo("Sem categoria");
+
+        String name = "Furadeira filtro " + powerTools.toString().substring(0, 8);
+        var created = productService.create(new br.com.ferragens.product.ProductRequest(
+                null, name, null, null, "UN", BigDecimal.ZERO, BigDecimal.ZERO));
+        assertThat(created.categoryId()).isEqualTo(powerTools);
+        assertThat(inventory.balances(actor, LOCATION, name, false, false, 0, 20,
+                powerTools).totalElements()).isEqualTo(1);
+        assertThat(inventory.balances(actor, LOCATION, name, false, false, 0, 20,
+                UUID.fromString("00000000-0000-0000-0000-000000000104")).totalElements())
+                .isZero();
+        assertThat(inventory.balances(actor, LOCATION, name, false, false, 0, 20,
+                null).totalElements()).isEqualTo(1);
+    }
+
+    @Test
     void bulkImportCreatesInitialStockExactlyOnceAndAllowsBlankFields() {
         String name = "Lote ferragens " + UUID.randomUUID().toString().substring(0, 8);
         var result = productService.importReviewed(actor, List.of(
