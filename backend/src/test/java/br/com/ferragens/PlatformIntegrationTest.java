@@ -108,6 +108,11 @@ class PlatformIntegrationTest {
         HttpResponse<String> listing = send(owner, "GET", "/api/admin/products?page=0&size=10", null, null);
         assertThat(listing.statusCode()).as(listing.body()).isEqualTo(200);
         assertThat(listing.body()).contains("FUR-001", "Furadeira", "CAB-001");
+        HttpResponse<String> internalCatalog = send(owner,
+            "GET", "/api/admin/catalog?query=Furadeira", null, null);
+        assertThat(internalCatalog.statusCode()).as(internalCatalog.body()).isEqualTo(200);
+        assertThat(internalCatalog.body()).contains("Furadeira");
+        assertThat(send(anonymous, "GET", "/api/admin/catalog", null, null).statusCode()).isIn(401, 403);
         HttpResponse<String> emptyFilter = send(owner,
             "GET", "/api/admin/products?page=0&size=10&query=", null, null);
         assertThat(emptyFilter.statusCode()).as(emptyFilter.body()).isEqualTo(200);

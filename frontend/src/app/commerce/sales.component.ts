@@ -77,7 +77,7 @@ export class SalesComponent {
       });
   }
   searchProducts() {
-    this.http.get<Page>('/api/catalog', { params: { query: this.productQuery } }).subscribe({
+    this.http.get<Page>('/api/admin/catalog', { params: { query: this.productQuery } }).subscribe({
       next: (r) => this.products.set(r.content),
       error: (e) => this.error.set(detail(e)),
     });

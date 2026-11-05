@@ -78,7 +78,7 @@ test('venda pelo navegador baixa de 50 para 35 e aparece no estoque', async ({ p
   if (!current.current.id) await command(context, '/api/admin/cash/open', { amount: '100.00' });
   await page.goto('/admin/sales');
   await page.getByRole('button', { name: 'Nova venda / orçamento' }).click();
-  await page.getByLabel('Buscar produto', { exact: true }).fill(product.code);
+  await page.getByLabel('Buscar produto', { exact: true }).fill(product.name);
   await page.getByRole('button', { name: 'Buscar produto', exact: true }).click();
   await expect(
     page.getByLabel('Produto', { exact: true }).locator('option[value="' + product.id + '"]'),
@@ -189,7 +189,7 @@ test('cadastro rápido permite criar e editar sem código manual', async ({ page
   await editor.getByLabel('Nome do produto').fill(name);
   await editor.getByLabel('Preço de referência (R$)').fill('9,50');
   await editor.getByRole('button', { name: 'Cadastrar produto' }).click();
-  await expect(page.getByRole('status')).toContainText('Produto cadastrado');
+  await expect(page.locator('.success-notice')).toContainText('Produto cadastrado');
   const search = page.getByRole('searchbox', { name: 'Buscar produto' });
   await search.fill(name);
   const row = page.locator('tr').filter({ hasText: name });
