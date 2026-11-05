@@ -141,9 +141,9 @@
     <div><strong>Materiais no estoque</strong><span>{{ total() }} produto(s) neste filtro</span></div>
     <div class="stock-view-switch" role="group" aria-label="Forma de exibir estoque">
       <button type="button" [attr.aria-pressed]="viewMode() === 'cards'"
-        [class.selected]="viewMode() === 'cards'" (click)="viewMode.set('cards')">▦ Quadradinhos</button>
+        [class.selected]="viewMode() === 'cards'" (click)="setViewMode('cards')">▦ Quadradinhos</button>
       <button type="button" [attr.aria-pressed]="viewMode() === 'list'"
-        [class.selected]="viewMode() === 'list'" (click)="viewMode.set('list')">☷ Lista</button>
+        [class.selected]="viewMode() === 'list'" (click)="setViewMode('list')">☷ Lista</button>
     </div>
   </div>
   <section class="data-section" aria-label="Saldos do estoque"
@@ -221,9 +221,17 @@
             <div><span>Mínimo</span><strong>{{ number(row.minimumQuantity) }}</strong></div>
           </div>
           <div class="stock-card-actions">
-            @if (canWrite()) { <button mat-flat-button type="button" [disabled]="saving()" (click)="open(row)">Movimentar</button> }
-            <button mat-button type="button" (click)="showHistory(row)">Ver histórico</button>
-            @if (canWrite()) { <button mat-button type="button" [disabled]="saving()" (click)="open(row,'MINIMUM')">Definir mínimo</button> }
+            @if (canWrite()) {
+              <button class="quick-entry" type="button" [disabled]="saving()" (click)="open(row,'ENTRY')"
+                [attr.aria-label]="'Registrar entrada de ' + row.name">+ Entrada</button>
+              <button class="quick-exit" type="button" [disabled]="saving()" (click)="open(row,'EXIT')"
+                [attr.aria-label]="'Registrar saída de ' + row.name">− Saída</button>
+            }
+            <button class="quick-history" type="button" (click)="showHistory(row)">Histórico</button>
+            @if (canWrite()) {
+              <button class="quick-minimum" type="button" [disabled]="saving()" (click)="open(row,'MINIMUM')"
+                aria-label="Definir estoque mínimo">Mínimo</button>
+            }
           </div>
         </article>
       }

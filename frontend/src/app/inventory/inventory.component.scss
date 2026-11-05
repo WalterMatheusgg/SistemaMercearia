@@ -120,3 +120,13 @@ td small { display: block; margin-top: 4px; color: var(--ink-soft); overflow-wra
 }
 @media(max-width:420px){.data-section.mode-cards>.mobile-stock-cards{grid-template-columns:1fr}.stock-card-photo{height:145px}}
 @media(prefers-reduced-motion:reduce){.stock-card{transition:none}}
+
+/* Ações de estoque com um toque, sem menus intermediários. */
+.stock-card-actions{display:grid;grid-template-columns:1fr 1fr;gap:7px}
+.stock-card-actions button{margin:0;min-width:0;min-height:37px;border-radius:9px;font-size:11px;white-space:normal;cursor:pointer;font-weight:790}
+.stock-card-actions .quick-entry{background:#1d664d;color:#fff;border:1px solid #1d664d}
+.stock-card-actions .quick-entry:hover{background:#144c38}
+.stock-card-actions .quick-exit{background:#fff0e6;color:#a55a2e;border:1px solid #efd3bc}
+.stock-card-actions .quick-exit:hover{background:#ffe4d1}
+.stock-card-actions .quick-history,.stock-card-actions .quick-minimum{background:#fff;color:#3b7155;border:1px solid #d9e8de}
+.stock-card-actions .quick-history:hover,.stock-card-actions .quick-minimum:hover{background:#edf8f1}

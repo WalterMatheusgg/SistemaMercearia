@@ -69,7 +69,13 @@ export class InventoryComponent implements OnInit {
   readonly historyProduct = signal<InventoryBalance | null>(null);
   readonly reverse = signal<InventoryMovement | null>(null);
   readonly formOpen = signal(false);
-  readonly viewMode = signal<'cards'|'list'>('cards');
+  readonly viewMode = signal<'cards'|'list'>(
+    typeof localStorage !== 'undefined' && localStorage.getItem('loja-stock-view') === 'list'
+      ? 'list' : 'cards');
+  setViewMode(mode: 'cards'|'list'): void {
+    this.viewMode.set(mode);
+    if (typeof localStorage !== 'undefined') localStorage.setItem('loja-stock-view', mode);
+  }
   readonly onlyLow = signal(false);
   readonly includeInactive = signal(false);
   readonly query = signal('');
