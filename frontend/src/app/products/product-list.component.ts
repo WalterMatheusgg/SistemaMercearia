@@ -239,10 +239,6 @@ export class ProductListComponent implements OnInit, OnDestroy {
       this.formError.set('Revise os valores informados. Os campos podem ficar vazios.');
       return;
     }
-    if (!this.editingId() && !this.selectedPhoto) {
-      this.formError.set('Para cadastrar, tire uma foto ou selecione uma imagem do produto.');
-      return;
-    }
     const raw = this.form.getRawValue();
     const input: ProductInput = {
       name: raw.name.trim(),
@@ -257,7 +253,7 @@ export class ProductListComponent implements OnInit, OnDestroy {
     const request = this.editingId()
       ? this.api.updateComplete(this.editingId()!, input, this.selectedPhoto ?? undefined)
       : this.api.createComplete(input,
-          raw.initialQuantity.trim() ? raw.initialQuantity.replace(',', '.') : '0', this.selectedPhoto!);
+          raw.initialQuantity.trim() ? raw.initialQuantity.replace(',', '.') : '0', this.selectedPhoto ?? undefined);
     request.subscribe({
       next: (saved) => {
         this.saving.set(false);
@@ -265,7 +261,7 @@ export class ProductListComponent implements OnInit, OnDestroy {
         this.clearPhoto();
         this.successMessage.set(isEditing
           ? 'Produto atualizado: ' + saved.name
-          : 'Produto e foto cadastrados: ' + saved.name +
+          : 'Produto cadastrado: ' + saved.name +
             (Number(raw.initialQuantity.replace(',','.')) > 0 ? '. Saldo inicial registrado.' : '. Saldo inicial: zero.'));
         this.loadProducts();
       },
