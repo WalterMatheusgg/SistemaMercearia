@@ -14,7 +14,7 @@ const product: Product = {
 describe('Cadastro simples de produtos', () => {
   const api = {
     list: vi.fn(), categories: vi.fn(), units: vi.fn(),
-    create: vi.fn(), update: vi.fn(), deactivate: vi.fn(), reactivate: vi.fn(),
+    create: vi.fn(), update: vi.fn(), createComplete: vi.fn(), updateComplete: vi.fn(), deactivate: vi.fn(), reactivate: vi.fn(),
   };
   beforeEach(async () => {
     vi.resetAllMocks();
@@ -38,20 +38,22 @@ describe('Cadastro simples de produtos', () => {
     expect(fixture.componentInstance.form.contains('code')).toBe(false);
   });
   it('salva produtos sem código manual com valores decimais exatos', () => {
-    api.create.mockReturnValue(of(product));
+    api.createComplete.mockReturnValue(of(product));
     const fixture = TestBed.createComponent(ProductListComponent);
     fixture.detectChanges();
     const component = fixture.componentInstance;
     component.startCreate();
     component.form.patchValue({ name: ' Bucha 8 mm ', categoryId: 'category-1',
       baseUnitCode: 'UN', cost: '5,00', price: '12,90' });
+    const image = new File([new Uint8Array([137,80,78,71])], 'item.png', {type: 'image/png'});
+    component.selectedPhoto=image;
     component.save();
-    expect(api.create).toHaveBeenCalledWith({
+    expect(api.createComplete).toHaveBeenCalledWith({
       name: 'Bucha 8 mm', description: null, categoryId: 'category-1',
       baseUnitCode: 'UN', cost: '5.00', price: '12.90',
-    });
+    }, '0', image);
   });
-  it('permite cadastro sem preencher nenhum campo', () => {
+  it('permite nome/categoria/valores vazios, exigindo apenas uma foto', () => {
     api.create.mockReturnValue(of(product));
     const fixture = TestBed.createComponent(ProductListComponent);
     fixture.detectChanges();
@@ -59,20 +61,24 @@ describe('Cadastro simples de produtos', () => {
     component.startCreate();
     expect(component.form.valid).toBe(true);
     component.save();
-    expect(api.create).toHaveBeenCalledWith(expect.objectContaining({
+    expect(component.formError()).toContain('foto');
+    const image = new File([new Uint8Array([137,80,78,71])], 'item.png', {type: 'image/png'});
+    component.selectedPhoto=image;
+    component.save();
+    expect(api.createComplete).toHaveBeenCalledWith(expect.objectContaining({
       name: '', categoryId: null, baseUnitCode: '', cost: '0.00', price: '0.00',
-    }));
+    }), '0', image);
   });
   it('permite editar sem alterar o identificador interno do produto', () => {
-    api.update.mockReturnValue(of(product));
+    api.updateComplete.mockReturnValue(of(product));
     const fixture = TestBed.createComponent(ProductListComponent);
     fixture.detectChanges();
     const component = fixture.componentInstance;
     component.startEdit(product);
     component.form.patchValue({ price: '219,50' });
     component.save();
-    expect(api.update).toHaveBeenCalledWith('product-1',
-      expect.objectContaining({ price: '219.50', name: 'Furadeira' }));
+    expect(api.updateComplete).toHaveBeenCalledWith('product-1',
+      expect.objectContaining({ price: '219.50', name: 'Furadeira' }), undefined);
   });
   it('permite consultar inativos e reativar', () => {
     api.reactivate.mockReturnValue(of(product));
