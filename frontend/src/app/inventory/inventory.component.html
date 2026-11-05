@@ -3,7 +3,8 @@
     <div>
       <p class="eyebrow">OPERAÇÃO DA LOJA</p>
       <h1>Estoque</h1>
-      <p>Quantidades e movimentações com histórico.</p>
+      <p>Quantidades, entradas e saídas com histórico.</p>
+      <div class="stock-shortcuts"><a href="/admin/products">Produtos</a><a href="/admin/suppliers">Fornecedores</a><a href="/admin/purchases">Compras e recebimentos</a></div>
     </div>
     <button mat-stroked-button type="button" (click)="refresh()" [disabled]="loading() || saving()">
       Atualizar

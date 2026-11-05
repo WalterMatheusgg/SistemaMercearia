@@ -1,194 +1,107 @@
-<section class="page">
-  <header>
-    <div>
-      <p class="eyebrow">OPERAÇÃO</p>
-      <h1>Caixa</h1>
-      <small>Conferência do dinheiro físico da loja.</small>
-    </div>
-    <button (click)="load()">Atualizar</button>
+<section class="page cash-page">
+  <header class="cash-header">
+    <div><p class="eyebrow">CONTROLE DIÁRIO</p><h1>Caixa</h1>
+      <small>Acompanhe o dinheiro físico sem misturar com Pix ou cartão.</small></div>
+    <button type="button" (click)="load()">↻ Atualizar</button>
   </header>
   <app-action-status [action]="action" />
-  @if (error()) {
-    <p class="note error" role="alert">{{ error() }}</p>
-  }
-  <p class="note">
-    Pix, cartão e transferência são registrados no financeiro. Apenas pagamentos em dinheiro alteram
-    a gaveta. Um caixa pode ficar aberto por vez nesta loja.
-  </p>
+  @if (error()) { <p class="note error" role="alert">{{ error() }}</p> }
   @if (state().current.id; as id) {
-    <div class="cards">
-      <div class="card">
-        <small>Aberto em</small><strong>{{ date(state().current.openedAt) }}</strong>
-      </div>
-      <div class="card">
-        <small>Fundo inicial</small><strong>{{ money(state().current.openingAmount) }}</strong>
-      </div>
-      <div class="card">
-        <small>Esperado na gaveta</small><strong>{{ money(state().current.balance) }}</strong>
-      </div>
-    </div>
+    <section class="cash-status open-status" aria-label="Situação do caixa">
+      <div><span class="status-pill">● Caixa aberto</span><h2>Em operação</h2>
+        <p>Aberto em {{ date(state().current.openedAt) }}</p></div>
+      <div class="cash-balance"><span>Dinheiro esperado na gaveta</span><strong>{{ money(state().current.balance) }}</strong>
+        <small>Fundo inicial: {{ money(state().current.openingAmount) }}</small></div>
+    </section>
     @if (canWrite()) {
-      <div class="grid">
-        <section class="panel">
-          <h2>Suprimento ou sangria</h2>
+      <section class="cash-main-actions" aria-label="Operações do caixa">
+        <div class="action-intro"><h2>O que você precisa fazer?</h2>
+          <p>Escolha uma operação abaixo. Você confere tudo antes de registrar.</p></div>
+        <details class="cash-fold">
+          <summary><strong>+ Entrada ou retirada</strong><span>Suprimento e sangria de dinheiro</span></summary>
           <form (ngSubmit)="adjust()" #adjustForm="ngForm">
             <fieldset [disabled]="action.locked()">
-              <div class="grid">
-                <label
-                  >Operação<select aria-label="Operação" [(ngModel)]="adjustment.kind" name="kind">
-                    <option value="WITHDRAWAL">Sangria (retirada)</option>
-                    <option value="SUPPLY">Suprimento (entrada)</option>
-                  </select></label
-                ><label
-                  >Valor<input
-                    name="amount"
-                    [(ngModel)]="adjustment.amount"
-                    required
-                    inputmode="decimal"
-                    pattern="[0-9]+([.,][0-9]{1,2})?" /></label
-                ><label
-                  >Motivo<input
-                    name="reason"
-                    [(ngModel)]="adjustment.reason"
-                    required
-                    minlength="3"
-                    maxlength="500"
-                /></label>
+              <div class="cash-fields">
+                <label>Tipo de movimentação<select [(ngModel)]="adjustment.kind" name="kind">
+                  <option value="SUPPLY">Adicionar dinheiro</option><option value="WITHDRAWAL">Retirar dinheiro</option>
+                </select></label>
+                <label>Valor (R$)<input name="amount" [(ngModel)]="adjustment.amount"
+                  inputmode="decimal" placeholder="0,00" required pattern="[0-9]+([.,][0-9]{1,2})?" /></label>
+                <label>Motivo<input name="reason" [(ngModel)]="adjustment.reason" required
+                  minlength="3" maxlength="500" placeholder="Ex.: Troco para o balcão" /></label>
               </div>
-              <button class="primary gap" [disabled]="adjustForm.invalid">Registrar</button>
+              <button class="primary" [disabled]="adjustForm.invalid">Registrar movimentação</button>
             </fieldset>
           </form>
-        </section>
-        <section class="panel">
-          <h2>Fechar caixa</h2>
+        </details>
+        <details class="cash-fold closing-fold">
+          <summary><strong>✓ Fechar caixa</strong><span>Conte o dinheiro e confirme a diferença</span></summary>
           <form (ngSubmit)="close()" #closeForm="ngForm">
             <fieldset [disabled]="action.locked()">
-              <label
-                >Dinheiro contado na gaveta<input
-                  name="counted"
-                  [(ngModel)]="closing.counted"
-                  required
-                  inputmode="decimal"
-                  pattern="[0-9]+([.,][0-9]{1,2})?" /></label
-              ><label class="gap"
-                >Observação (obrigatória se houver diferença)<textarea
-                  name="note"
-                  [(ngModel)]="closing.note"
-                  maxlength="500"
-                ></textarea></label
-              ><button class="primary gap" [disabled]="closeForm.invalid">Conferir e fechar</button>
+              <div class="cash-fields">
+                <label>Dinheiro contado na gaveta (R$)<input name="counted"
+                  [(ngModel)]="closing.counted" required inputmode="decimal"
+                  pattern="[0-9]+([.,][0-9]{1,2})?" placeholder="0,00" /></label>
+                <label>Observação (se houver diferença)
+                  <textarea name="note" [(ngModel)]="closing.note" maxlength="500" rows="2"></textarea></label>
+              </div>
+              <p class="cash-warning">Confirme o valor físico antes de fechar. O registro ficará no histórico.</p>
+              <button class="primary" [disabled]="closeForm.invalid">Conferir e fechar caixa</button>
             </fieldset>
           </form>
-        </section>
-      </div>
+        </details>
+      </section>
     }
-    <section class="panel">
-      <h2>Movimentos da gaveta</h2>
-      <div class="scroll">
-        <table>
-          <thead>
-            <tr>
-              <th>Data</th>
-              <th>Tipo</th>
-              <th>Responsável / motivo</th>
-              <th>Valor</th>
-            </tr>
-          </thead>
-          <tbody>
-            @for (entry of state().current.entries; track entry.id) {
-              <tr>
-                <td>{{ date(entry.occurredAt) }}</td>
-                <td>{{ label(entry.kind) }}</td>
-                <td>
-                  {{ entry.actorName }}<small>{{ entry.reason }}</small>
-                </td>
-                <td class="numeric">{{ money(entry.amount) }}</td>
-              </tr>
-            }
-          </tbody>
-        </table>
-      </div>
-    </section>
+    <details class="cash-fold cash-history" open>
+      <summary><strong>Movimentações do caixa atual</strong><span>Entradas e saídas registradas</span></summary>
+      @if (state().current.entries?.length) {
+        <div class="scroll"><table><thead><tr><th>Data</th><th>Operação</th><th>Motivo</th><th>Valor</th></tr></thead>
+          <tbody>@for (entry of state().current.entries; track entry.id) {
+            <tr><td>{{ date(entry.occurredAt) }}</td><td>{{ label(entry.kind) }}</td>
+              <td>{{ entry.reason }}<small>{{ entry.actorName }}</small></td><td class="numeric">{{ money(entry.amount) }}</td></tr>
+          }</tbody></table></div>
+      } @else { <p class="empty">Nenhuma movimentação nesta sessão.</p> }
+    </details>
   } @else {
-    <section class="panel">
-      <h2>Caixa fechado</h2>
+    <section class="cash-status closed-status">
+      <div><span class="status-pill">● Caixa fechado</span><h2>Pronto para começar?</h2>
+        <p>Abra o caixa quando iniciar o atendimento. O sistema acompanhará as movimentações.</p></div>
       @if (canWrite()) {
-        <form (ngSubmit)="open()" #openForm="ngForm">
+        <form (ngSubmit)="open()" #openForm="ngForm" class="cash-start">
           <fieldset [disabled]="action.locked()">
-            <label
-              >Fundo inicial em dinheiro<input
-                name="opening"
-                [(ngModel)]="opening"
-                required
-                inputmode="decimal"
-                pattern="[0-9]+([.,][0-9]{1,2})?" /></label
-            ><button class="primary gap" [disabled]="openForm.invalid">Abrir caixa</button>
+            <label>Dinheiro inicial na gaveta (R$)
+              <input name="opening" [(ngModel)]="opening" required inputmode="decimal"
+                pattern="[0-9]+([.,][0-9]{1,2})?" placeholder="0,00" /></label>
+            <button class="primary" [disabled]="openForm.invalid">Abrir caixa</button>
           </fieldset>
         </form>
       }
     </section>
   }
-  <section class="panel">
-    <h2>Últimas 30 sessões</h2>
-    <div class="scroll">
-      <table>
-        <thead>
-          <tr>
-            <th>Abertura</th>
-            <th>Fechamento</th>
-            <th>Contado</th>
-            <th>Diferença</th>
-            <th></th>
-          </tr>
-        </thead>
-        <tbody>
-          @for (session of state().sessions; track session.id) {
-            <tr>
-              <td>{{ date(session.openedAt) }}</td>
-              <td>{{ date(session.closedAt) }}</td>
-              <td>{{ session.countedAmount === null ? '—' : money(session.countedAmount) }}</td>
-              <td>{{ session.difference === null ? '—' : money(session.difference) }}</td>
-              <td><button (click)="show(session.id)">Detalhes</button></td>
-            </tr>
-          }
-        </tbody>
-      </table>
-    </div>
-  </section>
+  <details class="cash-fold cash-history">
+    <summary><strong>Histórico de caixas anteriores</strong><span>Últimas 30 sessões</span></summary>
+    <div class="scroll"><table><thead><tr><th>Abertura</th><th>Fechamento</th><th>Contado</th><th>Diferença</th><th></th></tr></thead>
+      <tbody>@for (session of state().sessions; track session.id) {
+        <tr><td>{{ date(session.openedAt) }}</td><td>{{ date(session.closedAt) }}</td>
+          <td>{{ session.countedAmount === null ? '—' : money(session.countedAmount) }}</td>
+          <td>{{ session.difference === null ? '—' : money(session.difference) }}</td>
+          <td><button type="button" (click)="show(session.id)">Detalhes</button></td></tr>
+      }</tbody></table></div>
+  </details>
   @if (selected(); as session) {
     <section class="panel">
-      <div class="toolbar">
-        <h2>Conferência do caixa</h2>
-        <button (click)="selected.set(null)">Fechar detalhes</button>
-      </div>
-      <p>
-        Abertura: {{ date(session['openedAt']) }} · Contado: {{ money(session['countedAmount']) }} ·
-        Esperado: {{ money(session['expectedAmount'] ?? session['balance']) }} · Diferença:
-        {{ money(session['difference']) }}
-      </p>
+      <div class="toolbar"><h2>Detalhes do fechamento</h2>
+        <button type="button" (click)="selected.set(null)">Fechar</button></div>
+      <p>Dinheiro contado: {{ money(session['countedAmount']) }} ·
+        Valor esperado: {{ money(session['expectedAmount'] ?? session['balance']) }} ·
+        Diferença: <strong>{{ money(session['difference']) }}</strong></p>
       <p>{{ session['closingNote'] }}</p>
-      <div class="scroll">
-        <table>
-          <thead>
-            <tr>
-              <th>Data</th>
-              <th>Responsável</th>
-              <th>Motivo</th>
-              <th>Valor</th>
-            </tr>
-          </thead>
-          <tbody>
-            @for (entry of session['entries']; track entry.id) {
-              <tr>
-                <td>{{ date(entry.occurredAt) }}</td>
-                <td>{{ entry.actorName }}</td>
-                <td>{{ entry.reason }}</td>
-                <td>{{ money(entry.amount) }}</td>
-              </tr>
-            }
-          </tbody>
-        </table>
-      </div>
+      <div class="scroll"><table><thead><tr><th>Data</th><th>Responsável</th><th>Motivo</th><th>Valor</th></tr></thead>
+        <tbody>@for (entry of session['entries']; track entry.id) {
+          <tr><td>{{ date(entry.occurredAt) }}</td><td>{{ entry.actorName }}</td>
+            <td>{{ entry.reason }}</td><td>{{ money(entry.amount) }}</td></tr>
+        }</tbody></table></div>
     </section>
   }
+  <p class="cash-footnote">Pix, cartão e transferências ficam registrados no financeiro. Este painel considera somente dinheiro físico.</p>
 </section>
