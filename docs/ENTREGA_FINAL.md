@@ -6,6 +6,8 @@ A marca do aplicativo é apenas **Loja**, com títulos individualizados por seç
 
 Esta entrega prioriza o **controle interno**. A vitrine pública e o cadastro externo estão desativados por padrão; nenhum registro comercial é apagado. Produtos não exigem código manual. Senhas novas seguem a regra de 4 caracteres e 1 número.
 
+A partir da versão atual, abertura/fechamento de caixa não é exigida para vendas ou operações em dinheiro: a sessão técnica é criada automaticamente para manter a rastreabilidade. O assistente exige confirmação humana para importar materiais e habilitação explícita para IA externa.
+
 ## O que está entregue
 
 - Java 21 / Spring Boot 4 / Angular 22 / PostgreSQL 18; sessão e CSRF no mesmo domínio.

@@ -1,13 +1,13 @@
 # Loja — Interface e navegação
 
-A plataforma utiliza somente o nome **Loja** e opera como painel interno de ferragens, sem vitrine pública nem carrinho no fluxo principal. O título da aba do navegador identifica o módulo, como `Estoque | Loja`, `Caixa | Loja` e `Minha conta | Loja`.
+A plataforma utiliza somente o nome **Loja** e opera como painel interno de ferragens, sem vitrine pública nem carrinho no fluxo principal. O título da aba do navegador identifica o módulo, como `Estoque | Loja`, `Dinheiro | Loja` e `Produtos | Loja`.
 
 ## Atualizações
 
 - Logotipo com inicial L e favicon SVG próprio; idioma do documento `pt-BR`.
 - Painel administrativo com atalhos por permissão, fluxo de atendimento e menu lateral organizado.
 - Navegação responsiva com menu horizontal rolável no celular, indicador de módulo e link para pular direto ao conteúdo.
-- Vitrine com cards melhorados, mensagem explícita para produto sem saldo, estado de carregamento e prevenção de respostas fora de ordem durante buscas.
+- A vitrine pública deixou de fazer parte do fluxo interno. O aplicativo abre no painel de controle após o login.
 - Login, botões, tabelas, formulários e alertas com cores, bordas e hierarquia visual consistentes.
 - Rótulos, navegação e foco continuam acessíveis; animações são reduzidas conforme a preferência do usuário.
 
@@ -35,7 +35,7 @@ O usuário inicial é `admin` e sua senha inicial forte é gerada e guardada **s
 bash scripts/admin-access.sh
 ```
 
-**Não use `admin/admin`**: o projeto é destinado à operação real, e senhas de quatro caracteres não atendem à validação mínima do backend. O bootstrap não redefine senhas já gravadas no PostgreSQL. Para trocar a senha de um usuário existente, use a área **Usuários** com uma conta de dono ou a recuperação por e-mail verificado.
+**Não use `admin/admin`**: mesmo sendo permitidos quatro caracteres com pelo menos um número, senhas curtas não são adequadas para o dono de uma operação real. O bootstrap não redefine senhas já gravadas no PostgreSQL. Para trocar a senha de um usuário existente, use a área **Usuários** com uma conta de dono ou a recuperação por e-mail verificado.
 
 ### Criar ou recuperar o dono com senha temporária
 
@@ -50,6 +50,16 @@ python3 scripts/owner-setup.py
 Digite `CONFIRMAR`. O procedimento confere que está usando o Compose `local`, faz backup automático, cria o usuário `admin` com `ROLE_OWNER` se não existir ou redefine a senha se essa conta já for dona. A nova senha aleatória aparece **uma única vez** no terminal, não no Git nem no `.env`. Se `admin` pertencer a outro papel, o procedimento é bloqueado sem promovê-lo.
 
 Depois de entrar na porta 8080, abra **Usuários → Editar admin → Nova senha** para substituir a temporária. O procedimento invalida sessões anteriores da conta admin e registra a recuperação no histórico administrativo. Não execute novamente se não quiser trocar a senha outra vez.
+
+## Visual e experiência — refatoração de novembro/2026
+
+- Cabeçalho próprio com cores escuras, verde natural e acentos claros, inspirado nos padrões de interação e dados conectados da SEA, sem replicar o design institucional.
+- Comando global `Ctrl+K` / `⌘K` para encontrar módulos rapidamente, com pesquisa por tarefa e permissões.
+- Painel com elemento conectado animado discreto, opção de pausar movimento, indicador de atenção real e atalhos operacionais; sem dados simulados.
+- Atendimento em três etapas, com detalhes opcionais recolhidos e visibilidade do total antes de finalizar.
+- Dinheiro registrado automaticamente em sessão técnica ao movimentar: **sem precisar abrir ou fechar caixa** na rotina.
+- Financeiro reduzido a pendências, contas a pagar/receber e pagamentos; relatórios com períodos Hoje, 7 dias, Este mês, datas livres e visualização responsiva.
+- Assistente consulta dados reais restritos ao usuário. Para usar IA externa, é necessário configurar a chave e optar por enviá-los. Importação em lote de até 200 itens com prévia editável, confirmação e auditoria.
 
 ## Preservação
 

@@ -20,7 +20,25 @@ Instruções completas: [docs/CODESPACE.md](docs/CODESPACE.md). Conferência seg
 
 **Hospedagem comercial e HTTPS:** antes de publicar, consulte [docs/HOSPEDAGEM.md](docs/HOSPEDAGEM.md). A Vercel Hobby gratuita não autoriza uso comercial; a implantação Docker com Caddy mantém API e interface na mesma origem. Nenhuma URL externa foi homologada.
 
-**A aplicação agora é para controle interno, sem checkout público.** Pagamentos são registrados e conferidos manualmente pela loja.** Cobrança/reembolso bancário automático, emissão fiscal e publicação em domínio real dependem de integrações e credenciais externas. Não há credenciais de produção embutidas nem emissão fiscal simulada. A versão atende uma loja/local principal e um caixa físico.
+**A aplicação agora é para controle interno, sem checkout público.** Pagamentos são registrados e conferidos manualmente pela loja. Cobrança/reembolso bancário automático, emissão fiscal e publicação em domínio real dependem de integrações e credenciais externas. Não há credenciais de produção embutidas nem emissão fiscal simulada. A versão atende uma loja/local principal e um caixa físico.
+
+## Navegação renovada
+
+A interface organiza as tarefas em **Estoque, Produtos, Fornecedores, Vendas, Dinheiro e Financeiro**, com acesso à área de Compras dentro de Estoque, sem perder históricos. A nova pesquisa universal abre com `Ctrl+K` (ou `⌘K` no macOS); o painel mostra indicadores reais e um resumo de reposição sob demanda.
+
+- **Produtos:** cadastro opcional, sem código exibido, com editor lateral e edição posterior. Não preencha nenhum campo para gerar um rascunho com nome provisório.
+- **Vendas:** três partes — escolher itens, conferir total e confirmar. Abertura de caixa deixa de ser uma etapa do atendimento.
+- **Dinheiro:** entradas/retiradas e saldo físico registrado, sem exigir abertura/fechamento manual. Operações continuam auditadas.
+- **Financeiro:** pendências a pagar ou receber, com pagamento no detalhe. **Relatórios:** períodos rápidos, gráficos e exportação CSV.
+- **Assistente:** consultas locais com dados permitidos a cada perfil e **prévia de importação de até 200 materiais por lote**, com nomes duplicados ignorados. Cada importação precisa de confirmação.
+
+### IA opcional dentro da Loja
+
+O assistente sem chave externa responde perguntas comuns sobre dados atuais. Para habilitar **interpretação com modelo de IA**, adicione `OPENAI_API_KEY` no **`.env` privado**, sem enviar o valor ao GitHub, e, opcionalmente, `OPENAI_MODEL`. Depois execute `bash scripts/start.sh` para aplicar as variáveis ao container.
+
+A IA só é acionada se o usuário **marcar explicitamente a opção** na tela; nesse caso, o servidor envia o texto da pergunta e um resumo dos dados visíveis ao seu perfil ao provedor do modelo. Não são enviados dados de outros perfis. O modelo não recebe permissão de escrita e nunca faz alterações diretamente. Para importar, use lista `Nome;preço;custo` (até 200 linhas), revise a prévia e confirme a gravação. As alterações comerciais continuam sob regras, permissões e auditoria do backend.
+
+A inspiração visual é o site da SEA Tecnologia: hierarquia tipográfica forte, elementos de conexão e navegação interativa — **sem copiar a interface nem usar dados fictícios**.
 
 ## Matriz de versões
 

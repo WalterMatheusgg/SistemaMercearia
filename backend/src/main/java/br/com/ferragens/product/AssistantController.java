@@ -80,9 +80,11 @@ public class AssistantController {
                     Long.class, actor.storeId()));
         }
         if (role(auth, "OWNER", "MANAGER", "SELLER", "CASHIER")) {
-            result.put("cashOpen", db.jdbc.queryForObject(
-                    "SELECT EXISTS(SELECT 1 FROM cash_session WHERE store_id=? AND closed_at IS NULL)",
-                    Boolean.class, actor.storeId()));
+            result.put("cashRecorded", db.jdbc.queryForObject(
+                    "SELECT COALESCE((SELECT c.opening_amount + "
+                    + "COALESCE((SELECT sum(e.amount) FROM cash_entry e WHERE e.session_id=c.id),0) "
+                    + "FROM cash_session c WHERE c.store_id=? AND c.closed_at IS NULL LIMIT 1),0)",
+                    BigDecimal.class, actor.storeId()));
             result.put("recentSales", db.rows(
                     "SELECT status,total,created_at FROM sale WHERE store_id=? "
                     + "ORDER BY created_at DESC LIMIT 5", actor.storeId()));
@@ -143,10 +145,11 @@ public class AssistantController {
                 ? "Neste momento, há " + facts.get("lowStock") + " itens abaixo do mínimo nas localizações cadastradas. "
                 + "Consulte Estoque para ver o detalhe e movimentar materiais."
                 : "Seu perfil não tem acesso às informações de estoque.";
-        if (q.contains("caixa"))
-            return facts.containsKey("cashOpen")
-                ? (Boolean.TRUE.equals(facts.get("cashOpen")) ? "O caixa está aberto." : "O caixa está fechado.")
-                : "Seu perfil não tem acesso ao caixa.";
+        if (q.contains("caixa") || q.contains("dinheiro"))
+            return facts.containsKey("cashRecorded")
+                ? "Dinheiro registrado nas movimentações atuais: R$ " + facts.get("cashRecorded")
+                  + ". Consulte a área Dinheiro para ver entradas e retiradas. Não é um saldo bancário."
+                : "Seu perfil não tem acesso ao controle de dinheiro.";
         if (q.contains("pagar") || q.contains("receber") || q.contains("financeiro"))
             return facts.containsKey("openReceivables")
                 ? "Total ainda a receber: R$ " + facts.get("openReceivables")
