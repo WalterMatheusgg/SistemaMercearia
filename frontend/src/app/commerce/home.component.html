@@ -1,113 +1,79 @@
-<section class="page control-home">
-  <header class="control-hero" [class.motion-paused]="motionPaused()">
-    <div class="hero-content">
-      <div class="hero-kicker"><span class="hero-pulse" aria-hidden="true"></span> CENTRAL DE CONTROLE <span class="kicker-divider">/</span> LOJA</div>
-      <h1>Você no controle.<br /><span>Seu estoque em ordem.</span></h1>
-      <p>Bem-vindo, {{ auth.currentUser()?.username }}. Acompanhe o que precisa de atenção e acesse sua operação sem perder tempo.</p>
-      <div class="hero-actions">
-        @if (has(['OWNER', 'MANAGER', 'STOCKKEEPER'])) {
-          <a class="hero-main-action" routerLink="/admin/products">+ Cadastrar material <span aria-hidden="true">↗</span></a>
-        }
-        <a class="hero-second-action" routerLink="/admin/inventory">Ver movimentações <span aria-hidden="true">↗</span></a>
-      </div>
-      <div class="hero-bottom"><span>{{ todayLabel }}</span><span>Controle interno · dados da sua loja</span></div>
+<section class="page control-dashboard">
+  <header class="dashboard-heading">
+    <div>
+      <p class="eyebrow">PAINEL DE CONTROLE</p>
+      <h1>Bom trabalho, {{ auth.currentUser()?.username }}.</h1>
+      <p>As informações importantes da sua loja, sem complicação.</p>
     </div>
-    <div class="orbital" aria-hidden="true">
-      <div class="orbit orbit-one"></div><div class="orbit orbit-two"></div><div class="orbit orbit-three"></div>
-      <div class="orb-center"><span>▦</span></div>
-      <div class="orbit-point point-one"></div><div class="orbit-point point-two"></div><div class="orbit-point point-three"></div>
-      <span class="orb-label label-one">ESTOQUE</span><span class="orb-label label-two">GESTÃO</span>
-    </div>
-    <button class="motion-button" type="button" (click)="motionPaused.set(!motionPaused())"
-      [attr.aria-pressed]="motionPaused()" [attr.aria-label]="motionPaused() ? 'Retomar animações' : 'Pausar animações'">
-      {{ motionPaused() ? '▶ Retomar animações' : 'Ⅱ Pausar animações' }}
+    <button class="refresh-button" type="button" (click)="refreshDashboard()" [disabled]="updating()">
+      <span aria-hidden="true">↻</span> {{ updating() ? 'Consultando...' : 'Atualizar dados' }}
     </button>
   </header>
 
-  <div class="insights-head">
-    <div>
-      <p class="eyebrow">VISÃO EM TEMPO REAL</p>
-      <h2>O que importa <span>agora.</span></h2>
-      <p>Números consultados no seu sistema. Sem valores fictícios.</p>
-    </div>
-    <div class="refresh-box">
-      @if (lastUpdated()) { <small>Atualizado às {{ lastUpdated() }}</small> }
-      <button type="button" (click)="refreshDashboard()" [disabled]="updating()">
-        <span aria-hidden="true" [class.spin]="updating()">↻</span> {{ updating() ? 'Atualizando...' : 'Atualizar' }}
-      </button>
-    </div>
-  </div>
-  <div class="metric-grid">
+  <section class="dash-actions" aria-label="Ações rápidas">
     @if (has(['OWNER','MANAGER','STOCKKEEPER'])) {
-      <a class="metric metric-blue" routerLink="/admin/products">
-        <span class="metric-icon" aria-hidden="true">▦</span><span class="metric-label">Produtos ativos</span>
-        <strong>{{ productsTotal() === null ? '—' : productsTotal() }}</strong>
-        <small>Gerenciar catálogo <span aria-hidden="true">↗</span></small>
-      </a>
+      <a class="dash-primary" routerLink="/admin/products"><strong>+ Novo produto</strong><span>Cadastro sem código nem campos obrigatórios</span></a>
+    }
+    @if (has(['OWNER','MANAGER','SELLER','CASHIER'])) {
+      <a routerLink="/admin/sales"><strong>Nova venda</strong><span>Registre o atendimento</span></a>
+      <a routerLink="/admin/cash"><strong>Ver caixa</strong><span>Abertura e fechamento</span></a>
+    }
+    <a routerLink="/admin/assistant"><strong>✦ Assistente</strong><span>Pergunte e importe produtos em lote</span></a>
+  </section>
+
+  <div class="section-top">
+    <div><p class="eyebrow">RESUMO OPERACIONAL</p><h2>O que importa agora</h2></div>
+    @if (lastUpdated()) { <span class="updated">Atualizado às {{ lastUpdated() }}</span> }
+  </div>
+  <div class="dashboard-metrics">
+    @if (has(['OWNER','MANAGER','STOCKKEEPER'])) {
+      <a routerLink="/admin/products" class="metric-tile"><span>Produtos ativos</span><strong>{{ productsTotal() ?? '—' }}</strong><small>Consultar materiais</small></a>
     }
     @if (has(['OWNER','MANAGER','STOCKKEEPER','SELLER','CASHIER'])) {
-      <a class="metric metric-coral" routerLink="/admin/inventory">
-        <span class="metric-icon" aria-hidden="true">◉</span><span class="metric-label">Precisam de reposição</span>
-        <strong>{{ lowStockTotal() === null ? '—' : lowStockTotal() }}</strong>
-        <small>Ver estoque do local principal <span aria-hidden="true">↗</span></small>
-      </a>
+      <a routerLink="/admin/inventory" class="metric-tile warning-tile"><span>Estoque abaixo do mínimo</span><strong>{{ lowStockTotal() ?? '—' }}</strong><small>Verificar reposição</small></a>
     }
     @if (has(['OWNER','MANAGER','FINANCE'])) {
-      <a class="metric metric-amber" routerLink="/admin/reports">
-        <span class="metric-icon" aria-hidden="true">▤</span><span class="metric-label">Vendas confirmadas hoje</span>
-        <strong>{{ todaySales() === null ? '—' : todaySales() }}</strong>
-        <small>Consultar relatório <span aria-hidden="true">↗</span></small>
-      </a>
-      <a class="metric metric-mint" routerLink="/admin/reports">
-        <span class="metric-icon" aria-hidden="true">↗</span><span class="metric-label">Total das vendas hoje</span>
-        <strong class="metric-money">{{ formattedRevenue() }}</strong>
-        <small>Receita de vendas, não saldo bancário <span aria-hidden="true">↗</span></small>
-      </a>
+      <a routerLink="/admin/reports" class="metric-tile"><span>Vendas de hoje</span><strong>{{ todaySales() ?? '—' }}</strong><small>Vendas confirmadas</small></a>
+      <a routerLink="/admin/reports" class="metric-tile"><span>Total vendido hoje</span><strong class="money-value">{{ formattedRevenue() }}</strong><small>Não equivale a saldo em caixa</small></a>
+    }
+    @if (has(['OWNER','MANAGER','SELLER','CASHIER'])) {
+      <a routerLink="/admin/cash" class="metric-tile cash-tile"><span>Situação do caixa</span><strong class="cash-state">{{ cashStatus() }}</strong><small>Consultar caixa físico</small></a>
     }
   </div>
 
-  <section class="modules-section" aria-labelledby="modules-title">
-    <div class="section-head">
-      <div>
-        <p class="eyebrow">SEU ESPAÇO DE TRABALHO</p>
-        <h2 id="modules-title">Tudo em um <span>só lugar.</span></h2>
-        <p>Encontre rapidamente a função que você precisa.</p>
-      </div>
-      <label class="module-search">
-        <span aria-hidden="true">⌕</span>
-        <input type="search" [value]="searchTerm()" (input)="filterModules($any($event.target).value)"
-          placeholder="Buscar função..." aria-label="Buscar função do painel" />
+  <section class="workspace-panel" aria-labelledby="workspace-title">
+    <div class="section-top">
+      <div><p class="eyebrow">ÁREAS DA LOJA</p><h2 id="workspace-title">Encontre o que precisa</h2></div>
+      <label class="dashboard-search">
+        <span aria-hidden="true">⌕</span><input type="search" [value]="searchTerm()"
+          (input)="filterModules($any($event.target).value)" placeholder="Buscar uma função..."
+          aria-label="Buscar uma função" />
       </label>
     </div>
-    <div class="module-tabs" role="group" aria-label="Filtrar áreas do painel">
-      <button type="button" [attr.aria-pressed]="activeGroup() === 'all'" [class.active]="activeGroup() === 'all'" (click)="chooseGroup('all')">Todas</button>
-      <button type="button" [attr.aria-pressed]="activeGroup() === 'estoque'" [class.active]="activeGroup() === 'estoque'" (click)="chooseGroup('estoque')">Estoque e produtos</button>
-      <button type="button" [attr.aria-pressed]="activeGroup() === 'comercial'" [class.active]="activeGroup() === 'comercial'" (click)="chooseGroup('comercial')">Comercial</button>
-      <button type="button" [attr.aria-pressed]="activeGroup() === 'financeiro'" [class.active]="activeGroup() === 'financeiro'" (click)="chooseGroup('financeiro')">Financeiro</button>
+    <div class="module-tabs" role="group" aria-label="Filtrar áreas">
+      <button [class.active]="activeGroup() === 'all'" [attr.aria-pressed]="activeGroup() === 'all'"
+        type="button" (click)="chooseGroup('all')">Tudo</button>
+      <button [class.active]="activeGroup() === 'estoque'" [attr.aria-pressed]="activeGroup() === 'estoque'"
+        type="button" (click)="chooseGroup('estoque')">Materiais</button>
+      <button [class.active]="activeGroup() === 'comercial'" [attr.aria-pressed]="activeGroup() === 'comercial'"
+        type="button" (click)="chooseGroup('comercial')">Atendimento</button>
+      <button [class.active]="activeGroup() === 'financeiro'" [attr.aria-pressed]="activeGroup() === 'financeiro'"
+        type="button" (click)="chooseGroup('financeiro')">Financeiro</button>
     </div>
-    <div class="module-grid">
-      @for (link of filteredLinks(); track link.path; let index = $index) {
-        <a class="module-card" [routerLink]="link.path">
-          <span class="module-index">{{ (index + 1).toString().padStart(2, '0') }} / CONTROLE</span>
-          <span class="module-icon" aria-hidden="true">{{ link.icon }}</span>
-          <strong>{{ link.title }}</strong><p>{{ link.description }}</p>
-          <span class="module-go" aria-hidden="true">↗</span>
+    <div class="task-grid">
+      @for (link of filteredLinks(); track link.path) {
+        <a [routerLink]="link.path" class="task-card">
+          <span class="task-symbol" aria-hidden="true">{{ link.icon }}</span>
+          <strong>{{ link.title }}</strong>
+          <span>{{ link.description }}</span>
+          <span class="task-arrow" aria-hidden="true">↗</span>
         </a>
-      } @empty {
-        <div class="no-modules">Nenhuma função corresponde ao filtro. <button type="button" (click)="filterModules(''); chooseGroup('all')">Mostrar tudo</button></div>
-      }
+      } @empty { <p class="empty-modules">Nenhum resultado. <button type="button" (click)="filterModules(''); chooseGroup('all')">Limpar busca</button></p> }
     </div>
   </section>
 
-  <section class="workflow" aria-label="Guia rápido de operação">
-    <div class="workflow-title">
-      <p class="eyebrow">COMECE POR AQUI</p>
-      <h2>Um processo simples.<br/><span>Sem perder o controle.</span></h2>
-    </div>
-    <ol class="workflow-steps">
-      <li><span class="step-number">01</span><strong>Cadastre os materiais</strong><span>Nome, categoria e unidade. Nenhum código obrigatório.</span></li>
-      <li><span class="step-number">02</span><strong>Informe o saldo real</strong><span>Faça a contagem inicial no Estoque, com histórico.</span></li>
-      <li><span class="step-number">03</span><strong>Acompanhe as mudanças</strong><span>Registre entradas, saídas e correções com responsável.</span></li>
-    </ol>
-  </section>
+  <div class="dashboard-bottom">
+    <div><strong>Estoque, produtos e fornecedores no mesmo fluxo.</strong><span>Entre em Estoque para registrar movimentos ou ir às compras. Os históricos continuam disponíveis.</span></div>
+    <a routerLink="/admin/inventory">Abrir estoque <span aria-hidden="true">↗</span></a>
+  </div>
 </section>

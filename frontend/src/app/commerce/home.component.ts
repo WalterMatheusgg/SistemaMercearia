@@ -21,6 +21,7 @@ export class HomeComponent {
   readonly lowStockTotal = signal<number | null>(null);
   readonly todaySales = signal<number | null>(null);
   readonly todayRevenue = signal<string | null>(null);
+  readonly cashStatus = signal('—');
   readonly lastUpdated = signal('');
   readonly todayLabel = new Intl.DateTimeFormat('pt-BR', { weekday: 'long', day: 'numeric', month: 'long', timeZone: 'America/Sao_Paulo' }).format(new Date());
   readonly filteredLinks = computed(() => {
@@ -49,16 +50,19 @@ export class HomeComponent {
                 { params: { locationId: locations[0].id, onlyLow: true, size: 1 } })
             : of(null)), catchError(() => of(null)))
       : of(null);
+    const cash$ = this.has(['OWNER','MANAGER','SELLER','CASHIER'])
+      ? this.http.get<{current?: {id?: string}}>('/api/admin/cash').pipe(catchError(() => of(null))) : of(null);
     const report$ = canReports
       ? this.http.get<{ sales: number; revenue: string }>('/api/admin/reports',
           { params: { start: this.todayLocal(), end: this.todayLocal() } }).pipe(catchError(() => of(null)))
       : of(null);
-    forkJoin({ products: products$, lowStock: lowStock$, report: report$ }).subscribe({
+    forkJoin({ products: products$, lowStock: lowStock$, report: report$, cash: cash$ }).subscribe({
       next: (result) => {
         this.productsTotal.set(result.products?.totalElements ?? null);
         this.lowStockTotal.set(result.lowStock?.totalElements ?? null);
         this.todaySales.set(result.report?.sales ?? null);
         this.todayRevenue.set(result.report?.revenue ?? null);
+        this.cashStatus.set(result.cash ? (result.cash.current?.id ? 'Aberto' : 'Fechado') : '—');
         this.lastUpdated.set(new Intl.DateTimeFormat('pt-BR', { timeStyle: 'short' }).format(new Date()));
         this.updating.set(false);
       },

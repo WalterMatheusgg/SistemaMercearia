@@ -41,3 +41,18 @@
   .workspace { padding: 23px 15px 52px; }
 }
 @media print { .topbar,.side-nav { display: none; } .admin-body { display: block; } .workspace { padding: 0; } }
+
+/* Navegação reduzida, consistente e sem caracteres improvisados */
+.nav-icon svg { width: 19px; height: 19px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+.nav-icon { background: none; color: #a7c4ca; }
+.nav-item.active .nav-icon { background: none; color: #166f59; }
+.side-nav { gap: 2px; }
+.nav-caption { margin-top: 26px; }
+.nav-item { font-size: 14px; }
+.assistant-cta { display: inline-flex; align-items: center; gap: 7px; background: #eaf8ef; color: #1d7456;
+  text-decoration: none; font-size: 12px; font-weight: 800; padding: 9px 13px; border-radius: 999px; }
+.sidebar-footer { background: #ffffff0a; border: 1px solid #ffffff17; border-radius: 14px; margin: auto 4px 0;
+  padding: 16px; gap: 6px; }
+.sidebar-footer strong { font-size: 13px; color: #eaf8ee; }
+.sidebar-footer span { color: #abc3ce; font-size: 11px; line-height: 1.55; }
+@media(max-width:760px) { .nav-item { font-size: 12px; } .nav-icon svg { width: 17px; height: 17px; } .assistant-cta { padding: 8px 10px; } }
