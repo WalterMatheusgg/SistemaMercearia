@@ -1,0 +1,16 @@
+# Perfil de homologação da aplicação em Vercel Container Functions (stateless).
+# O Java e o Angular são publicados juntos. Sem tarefas periódicas: o contêiner pode hibernar.
+spring:
+  datasource:
+    hikari:
+      maximum-pool-size: 3
+      minimum-idle: 0
+      connection-timeout: 15000
+  session:
+    jdbc:
+      initialize-schema: never
+server:
+  port: ${PORT:8080}
+app:
+  jobs:
+    enabled: false
