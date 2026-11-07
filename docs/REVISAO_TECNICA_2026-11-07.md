@@ -1,5 +1,7 @@
 # Revisão técnica da Loja — 07/11/2026
 
+> **Atualização posterior (07/11/2026):** a conta administradora inicial foi criada e o bootstrap desligado; os testes automatizados das atualizações foram aprovados. A Vercel passou a proteger apenas previews. A operação na Vercel ainda apresentou cold starts e o erro `EMAXCONNSESSION`; foi reduzido o número de conexões Hikari por instância e preparado o perfil Railway, porém sem implantação persistente validada. Os achados abaixo são um retrato da verificação original anterior a essas mudanças.
+
 **Origem:** `WalterMatheusgg/SistemaMercearia`. Esta revisão cobre o repositório, CI, Vercel e Supabase. Não houve acesso direto ao terminal/volumes do Codespace nem homologação interativa das telas em produção.
 
 ## Estado confirmado
