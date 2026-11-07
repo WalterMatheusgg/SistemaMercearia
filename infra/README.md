@@ -1,10 +1,24 @@
-# Infraestrutura
+# 🛠️ Infraestrutura — Loja Ferragens
 
-- `compose.yaml` na raiz: PostgreSQL + Mailpit no Codespace; dados no volume local.
-- `infra/compose.production.yaml`: monólito Spring/Angular e PostgreSQL persistente, app somente no loopback.
-- `infra/compose.https.yaml` + `infra/Caddyfile`: Caddy com TLS automático, domínios configurados por variável de ambiente e proxy da mesma origem.
-- `scripts/backup.sh` e `scripts/restore-test.sh`: por padrão banco local; em produção use `COMPOSE_CONFIG=infra/compose.production.yaml`.
+Configurações de execução para o monólito **Spring Boot + Angular**, serviços PostgreSQL e HTTPS.
 
-A configuração pública exige domínio, VM com Docker, .env privado e SMTP legítimo. Não há recursos cloud provisionados por esses arquivos. Antes de iniciar uma loja real, siga a implantação e a homologação em [docs/HOSPEDAGEM.md](../docs/HOSPEDAGEM.md).
+| Arquivo | Finalidade |
+|:--|:--|
+| `../compose.yaml` | Desenvolvimento no Codespaces: PostgreSQL, Mailpit e aplicação |
+| `compose.production.yaml` | Aplicação e PostgreSQL persistentes para servidor Linux |
+| `compose.https.yaml` + `Caddyfile` | Caddy com HTTPS e proxy reverso na mesma origem |
+| `../Dockerfile` | Build multiestágio Angular + backend Java 21 |
 
-**Atenção:** não exponha PostgreSQL, SMTP local ou porta 8080 à Internet; não apague volumes para resolver erros de container.
+O banco local usa volume persistente. Os scripts `../scripts/backup.sh` e `../scripts/restore-test.sh` ajudam a validar recuperação, mas os dumps de operação real precisam ser copiados para armazenamento externo seguro.
+
+## 🌐 Implantação atual
+
+- **Vercel + Supabase:** disponível para homologação, porém com cold starts e limitação de conexões; não aprovado para operação comercial.
+- **Railway:** perfil `prod,railway` preparado em `../backend/src/main/resources/application-railway.yml`; o serviço persistente ainda não está implantado e validado.
+- **Servidor Docker:** Compose de produção com Caddy/HTTPS disponível, mas a VM e o DNS precisam ser configurados.
+
+## 🔒 Cuidados
+
+Nunca exponha PostgreSQL, SMTP local ou porta 8080 diretamente à Internet. Mantenha segredos apenas em variáveis privadas; não versione `.env`, não execute `docker compose down -v` e não restaure banco em operação sem testar previamente.
+
+[Hospedagem comercial](../docs/HOSPEDAGEM.md) · [Railway](../docs/RAILWAY.md) · [README principal](../README.md)
