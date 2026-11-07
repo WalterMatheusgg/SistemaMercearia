@@ -1,59 +1,62 @@
-# Frontend
+# 🎨 Frontend — Loja Ferragens
 
-This project was generated using [Angular CLI](https://github.com/angular/angular-cli) version 22.2.5.
+Interface administrativa da **Loja Ferragens**, desenvolvida em **Angular 22**, **TypeScript 6**, **Angular Material** e **SCSS**.
 
-## Development server
+Este diretório integra o sistema Full Stack do repositório principal. O frontend não é um checkout público: as telas de produtos, estoque, vendas, caixa, financeiro, clientes e equipe exigem autenticação e respeitam as permissões retornadas pelo backend.
 
-To start a local development server, run:
+## 🧩 Organização
 
-```bash
-ng serve
-```
+| Área | Responsabilidade |
+|:--|:--|
+| `app/auth/` | Login, recuperação e sessão |
+| `app/admin/` | Layout, menu, navegação e atalhos |
+| `app/products/` | Cadastro, filtros e imagens |
+| `app/inventory/` | Saldos, movimentações e histórico |
+| `app/commerce/` | Vendas, compras, clientes, caixa e financeiro |
+| `e2e/` | Cenários de navegador com Playwright |
 
-Once the server is running, open your browser and navigate to `http://localhost:4200/`. The application will automatically reload whenever you modify any of the source files.
+## 🚀 Desenvolvimento
 
-## Code scaffolding
-
-Angular CLI includes powerful code scaffolding tools. To generate a new component, run:
-
-```bash
-ng generate component component-name
-```
-
-For a complete list of available schematics (such as `components`, `directives`, or `pipes`), run:
+**Requisitos:** Node.js 24 e npm 11. O backend Spring Boot deve estar ativo para chamadas à API.
 
 ```bash
-ng generate --help
+cd frontend
+npm ci
+npm start -- --host 0.0.0.0
 ```
 
-## Building
+Abra **http://localhost:4200**. O proxy em `proxy.conf.json` encaminha a API para o backend local na porta 8080. No Codespaces, utilize a aba **Ports**.
 
-To build the project run:
+Para executar o projeto inteiro pelo Docker, prefira o script da raiz:
 
 ```bash
-ng build
+bash scripts/start.sh
 ```
 
-This will compile your project and store the build artifacts in the `dist/` directory. By default, the production build optimizes your application for performance and speed.
-
-## Running unit tests
-
-To execute unit tests with the [Vitest](https://vitest.dev/) test runner, use the following command:
+## 🧪 Qualidade e build
 
 ```bash
-ng test
+npm test -- --watch=false
+npm run build
 ```
 
-## Running end-to-end tests
-
-For end-to-end (e2e) testing, run:
+Os testes E2E com **Playwright** precisam da aplicação completa e de um **banco isolado para testes**; não use o ambiente de produção:
 
 ```bash
-ng e2e
+npm run e2e
 ```
 
-Angular CLI does not come with an end-to-end testing framework by default. You can choose one that suits your needs.
+O GitHub Actions executa esses cenários com PostgreSQL e serviços de teste, em desktop e mobile.
 
-## Additional Resources
+## 📱 Responsividade e acessibilidade
 
-For more information on using the Angular CLI, including detailed command references, visit the [Angular CLI Overview and Command Reference](https://angular.dev/tools/cli) page.
+- Navegação desktop com menu lateral recolhível e gaveta no celular.
+- Estoque com grade ou lista, fotos em modo `contain` e botões acessíveis ao toque.
+- Testes de largura para 320, 390, 600, 760 e 1280 px.
+- Feedback de erros, navegação por teclado e confirmação antes de alterações comerciais.
+
+## 🔐 Autenticação
+
+Cookies HttpOnly, CSRF e autorização são controlados pelo **Spring Boot**, não pelo Angular isoladamente. O backend também serve a versão compilada da interface no deploy Docker. Não coloque senhas ou chaves privadas em arquivos `environment.ts` ou no código publicado.
+
+[README principal](../README.md) · [Arquitetura](../docs/ARQUITETURA.md) · [Guia de operação](../docs/OPERACAO.md)
