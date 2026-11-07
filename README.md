@@ -1,170 +1,194 @@
-# Loja — Controle interno de ferragens
+<div align="center">
 
-**Loja** é um sistema de controle para ferragens: produtos sem código manual, estoque e movimentações, compras, fornecedores, vendas internas, caixa, contas, relatórios e perfis por funcionário. O antigo carrinho, a vitrine pública e o cadastro externo não são publicados por padrão; os registros históricos e serviços internos permanecem preservados.
+# 🔩 LOJA FERRAGENS
+### Sistema Full Stack de Gestão de Estoque e Vendas
 
-## Começar no Codespace
+**Produtos, estoque, vendas, clientes, fornecedores, compras e financeiro em um só lugar.**
+
+[![CI · Java, Angular e E2E](https://github.com/WalterMatheusgg/SistemaMercearia/actions/workflows/ci.yml/badge.svg)](https://github.com/WalterMatheusgg/SistemaMercearia/actions/workflows/ci.yml)
+
+![Java](https://img.shields.io/badge/Java-21-ED8B00?style=for-the-badge&logo=openjdk&logoColor=white)
+![Spring Boot](https://img.shields.io/badge/Spring_Boot-4.1-6DB33F?style=for-the-badge&logo=springboot&logoColor=white)
+![Angular](https://img.shields.io/badge/Angular-22-DD0031?style=for-the-badge&logo=angular&logoColor=white)
+![PostgreSQL](https://img.shields.io/badge/PostgreSQL-4169E1?style=for-the-badge&logo=postgresql&logoColor=white)
+![Docker](https://img.shields.io/badge/Docker-Compose-2496ED?style=for-the-badge&logo=docker&logoColor=white)
+
+**Status: desenvolvimento e homologação · Ainda não aprovado para operação comercial**
+
+[Funcionalidades](#-funcionalidades) · [Tecnologias](#-tecnologias) · [Arquitetura](#-arquitetura) · [Instalação](#-executar-localmente) · [Hospedagem](#-hospedagem-e-estado-atual) · [Documentação](#-documentação)
+
+</div>
+
+---
+
+## 🎯 Sobre o projeto
+
+A **Loja Ferragens** é uma aplicação Full Stack para a gestão interna de uma loja de materiais e ferragens. Centraliza tarefas do balcão e do estoque com regras de negócio no servidor, controle de acesso por funcionário, dados persistidos e histórico das operações.
+
+O repositório se chama **SistemaMercearia**, enquanto a marca apresentada na interface é **Loja**. O frontend Angular e a API Spring Boot são distribuídos juntos no mesmo domínio, com autenticação por sessão.
+
+> **Escopo:** controle interno. A aplicação não realiza cobranças bancárias, emissão fiscal ou checkout público. Pix, cartão e transferência são conferidos externamente e registrados pela equipe.
+
+## ✨ Funcionalidades
+
+| Módulo | Recursos implementados |
+|:--|:--|
+| 📊 **Painel** | Indicadores e atalhos para as principais operações |
+| 🧱 **Produtos** | Cadastro com categoria, marca, unidade, preço, quantidade inicial e foto opcional |
+| 📦 **Estoque** | Entrada, saída, contagem, perda, mínimo, estorno, reposição sugerida e histórico |
+| 🛒 **Vendas** | Seleção de itens, conferência do total, descontos autorizados, pagamentos e devoluções |
+| 👥 **Clientes e fornecedores** | Cadastros, contatos e vínculos com operações |
+| 🚚 **Compras** | Pedidos e recebimentos parciais ou integrais, com atualização do estoque |
+| 💰 **Financeiro e caixa** | Contas, pagamentos, recebimentos e movimentos de dinheiro |
+| 📈 **Relatórios** | Vendas, pagamentos, custos, estoque e exportação CSV |
+| 🔐 **Equipe** | Usuários, autenticação e permissões por função |
+| ✨ **Assistente** | Consultas internas, importação em lote com prévia e IA externa opcional |
+| ✉️ **Notificações** | Preferências e fila transacional; envio real exige SMTP e worker persistente |
+
+### Estoque com rastreabilidade
+
+A interface oferece alternância entre **cartões e lista**, imagens inteiras, botões adaptados ao toque e filtros por categoria. Movimentações exigem motivo e registram o responsável. O backend aplica controle de concorrência e idempotência para evitar duplicidade; estornos preservam o registro original.
+
+## 📱 Responsividade
+
+A navegação tem menu lateral recolhível no desktop, menu adaptado a celular e busca rápida por **Ctrl + K** / **⌘ + K**. A suíte de navegador testa desktop e mobile, incluindo cartões do estoque em **320, 390, 600, 760 e 1280 px**.
+
+Testes automatizados não substituem homologação visual em dispositivos reais.
+
+## 🧰 Tecnologias
+
+| Camada | Ferramentas |
+|:--|:--|
+| **Backend** | Java 21 · Spring Boot 4.1 · Spring MVC · Spring Security · Spring Data JPA |
+| **Frontend** | Angular 22 · TypeScript 6 · Angular Material · SCSS |
+| **Persistência** | PostgreSQL · Hibernate · Flyway · Spring Session JDBC |
+| **Segurança** | Cookies HttpOnly · CSRF · BCrypt · Permissões no backend |
+| **Qualidade** | JUnit · Mockito · Testcontainers · Vitest · Playwright |
+| **Infraestrutura** | Docker · Docker Compose · GitHub Actions · Supabase · Vercel (homologação) |
+| **E-mails de desenvolvimento** | Mailpit |
+
+## 🏗️ Arquitetura
+
+O projeto é um **monólito modular**: o Spring Boot serve a interface Angular e a API REST na mesma origem.
+
+```mermaid
+flowchart LR
+    U["Funcionário · Desktop/Mobile"] --> UI["Angular 22"]
+    UI --> API["Spring Boot 4 · API + Security"]
+    API --> DOM["Produtos · Estoque · Vendas · Financeiro"]
+    DOM --> JPA["JPA / JDBC"]
+    JPA --> DB[("PostgreSQL")]
+    FLYWAY["Flyway · Migrações"] --> DB
+    API --> SESSION["Sessões JDBC"]
+    SESSION --> DB
+    DOM --> OUTBOX["Fila de notificações"]
+    OUTBOX --> DB
+    WORKER["Worker persistente · quando habilitado"] --> OUTBOX
+    WORKER --> SMTP["SMTP verificado"]
+```
+
+```text
+SistemaMercearia/
+├── backend/            # API, segurança, serviços e migrações
+├── frontend/           # Angular e testes de navegador
+├── infra/              # Docker Compose de produção e HTTPS
+├── scripts/            # Inicialização, backups e sincronização
+├── docs/               # Arquitetura, operação e hospedagem
+├── .github/workflows/  # CI
+├── Dockerfile          # Build Angular + Spring Boot
+└── compose.yaml        # Ambiente local
+```
+
+[Arquitetura](docs/ARQUITETURA.md) · [Modelo de dados](docs/MODELO_DADOS.md) · [Regras de negócio](docs/REGRAS_NEGOCIO.md)
+
+## 🚀 Executar localmente
+
+**Pré-requisitos:** Git, Docker Engine e Docker Compose v2. Para desenvolvimento fora do Docker: JDK 21, Node.js 24 e npm compatível.
 
 ```bash
-cd /workspaces/SistemaMercearia
-git fetch origin
-git switch main
-git pull --ff-only origin main
+git clone https://github.com/WalterMatheusgg/SistemaMercearia.git
+cd SistemaMercearia
 bash scripts/start.sh
 ```
 
-Abra a porta **8080** na aba **Ports**. O script compila e sobe o app completo no Docker, preservando o banco e o `.env` existentes. Em ambiente novo cria senhas locais aleatórias: consulte o login administrativo no `.env`. O acesso é interno: a porta 8080 abre o login para usuários autorizados. Contas administrativas entram no painel de controle. E-mails de desenvolvimento aparecem no Mailpit, porta **8025**.
+| Serviço | Endereço |
+|:--|:--|
+| **Loja + API** | http://localhost:8080 |
+| **Health** | http://localhost:8080/actuator/health |
+| **Mailpit local** | http://localhost:8025 |
 
-**Precisa criar ou recuperar acesso de dono?** Use `python3 scripts/owner-setup.py` no terminal privado do Codespace. O comando salva backup, verifica o perfil Docker local, cria `admin` (OWNER) se faltar ou redefine a senha de um `admin` já dono, com nova senha forte gerada e mostrada somente no terminal. Não altera outros usuários, vendas, estoque ou volumes. Para apenas conferir a senha inicial, use `bash scripts/admin-access.sh`. O usuário padrão é `admin`; por segurança não existe senha universal `admin/admin`. Veja a experiência visual em [docs/DESIGN_LOJA.md](docs/DESIGN_LOJA.md).
+Para conferir o ambiente sem gravar produtos nem vendas, execute `bash scripts/smoke.sh`. Não há senha pública padrão: use `bash scripts/admin-access.sh` ou `python3 scripts/owner-setup.py` para administrar o acesso **local** no terminal privado.
 
-Instruções completas: [docs/CODESPACE.md](docs/CODESPACE.md). Conferência segura de funcionamento: `bash scripts/smoke.sh`. Antes da hospedagem, execute `python3 scripts/preflight-production.py .env`. Entrega e pendências: [docs/ENTREGA_FINAL.md](docs/ENTREGA_FINAL.md). Fluxos, papéis e limites: [docs/OPERACAO.md](docs/OPERACAO.md).
-
-**Hospedagem comercial e HTTPS:** antes de publicar, consulte [docs/HOSPEDAGEM.md](docs/HOSPEDAGEM.md). A Vercel Hobby gratuita não autoriza uso comercial; a implantação Docker com Caddy mantém API e interface na mesma origem. Nenhuma URL externa foi homologada.
-
-**A aplicação agora é para controle interno, sem checkout público.** Pagamentos são registrados e conferidos manualmente pela loja. Cobrança/reembolso bancário automático, emissão fiscal e publicação em domínio real dependem de integrações e credenciais externas. Não há credenciais de produção embutidas nem emissão fiscal simulada. A versão atende uma loja/local principal e um caixa físico.
-
-## Navegação renovada
-
-A interface organiza as tarefas em **Estoque, Produtos, Fornecedores, Vendas e Financeiro**, com acesso à área de Compras dentro de Estoque, sem perder históricos. Dentro do **Financeiro**, a aba Dinheiro físico permite entradas e retiradas sem abertura/fechamento manual. A nova pesquisa universal abre com `Ctrl+K` (ou `⌘K` no macOS); o painel mostra indicadores reais e ações rápidas para a operação.
-
-- **Produtos:** foto e marca opcionais no cadastro manual, via câmera ou arquivo JPG/PNG/WebP de até 3 MB. Nome, marca, categoria, unidade, preço e **quantidade inicial** podem ser preenchidos na mesma tela, sem código manual. O nome pode ficar vazio, gerando um material provisório. Filtros por marca, categoria, situação e cadastros com nome/preço pendentes operam no banco com paginação. Categorias e unidades podem ser criadas dentro de Produtos.
-- **Vendas:** três partes — escolher itens, conferir total e confirmar. Abertura de caixa deixa de ser uma etapa do atendimento.
-- **Estoque:** alternância entre cartões ilustrados e tabela, com preferência salva no navegador. Nos cartões, use Entrada, Saída, Histórico, Mínimo e Edite o produto diretamente. Os atalhos de Produtos abrem a entrada de estoque. As sugestões de reposição consideram apenas itens ativos com mínimo definido, propõem atingir duas vezes o mínimo e exibem o último fornecedor do histórico, quando existe. Preparar uma compra não a confirma. Movimentações exigem quantidade e motivo, e são auditadas.
-- **Financeiro:** duas abas — Contas e pagamentos / Dinheiro físico — para reunir registros sem duplicar o menu. **Relatórios:** períodos rápidos, gráficos e exportação CSV.
-- **Assistente:** consultas locais e recomendações sobre o estado real da loja; gestores visualizam falhas HTTP 5xx recentes sem dados sensíveis. Há **prévia de importação de até 200 materiais por lote**, com nomes duplicados ignorados e confirmação obrigatória. Os dez materiais de exemplo podem ser carregados manualmente e têm prefixo TESTE; **nada é inserido automaticamente**. Na confirmação do lote, a quantidade informada é registrada como estoque inicial apenas para produtos novos. Materiais sem foto usam imagem provisória até receberem uma foto no editor.
-
-### IA opcional dentro da Loja
-
-O assistente sem chave externa responde perguntas comuns sobre dados atuais. Para habilitar **interpretação com modelo de IA**, adicione `OPENAI_API_KEY` no **`.env` privado**, sem enviar o valor ao GitHub, e, opcionalmente, `OPENAI_MODEL`. Depois execute `bash scripts/start.sh` para aplicar as variáveis ao container.
-
-A IA só é acionada se o usuário **marcar explicitamente a opção** na tela; nesse caso, o servidor envia o texto da pergunta e um resumo dos dados visíveis ao seu perfil ao provedor do modelo. Não são enviados dados de outros perfis. O modelo não recebe permissão de escrita e nunca faz alterações diretamente. Para importar, use lista `Nome;preço;custo;quantidade` (até 200 linhas). Todos os campos são opcionais; o nome vazio gera material provisório e quantidade vazia equivale a zero, revise a prévia e confirme a gravação. As alterações comerciais continuam sob regras, permissões e auditoria do backend.
-
-A inspiração visual é o site da SEA Tecnologia: hierarquia tipográfica forte, elementos de conexão e navegação interativa — **sem copiar a interface nem usar dados fictícios**.
-
-## Matriz de versões
-
-As versões abaixo foram conferidas em documentação oficial e registros oficiais em 03/11/2026. Angular Core acompanha a versão de patch publicada separadamente de CLI/Material/CDK.
-
-| Componente | Versão fixada ou gerenciada | Referência |
-| --- | --- | --- |
-| Java | 21 (nível de compilação; testes/execução no CI em JDK 21) | [Spring Boot system requirements](https://docs.spring.io/spring-boot/4.1/system-requirements.html) |
-| Spring Boot | 4.1.2 estável; dependências Spring gerenciadas pela BOM | [Spring Boot](https://spring.io/projects/spring-boot) |
-| Maven Wrapper / Maven | 3.3.4 / 3.9.12 | [Maven Wrapper](https://maven.apache.org/wrapper/) |
-| PostgreSQL | 18.6 (`postgres:18.6-alpine`) | [Versioning Policy](https://www.postgresql.org/support/versioning/) |
-| Testcontainers | 2.0.5, resolvido pela BOM do Spring Boot 4.1.2 | [Spring Boot testcontainers](https://docs.spring.io/spring-boot/4.1/reference/testing/testcontainers.html) |
-| springdoc-openapi | 3.2.0, linha compatível com Spring Boot 4 | [springdoc-openapi](https://springdoc.org/) |
-| Angular Core / TypeScript | 22.2.4 / 6.0.3 | [Angular version compatibility](https://angular.dev/reference/versions) |
-| Angular CLI / Material / CDK | 22.2.5 | [Angular releases](https://github.com/angular/angular/releases) |
-| Node.js / npm | 24.22.2 / 11.19.1; Node 24 está na matriz suportada pelo Angular 22 | [Angular version compatibility](https://angular.dev/reference/versions) |
-| Mailpit | `axllent/mailpit:v1.27.11` | [Mailpit](https://github.com/axllent/mailpit) |
-
-As dependências Java usam o gerenciamento do Spring Boot; Testcontainers não declara versão própria no projeto. Angular, Material e CDK ficam exatos no `package.json` e `package-lock.json`.
-
-## Requisitos locais
-
-- Docker Engine e Docker Compose v2.
-- JDK 21 ou superior para executar o wrapper (o compilador gera bytecode Java 21).
-- Node.js 24.x e npm 11.x para o Angular 22.
-- Acesso à internet na primeira execução para baixar imagens e dependências.
-
-## Iniciar banco e Mailpit
+### Sincronizar GitHub e Codespaces
 
 ```bash
-cp /workspaces/SistemaMercearia/.env.example /workspaces/SistemaMercearia/.env
+cd /workspaces/SistemaMercearia
+git status --short
+git switch main
+git pull --ff-only origin main
+bash scripts/sync-codespace.sh
 ```
 
-Edite `.env` e substitua `POSTGRES_PASSWORD`, `DB_PASSWORD` (devem coincidir) e `BOOTSTRAP_ADMIN_PASSWORD` por valores locais fortes. O arquivo fica ignorado pelo Git.
+O script preserva alterações locais, realiza backup quando o banco local está configurado e executa testes. Mantenha uma cópia dos backups fora do Codespace. Nunca use `git reset --hard` ou `docker compose down -v` sem um plano explícito de recuperação.
+
+[Guia do Codespaces](docs/CODESPACE.md)
+
+## 🧪 Testes e integração contínua
 
 ```bash
-docker compose --env-file /workspaces/SistemaMercearia/.env -f /workspaces/SistemaMercearia/compose.yaml up -d postgres mailpit
-docker compose --env-file /workspaces/SistemaMercearia/.env -f /workspaces/SistemaMercearia/compose.yaml ps
+./mvnw -pl backend test
+npm --prefix frontend ci
+npm --prefix frontend test -- --watch=false
+npm --prefix frontend run build
 ```
 
-Portas locais: PostgreSQL `5432`, SMTP do Mailpit `1025`, interface/API web do Mailpit `8025`. Os serviços estão vinculados a `127.0.0.1`; o volume `postgres-data` preserva o banco. `docker compose down` mantém o volume; não use `-v` se quiser conservar os dados.
+O [GitHub Actions](https://github.com/WalterMatheusgg/SistemaMercearia/actions/workflows/ci.yml) executa testes Java/PostgreSQL, frontend e cenários de navegador desktop/mobile. **Não execute testes E2E que criam registros no banco de produção.**
 
-## Iniciar backend
+## 🔐 Segurança e limites
 
-Na raiz, exporte as variáveis do arquivo local e execute o wrapper:
+- Controle por papéis, sessão HttpOnly, CSRF, senhas com BCrypt e autorizações no backend.
+- Movimentações e documentos comerciais têm histórico, transações e proteção contra operações duplicadas.
+- Credenciais de banco, SMTP e IA ficam em variáveis privadas. Não versione `.env`.
+- Cadastro externo e vitrine pública estão desativados por padrão.
+- Não há emissão fiscal nem integração bancária automática de Pix/cartão.
+- Notificações externas exigem SMTP, destinatários verificados e worker persistente; os jobs estão **desativados no perfil Vercel**.
 
-```bash
-set -a
-. /workspaces/SistemaMercearia/.env
-set +a
-/workspaces/SistemaMercearia/mvnw -f /workspaces/SistemaMercearia/pom.xml -pl backend spring-boot:run
-```
+## 🌐 Hospedagem e estado atual
 
-O perfil padrão é `local`. Na primeira execução, Flyway cria o schema e os dados iniciais. Com `BOOTSTRAP_ADMIN_ENABLED=true`, cria um usuário `ROLE_OWNER` apenas quando ainda não existe usuário; username e senha vêm do ambiente. Não há senha de produção embutida. Em ambiente seguro, defina `SESSION_COOKIE_SECURE=true` e termine HTTPS no proxy de mesma origem.
+| Ambiente | Situação |
+|:--|:--|
+| **Docker / Codespaces** | Desenvolvimento local |
+| **Vercel + Supabase** | Homologação com login da própria aplicação |
+| **Railway** | Perfil Java persistente preparado, **não implantado** |
+| **VM Docker + HTTPS** | Alternativa documentada, não provisionada |
 
-- API: `http://localhost:8080/api`
-- OpenAPI UI: `http://localhost:8080/swagger-ui.html` (exige sessão autenticada na mesma origem)
-- Health mínimo: `http://localhost:8080/actuator/health`
+**Demonstração:** [loja-ferragens.vercel.app/login](https://loja-ferragens.vercel.app/login)
 
-## Iniciar frontend
+> O ambiente Vercel apresentou inicializações do Java em torno de **18–21 segundos** e limite de conexões do pool do Supabase. Uma mitigação reduziu conexões por instância, mas a correção estrutural exige hospedagem persistente, monitoramento e testes. **A Loja ainda não foi homologada para operação comercial.**
 
-Em outro terminal:
+[Hospedagem](docs/HOSPEDAGEM.md) · [Railway](docs/RAILWAY.md) · [Vercel + Supabase](docs/VERCEL_SUPABASE.md)
 
-```bash
-npm --prefix /workspaces/SistemaMercearia/frontend ci
-npm --prefix /workspaces/SistemaMercearia/frontend start -- --host 0.0.0.0
-```
+## 📚 Documentação
 
-Abra `http://localhost:4200`. No Codespaces, abra a aba **Ports**, encaminhe a porta `4200` e selecione **Open in Browser**; o proxy do Angular encaminha `/api` para `localhost:8080` no container. Encaminhe `8025` para abrir o Mailpit. Em produção, publique frontend e API na mesma origem. A autenticação usa cookie de sessão e CSRF; credenciais e tokens não são persistidos no `localStorage`.
+| Guia | Conteúdo |
+|:--|:--|
+| [Operação](docs/OPERACAO.md) | Fluxos e limites de negócio |
+| [Arquitetura](docs/ARQUITETURA.md) | Organização, segurança e notificações |
+| [Estoque](docs/ESTOQUE.md) | Movimentações, saldos e APIs |
+| [Codespaces](docs/CODESPACE.md) | Inicialização e sincronização |
+| [Hospedagem](docs/HOSPEDAGEM.md) | HTTPS, backups e requisitos de produção |
+| [Railway](docs/RAILWAY.md) | Alternativa persistente com Supabase |
+| [Notificações](docs/ADMIN_NOTIFICACOES.md) | SMTP, destinatários e jobs |
+| [Revisão técnica](docs/REVISAO_TECNICA_2026-11-07.md) | Diagnósticos e pendências |
+| [Roadmap](docs/ROADMAP.md) | Melhorias futuras |
+| [GitHub About](docs/GITHUB_ABOUT.md) | Descrição, site e tópicos |
 
-## Usuários, papéis e endpoints
+---
 
-O bootstrap local cria o administrador configurado no `.env`, vinculado ao papel dono. Papéis cadastrados: `OWNER`, `MANAGER`, `SELLER`, `CASHIER`, `STOCKKEEPER`, `FINANCE` e `CUSTOMER`. O cadastro inicial de produtos exige `OWNER`, `MANAGER` ou `STOCKKEEPER`; o backend aplica a autorização.
+<div align="center">
 
-- `GET /api/auth/csrf`, `POST /api/auth/login`, `GET /api/auth/me`, `POST /api/auth/logout`.
-- `GET /api/admin/categories`, `GET /api/admin/units`.
-- `GET/POST /api/admin/products`, `GET/PUT/DELETE /api/admin/products/{id}`. `DELETE` inativa sem apagar o registro.
-- Custo e preço existem somente no contrato administrativo. Valores monetários são enviados/retornados como strings decimais com ponto e duas casas (`"199.90"`), sem arredondamento implícito; valores com mais de duas casas são rejeitados.
+**LOJA FERRAGENS · Gestão interna, rastreabilidade e Full Stack**
 
-## Usar o estoque
+Desenvolvido por **[Walter Matheus](https://github.com/WalterMatheusgg)**
 
-No cadastro de um produto novo, você já pode informar a quantidade inicial e enviar a fotografia; o sistema salva tudo na mesma transação. Para alterações posteriores, abra **Estoque**. O local principal é criado pela migração V2, sem saldo fictício. Registre um saldo inicial de 50 e uma saída manual de 15: o físico e o disponível passam a 35. Uma entrada posterior de 20 leva o saldo a 55. Toda operação exige um motivo e guarda responsável, instante e valores anteriores/posteriores.
-
-- `UN` aceita inteiros; `M` aceita incrementos de `0.01`; `KG` e `L`, de `0.001`. Quantidades via API são strings decimais, sem cálculo em ponto flutuante no navegador.
-- Dono/gerente/estoquista registram saldo inicial, entrada, saída, perda e mínimo. Contagem e estorno são restritos ao dono/gerente. Vendedor/caixa também têm consulta na interface e na API, sem botões de movimentação manual.
-- Saldo inicial só pode preceder movimentos físicos. Contagem informa o total contado, inclusive zero, e exige a revisão consultada; se outro movimento ocorrer, confira novamente antes de confirmar.
-- Saídas e estornos que deixariam o disponível negativo são recusados integralmente. Correções não apagam o original. O mínimo gera evento com variação física zero e filtro visual para reposição; alertas por e-mail seguem as preferências de destinatários verificados.
-- Pedidos online alteram o reservado e o consomem/liberam na confirmação, cancelamento ou expiração. O fluxo de bloqueio/indisponível ainda não está exposto.
-- A unidade de um produto com histórico de estoque não pode ser alterada. Cadastre outro produto para trabalhar com uma unidade diferente.
-
-API: `GET /api/admin/inventory/locations`, `GET /api/admin/inventory/balances?locationId=...`, `GET /api/admin/inventory/movements?locationId=...` e `POST /api/admin/inventory/movements`. O POST exige CSRF e cabeçalho `Idempotency-Key` com UUID. Reenvie a mesma chave e corpo para confirmar uma operação incerta: ela não será aplicada novamente. Uma chave reutilizada com outro conteúdo retorna 409.
-
-O contrato completo e exemplos estão em [docs/ESTOQUE.md](docs/ESTOQUE.md).
-
-## Migrações e testes
-
-Migrações versionadas em `backend/src/main/resources/db/migration`. O Hibernate apenas valida (`ddl-auto=validate`); nunca gera schema.
-
-```bash
-/workspaces/SistemaMercearia/mvnw -f /workspaces/SistemaMercearia/pom.xml test
-npm --prefix /workspaces/SistemaMercearia/frontend ci
-npm --prefix /workspaces/SistemaMercearia/frontend test -- --watch=false
-npm --prefix /workspaces/SistemaMercearia/frontend run build
-```
-
-Os testes Testcontainers precisam do daemon Docker e verificam PostgreSQL real, autenticação/autorização, CSRF, validação, persistência, logout, proteção do OpenAPI, estoque concorrente, rollback, idempotência, precisão por unidade e entrega SMTP ao Mailpit. Cada classe usa um schema aleatório isolado. A suíte também inclui teste unitário do serviço de produtos com Mockito e testes de componentes/HTTP Angular. O workflow `CI` executa testes e builds em pushes e pull requests.
-
-Para enviar uma mensagem de smoke pela própria aplicação (somente perfil `local`), inicie o backend assim:
-
-```bash
-set -a
-. /workspaces/SistemaMercearia/.env
-set +a
-APP_MAIL_SMOKE_TEST=true APP_MAIL_SMOKE_TEST_RECIPIENT=operacao@ferragens.local /workspaces/SistemaMercearia/mvnw -f /workspaces/SistemaMercearia/pom.xml -pl backend spring-boot:run
-```
-
-Confirme a mensagem em `http://localhost:8025`. Esse envio pela aplicação é separado do teste de integração, que usa instâncias próprias de PostgreSQL/Mailpit via Testcontainers.
-
-Para recriar somente o container PostgreSQL e manter o mesmo volume, não execute `down -v`:
-
-```bash
-docker compose --env-file /workspaces/SistemaMercearia/.env -f /workspaces/SistemaMercearia/compose.yaml up -d --force-recreate postgres
-```
-
-O volume `postgres-data` não é removido por esse comando. Confirme a persistência consultando `product` depois que o container ficar saudável.
-
-## Próximas etapas
-
-Consulte [docs/ROADMAP.md](docs/ROADMAP.md), [docs/ARQUITETURA.md](docs/ARQUITETURA.md), [docs/MODELO_DADOS.md](docs/MODELO_DADOS.md) e [docs/REGRAS_NEGOCIO.md](docs/REGRAS_NEGOCIO.md). O desenho de e-mail com outbox está em [docs/ARQUITETURA.md](docs/ARQUITETURA.md#notificacoes-por-email).
+</div>
