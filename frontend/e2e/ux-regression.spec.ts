@@ -179,6 +179,59 @@ test('rodapé, navegação por teclado e textos promocionais removidos', async (
   }
 });
 
+
+test('cartões do estoque ajustam imagem, largura e botões em celular, tablet e desktop', async ({ page }) => {
+  await signIn(page);
+  await page.goto('/admin/products');
+  await page.getByRole('button', { name: /Novo produto/ }).click();
+  const form = page.getByRole('dialog', { name: 'Novo produto' });
+  const name = 'Material responsivo E2E ' + randomUUID().slice(0, 8);
+  await form.getByLabel('Nome do produto (opcional)').fill(name);
+  await form.getByRole('button', { name: 'Cadastrar produto' }).click();
+  await expect(page.locator('.success-notice')).toContainText('Produto cadastrado');
+
+  await page.goto('/admin/inventory');
+  await page.getByRole('button', { name: /Quadradinhos/ }).click();
+  await page.getByLabel('Nome do produto').fill(name);
+  await page.getByRole('button', { name: 'Buscar', exact: true }).click();
+  const card = page.locator('.stock-card').filter({ hasText: name });
+  await expect(card).toBeVisible();
+  await expect(card.locator('.product-picture')).toHaveClass(/fit-contain/);
+
+  for (const width of [320, 390, 600, 760, 1280]) {
+    await page.setViewportSize({ width, height: 900 });
+    const layout = await card.evaluate((element) => {
+      const viewport = document.documentElement.clientWidth;
+      const grid = element.closest('.mobile-stock-cards') as HTMLElement;
+      const columns = getComputedStyle(grid).gridTemplateColumns.split(' ').filter(Boolean).length;
+      const box = element.getBoundingClientRect();
+      const actions = [...element.querySelectorAll('.stock-card-actions button, .stock-card-actions a')];
+      return {
+        viewport,
+        documentWidth: document.documentElement.scrollWidth,
+        left: box.left,
+        right: box.right,
+        columns,
+        minActionHeight: Math.min(...actions.map(action => action.getBoundingClientRect().height)),
+      };
+    });
+    expect(layout.documentWidth, 'Documento não deve transbordar a viewport em ' + width).toBeLessThanOrEqual(layout.viewport + 2);
+    expect(layout.left, 'Cartão não deve sair da esquerda em ' + width).toBeGreaterThanOrEqual(0);
+    expect(layout.right, 'Cartão não deve sair da direita em ' + width).toBeLessThanOrEqual(layout.viewport + 2);
+    expect(layout.minActionHeight, 'Área de toque pequena em ' + width).toBeGreaterThanOrEqual(43);
+    expect(layout.columns, 'Colunas do estoque em ' + width).toBe(width <= 640 ? 1 : width <= 760 ? 2 : 3);
+  }
+
+  await page.setViewportSize({ width: 390, height: 900 });
+  await page.getByRole('button', { name: /Lista/ }).click();
+  await expect(page.locator('.data-section.mode-list > .table-scroll')).toBeVisible();
+  const widths = await page.evaluate(() => ({
+    document: document.documentElement.scrollWidth,
+    viewport: document.documentElement.clientWidth,
+  }));
+  expect(widths.document).toBeLessThanOrEqual(widths.viewport + 2);
+});
+
 test('páginas principais permanecem dentro da largura de tela', async ({ page }) => {
   await signIn(page);
   const routes = [

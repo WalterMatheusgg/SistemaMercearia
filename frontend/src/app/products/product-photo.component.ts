@@ -5,7 +5,7 @@ import { Component, Input, OnChanges, signal } from '@angular/core';
   selector: 'app-product-photo',
   standalone: true,
   template: `
-    <span class="product-picture" [class.no-image]="failed()" aria-hidden="true">
+    <span class="product-picture" [class.no-image]="failed()" [class.fit-contain]="fit === 'contain'" aria-hidden="true">
       @if (id && !failed()) {
         <img [src]="'/api/admin/products/' + id + '/photo'" [alt]="alt"
           loading="lazy" (error)="failed.set(true)" />
@@ -24,12 +24,15 @@ import { Component, Input, OnChanges, signal } from '@angular/core';
     .product-picture{display:grid;place-items:center;width:100%;height:100%;
       min-width:42px;min-height:42px;overflow:hidden;border-radius:inherit;background:#edf4ef;color:#4c9476}
     img{width:100%;height:100%;object-fit:cover;display:block}
+    .product-picture.fit-contain{background:#fff}
+    .product-picture.fit-contain img{object-fit:contain;padding:8px}
     svg{width:44%;height:44%;max-width:52px;opacity:.85}
   `],
 })
 export class ProductPhotoComponent implements OnChanges {
   @Input() id: string | null | undefined;
   @Input() alt = 'Foto do produto';
+  @Input() fit: 'cover' | 'contain' = 'cover';
   readonly failed = signal(false);
   ngOnChanges(): void { this.failed.set(false); }
 }
