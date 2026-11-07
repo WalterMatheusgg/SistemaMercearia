@@ -31,7 +31,7 @@ docker compose --profile app ps
 
 ## Entrada em produção
 
-Execute `python3 scripts/preflight-production.py .env` na VM antes do primeiro deploy. Configure domínio e DNS, servidor Linux, backups externos, credenciais de PostgreSQL e SMTP reais, política de segurança e homologação. Siga [HOSPEDAGEM.md](HOSPEDAGEM.md). O Codespace é ambiente de desenvolvimento; **ainda não existe URL pública homologada**.
+Execute `python3 scripts/preflight-production.py .env` na VM antes do primeiro deploy. Configure domínio e DNS, servidor Linux, backups externos, credenciais de PostgreSQL e SMTP reais, política de segurança e homologação. Siga [HOSPEDAGEM.md](HOSPEDAGEM.md). O Codespace é ambiente de desenvolvimento. A URL **https://loja-ferragens.vercel.app** existe para homologação, mas apresentou inicializações lentas e limite de conexões do Supabase e **ainda não foi aprovada para operação comercial**. Veja também [RAILWAY.md](RAILWAY.md) para a alternativa persistente.
 
 No banco novo, `SPRING_PROFILES_ACTIVE=prod,bootstrap` e `BOOTSTRAP_ADMIN_ENABLED=true` são temporários. Após entrar como dono, use somente o perfil `prod` e desative o bootstrap. Ao migrar um banco já existente, evite inicializar/reescrever dados; restaure o backup de forma planejada.
 
