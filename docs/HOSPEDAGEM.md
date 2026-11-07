@@ -12,7 +12,7 @@ Este procedimento mantém o monólito Spring Boot/Angular e o PostgreSQL existen
 - **Oracle Cloud Always Free (opção técnica sob disponibilidade):** VM Linux ARM Ampere A1 permite executar o Docker Compose continuamente dentro da cota gratuita, sem mudar a arquitetura. A capacidade e a elegibilidade precisam ser verificadas na conta. Instâncias consideradas ociosas podem ser recuperadas pelo provedor: não há garantia de produção. Faça backup **fora** da máquina.
   - https://docs.oracle.com/en-us/iaas/Content/FreeTier/freetier_topic-Always_Free_Resources.htm
 
-**Não foi provisionada uma VM e não há URL externa confirmada.** A criação de conta, a escolha da região, o DNS e a verificação de limites são etapas externas necessárias. Não utilize o Codespace como servidor definitivo.
+**Não foi provisionada uma VM.** Existe uma URL de homologação na Vercel (`https://loja-ferragens.vercel.app`), porém não está aprovada para operação comercial: houve cold starts lentos e esgotamento do pool de conexões do Supabase. Um servidor Java persistente, DNS e testes operacionais continuam pendentes. Não utilize o Codespace como servidor definitivo.
 
 ## Alternativa persistente na Railway
 
