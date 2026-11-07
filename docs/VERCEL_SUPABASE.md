@@ -15,7 +15,11 @@ Na Vercel, as variáveis privadas `DB_URL`, `DB_USERNAME`, `DB_PASSWORD` devem a
 
 Defina ainda `SPRING_PROFILES_ACTIVE=prod,vercel`, `APP_PUBLIC_URL` com HTTPS, `SESSION_COOKIE_SECURE=true`, `PORT=8080` e `BOOTSTRAP_ADMIN_ENABLED=false` depois do primeiro administrador criado. Somente um banco vazio precisa temporariamente de `prod,vercel,bootstrap` e de credenciais fortes de bootstrap. Remova-as depois do primeiro acesso. O perfil `prod` obriga cookies seguros e desabilita Swagger público.
 
-Verifique o banco (`flyway_schema_history` versões V1–V10 em `loja`), `/actuator/health`, login e ações não destrutivas de Produtos e Estoque. A atualização não migra automaticamente dados do Codespace; consulte o procedimento de backup e restauração em `docs/HOSPEDAGEM.md`.
+Verifique o banco (`flyway_schema_history` versões V1–V11 em `loja`), `/actuator/health`, login e ações não destrutivas de Produtos e Estoque. A atualização não migra automaticamente dados do Codespace; consulte o procedimento de backup e restauração em `docs/HOSPEDAGEM.md`.
+
+## Estado verificado em 07/11/2026
+
+A autenticação da Vercel foi removida apenas do domínio de **produção** (a Loja mantém seu login); os previews continuam protegidos. No Supabase, o Flyway aplicou as migrações até V11. A Vercel usa Hikari com uma conexão por instância como mitigação de emergência. Foram observados cold starts de cerca de 18–21 segundos e o erro `EMAXCONNSESSION` por limite de clientes do pooler. O perfil `prod,railway` foi preparado, mas **não há deploy persistente homologado**.
 
 ## Limites: não é produção de loja comercial
 
