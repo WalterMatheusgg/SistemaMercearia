@@ -57,7 +57,7 @@ public class BootstrapAdminConfiguration {
                                     () ->
                                             new IllegalStateException(
                                                     "A migração não criou o papel ROLE_OWNER."));
-            var account = users.save(
+            var account = users.saveAndFlush(
                     new UserAccount(
                             username.trim(),
                             passwordEncoder.encode(password),
