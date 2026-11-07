@@ -2,6 +2,12 @@
 
 O ambiente Vercel `loja-ferragens` usa Spring Boot e Supabase no schema privado `loja`.
 
+## Estado da produção em 07/11/2026
+
+O primeiro administrador já foi criado e verificado como `ROLE_OWNER` no banco Supabase. O bootstrap foi desativado no ambiente. **Não reative o bootstrap nem substitua a senha existente para atualizar o README ou o Codespace.** O e-mail do administrador estava pendente de verificação e as notificações externas permanecem sem SMTP e worker homologados.
+
+A seção seguinte é um procedimento de recuperação/instalação para **banco vazio**, não uma tarefa pendente do ambiente atual.
+
 ## Criação inicial do dono (somente uma vez)
 
 O bootstrap **não funciona sem senha inicial**, porque a aplicação não deve criar um administrador com uma senha conhecida ou publicada. Em **Vercel → loja-ferragens → Settings → Environment Variables**, configure estas variáveis em Production:
