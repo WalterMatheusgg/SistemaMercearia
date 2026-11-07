@@ -69,6 +69,8 @@ jobs:
         run: |
           bash -n scripts/sync-codespace.sh
           bash scripts/sync-codespace.sh --help > /dev/null
+          bash -n scripts/configurar-github-about.sh
+          bash scripts/configurar-github-about.sh --help > /dev/null
       - name: Testar proteção da configuração de produção
         run: python3 -m unittest discover -s scripts/tests -p 'test_*.py' -v
       - name: Validar manifests de publicação comercial sem acessar segredos
