@@ -24,7 +24,8 @@ public class BootstrapAdminConfiguration {
             PasswordEncoder passwordEncoder,
             @Value("${app.bootstrap.admin.enabled:true}") boolean enabled,
             @Value("${app.bootstrap.admin.username:}") String username,
-            @Value("${app.bootstrap.admin.password:}") String password) {
+            @Value("${app.bootstrap.admin.password:}") String password,
+            @Value("${app.bootstrap.admin.email:}") String email) {
         return args -> {
             if (!enabled
                     || Boolean.TRUE.equals(
@@ -51,11 +52,21 @@ public class BootstrapAdminConfiguration {
                                     () ->
                                             new IllegalStateException(
                                                     "A migração não criou o papel ROLE_OWNER."));
-            users.save(
+            var account = users.save(
                     new UserAccount(
                             username.trim(),
                             passwordEncoder.encode(password),
                             java.util.Set.of(owner)));
+            if (StringUtils.hasText(email)) {
+                String address = email.trim().toLowerCase(java.util.Locale.ROOT);
+                if (!address.matches("^[A-Za-z0-9._%+\\-]+@[A-Za-z0-9.\\-]+\\.[A-Za-z]{2,}$")) {
+                    throw new IllegalStateException("E-mail de administrador inválido.");
+                }
+                jdbc.update("UPDATE app_user SET email=?,email_verified=false WHERE id=?",
+                        address, account.getId());
+                jdbc.update("INSERT INTO notification_preference(user_id,sale_completed,stock_low,daily_summary)"
+                        + " VALUES(?,true,true,true) ON CONFLICT(user_id) DO NOTHING", account.getId());
+            }
         };
     }
 }

@@ -42,6 +42,7 @@ app:
     admin:
       enabled: ${BOOTSTRAP_ADMIN_ENABLED:false}
       username: ${BOOTSTRAP_ADMIN_USERNAME:}
+      email: ${BOOTSTRAP_ADMIN_EMAIL:}
       password: ${BOOTSTRAP_ADMIN_PASSWORD:}
   public-url: ${APP_PUBLIC_URL:http://localhost:4200}
   mail:
