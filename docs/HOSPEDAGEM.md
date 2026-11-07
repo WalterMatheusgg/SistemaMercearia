@@ -14,6 +14,10 @@ Este procedimento mantém o monólito Spring Boot/Angular e o PostgreSQL existen
 
 **Não foi provisionada uma VM e não há URL externa confirmada.** A criação de conta, a escolha da região, o DNS e a verificação de limites são etapas externas necessárias. Não utilize o Codespace como servidor definitivo.
 
+## Alternativa persistente na Railway
+
+O projeto possui um perfil `prod,railway` e instruções em [RAILWAY.md](RAILWAY.md). O servidor persistente mantém o monólito Java/Angular na mesma origem, usando o banco já existente no Supabase. É uma opção de hospedagem com possíveis custos; exige configurar as variáveis privadas pelo provedor e testar antes de transferir acessos.
+
 ## Implantação Docker com HTTPS (VM Linux ARM64 ou AMD64)
 
 1. Provisione uma VM com armazenamento persistente e capacidade adequada, instale Docker Engine + Compose v2 e restrinja firewall. Permita entrada TCP 80 e 443 para Caddy; SSH apenas a administradores. **Não publique portas 5432, 8025 ou 8080**.

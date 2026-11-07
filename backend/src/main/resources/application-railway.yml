@@ -1,0 +1,20 @@
+# Perfil para um servidor Java persistente na Railway.
+# Um serviço único evita cold start e mantém conexão com o pool do Supabase.
+spring:
+  datasource:
+    hikari:
+      maximum-pool-size: 4
+      minimum-idle: 1
+      connection-timeout: 10000
+      max-lifetime: 1800000
+  session:
+    jdbc:
+      initialize-schema: never
+server:
+  address: 0.0.0.0
+  port: ${PORT:8080}
+  shutdown: graceful
+app:
+  # Só habilitar após SMTP real, testes de entrega e configuração de worker.
+  jobs:
+    enabled: ${APP_JOBS_ENABLED:false}
