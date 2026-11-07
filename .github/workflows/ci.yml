@@ -65,6 +65,10 @@ jobs:
           s=p.read_text().replace('replace-with-a-long-local-password','local-e2e-password-123456')
           p.write_text(s)
           PY
+      - name: Validar script de sincronização
+        run: |
+          bash -n scripts/sync-codespace.sh
+          bash scripts/sync-codespace.sh --help > /dev/null
       - name: Testar proteção da configuração de produção
         run: python3 -m unittest discover -s scripts/tests -p 'test_*.py' -v
       - name: Validar manifests de publicação comercial sem acessar segredos

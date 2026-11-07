@@ -1,5 +1,20 @@
 # Executar no Codespace
 
+## Sincronização segura com o GitHub
+
+Se já existe banco Docker no Codespace, execute no terminal privado:
+
+```bash
+cd /workspaces/SistemaMercearia
+git status --short
+bash scripts/backup.sh
+git switch main
+git pull --ff-only origin main
+bash scripts/sync-codespace.sh
+```
+
+O primeiro pull baixa o novo script, sem aplicar migrações. O script faz outro backup antes de compilar/iniciar, recusa mudanças locais ou branches divergentes, executa testes e um smoke test não destrutivo. Sem `.env` no ambiente novo, omita o backup inicial. Preserve uma cópia do dump fora do Codespace. Não use `reset --hard`, `git clean`, `down -v` ou `docker volume prune` para sincronizar.
+
 O caminho mais simples usa Docker para compilar o Angular, empacotar o backend e servir tudo na porta **8080**, na mesma origem. Não é preciso instalar Java/Node no Codespace para essa opção.
 
 ```bash
