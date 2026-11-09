@@ -43,30 +43,73 @@ export function code128Svg(value: string): string {
 const escapeHtml = (text: string) => text.replace(/[&<>"']/g,
   (char) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[char] ?? char);
 
-/** Uma janela isolada imprime somente a etiqueta, sem os dados da interface. */
-export function printShelfLabel(item: BarcodeItem): void {
+/** Dois tamanhos de papel: etiqueta de prateleira ou gaveta/organizador. */
+export type LabelSize = 'shelf' | 'drawer';
+
+/** HTML autossuficiente e de alto contraste para impressoras comuns ou térmicas. */
+export function shelfLabelHtml(item: BarcodeItem, size: LabelSize = 'shelf'): string {
   const svg = code128Svg(item.barcode);
-  const win = window.open('', '_blank', 'width=600,height=450');
+  const drawer = size === 'drawer';
+  const w = drawer ? 60 : 100;
+  const h = drawer ? 40 : 55;
+  const money = Number(item.price).toLocaleString('pt-BR', {
+    minimumFractionDigits: 2, maximumFractionDigits: 2,
+  });
+  const nameClass = item.name.length > (drawer ? 27 : 50) ? 'name long' : 'name';
+  return `<!doctype html><html lang="pt-BR"><head><meta charset="utf-8">
+  <title>Etiqueta ${escapeHtml(item.barcode)} - ${escapeHtml(item.name)}</title>
+  <style>
+    @page { size: ${w}mm ${h}mm; margin: 0; }
+    * { box-sizing: border-box; }
+    html,body { margin:0; padding:0; font-family:Arial,Helvetica,sans-serif; color:#111; }
+    .label {
+      width:${w}mm; height:${h}mm; padding:${drawer ? '2' : '3'}mm;
+      display:flex; flex-direction:column; overflow:hidden; background:#fff;
+    }
+    header { display:flex;align-items:center;justify-content:space-between;gap:2mm;
+      padding-bottom:1.1mm;border-bottom:1.5px solid #111;white-space:nowrap; }
+    .brand {font-weight:900;font-size:${drawer ? '10' : '13'}px;letter-spacing:.04em}
+    .ref {font-weight:700;font-size:${drawer ? '8' : '10'}px;border:1px solid #111;padding:2px 4px}
+    .name {font-size:${drawer ? '11' : '14'}px;font-weight:800;line-height:1.18;
+      margin-top:${drawer ? '1.2' : '2'}mm;min-height:${drawer ? '8' : '10'}mm;
+      max-height:${drawer ? '8.5' : '11'}mm;overflow:hidden;overflow-wrap:anywhere}
+    .name.long {font-size:${drawer ? '9' : '11'}px}
+    .details {display:flex;align-items:flex-end;justify-content:space-between;gap:2mm;
+      margin:${drawer ? '0' : '1'}mm 0 1mm}
+    .price {display:flex;align-items:baseline;gap:1mm;font-weight:900;line-height:1}
+    .currency {font-size:${drawer ? '12' : '15'}px}
+    .amount {font-size:${drawer ? '21' : '31'}px;letter-spacing:-.05em}
+    .unit {font-size:${drawer ? '8' : '10'}px;text-align:right;font-weight:700}
+    .barcode {width:100%;height:${drawer ? '9.5' : '11.5'}mm;overflow:hidden;margin-top:auto}
+    .barcode svg {display:block;width:100%;height:100%}
+    footer {display:flex;align-items:center;justify-content:space-between;gap:2mm;margin-top:1mm;
+      font-family:Arial,monospace;font-size:${drawer ? '9' : '11'}px;letter-spacing:.08em;font-weight:700}
+    footer small {font:normal ${drawer ? '7' : '9'}px Arial,sans-serif;letter-spacing:0}
+    @media screen {
+      body {min-height:100vh;display:grid;place-content:center;background:#e6e9e8}
+      .label {border:1px solid #cdd5d1;box-shadow:0 12px 30px #0002}
+    }
+    @media print {html,body{width:${w}mm;height:${h}mm} .label{border:0;box-shadow:none}}
+  </style></head><body><article class="label">
+    <header><span class="brand">LOJA FERRAGENS</span>
+      <span class="ref">FINAL ${escapeHtml(item.barcode.slice(-3))}</span></header>
+    <div class="${nameClass}">${escapeHtml(item.name)}</div>
+    <div class="details">
+      <div class="price"><span class="currency">R$</span><span class="amount">${money}</span></div>
+      <span class="unit">PREÇO POR ${escapeHtml(item.unit)}</span>
+    </div>
+    <div class="barcode">${svg}</div>
+    <footer><span>${escapeHtml(item.barcode)}</span><small>CÓDIGO INTERNO · ${drawer ? 'GAVETA' : 'PRATELEIRA'}</small></footer>
+  </article></body></html>`;
+}
+
+/** A janela de impressão não contém controles ou dados da interface principal. */
+export function printShelfLabel(item: BarcodeItem, size: LabelSize = 'shelf'): void {
+  const html = shelfLabelHtml(item, size);
+  const win = window.open('', '_blank', 'width=700,height=550');
   if (!win) throw new Error('O navegador bloqueou a impressão. Autorize a janela pop-up da Loja.');
   win.addEventListener('load', () => { win.focus(); win.print(); }, { once: true });
   win.document.open();
-  win.document.write(`<!doctype html><html lang="pt-BR"><head><meta charset="utf-8">
-  <title>Etiqueta - ${escapeHtml(item.name)}</title>
-  <style>
-    @page { size: 100mm 55mm; margin: 3mm; }
-    * { box-sizing: border-box; } body { margin: 0; font: 12px Arial, sans-serif; color: #111; }
-    .label { width: 94mm; height: 48mm; padding: 3mm; border: 1px solid #ddd; text-align: center; overflow: hidden; }
-    h1 { font-size: 11px; margin: 0 0 3mm; letter-spacing: 1px; }
-    h2 { font-size: 16px; margin: 0 0 2mm; overflow-wrap: anywhere; }
-    .barcode { margin: 2mm auto 0; width: 85mm; }
-    .code { font: bold 14px monospace; letter-spacing: 2px; margin-top: 2mm; }
-    .unit { font-size: 11px; margin-top: 2mm; }
-    @media screen { body { display: grid; place-content: center; min-height: 100vh; background: #eee; } .label { background: #fff; } }
-    @media print { .label { border: 0; } }
-  </style></head><body><section class="label">
-  <h1>LOJA FERRAGENS</h1><h2>${escapeHtml(item.name)}</h2>
-  <div class="barcode">${svg}</div><div class="code">${escapeHtml(item.barcode)}</div>
-  <div class="unit">Unidade: ${escapeHtml(item.unit)} · Etiqueta de prateleira</div>
-  </section></body></html>`);
+  win.document.write(html);
   win.document.close();
 }
