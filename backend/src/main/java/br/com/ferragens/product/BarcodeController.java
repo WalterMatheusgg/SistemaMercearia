@@ -5,6 +5,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
 import java.util.UUID;
 
 /** Consultas autenticadas para leitores USB/Bluetooth que digitam e enviam Enter. */
@@ -24,6 +25,12 @@ public class BarcodeController {
     public BarcodeCatalogService.Item lookup(Authentication authentication,
             @RequestParam String code, @RequestParam(required = false) UUID locationId) {
         return barcodes.byBarcode(actors.require(authentication), locationId, code);
+    }
+
+    @GetMapping("/search")
+    public List<BarcodeCatalogService.Item> search(Authentication authentication,
+            @RequestParam String query, @RequestParam(required = false) UUID locationId) {
+        return barcodes.search(actors.require(authentication), locationId, query);
     }
 
     @GetMapping("/product/{id}")
