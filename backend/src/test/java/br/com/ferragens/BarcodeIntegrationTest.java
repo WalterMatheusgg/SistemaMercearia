@@ -47,6 +47,19 @@ class BarcodeIntegrationTest {
         assertThat(first.available()).isEqualTo("0");
         assertThat(barcodes.byBarcode(actor, LOCATION, first.barcode().toLowerCase()))
                 .isEqualTo(first);
+        // Últimos 3 números, prefixo completo e nome: somente sugestões, sem movimentação.
+        String lastThree = first.barcode().substring(first.barcode().length() - 3);
+        assertThat(barcodes.search(actor, LOCATION, lastThree))
+                .extracting(BarcodeCatalogService.Item::productId).contains(a);
+        assertThat(barcodes.search(actor, LOCATION, "bucha"))
+                .extracting(BarcodeCatalogService.Item::productId).contains(a);
+        assertThat(barcodes.search(actor, LOCATION, "LF0000"))
+                .extracting(BarcodeCatalogService.Item::productId).contains(a);
+        assertThat(barcodes.search(actor, LOCATION, ""))
+                .isEmpty();
+        assertThat(barcodes.search(new Actor(UUID.randomUUID(), UUID.randomUUID(), "other"),
+                LOCATION, lastThree)).isEmpty();
+        assertThat(barcodes.search(actor, UUID.randomUUID(), lastThree)).isEmpty();
         assertThat(jdbc.queryForObject("SELECT count(*) FROM inventory_movement"
                 + " WHERE product_id IN (?,?)", Integer.class, a, b)).isZero();
 
