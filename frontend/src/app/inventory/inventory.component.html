@@ -191,6 +191,23 @@
         [class.selected]="viewMode() === 'list'" (click)="setViewMode('list')">☷ Lista</button>
     </div>
   </div>
+  <section class="barcode-batch" aria-label="Reimprimir etiquetas de produtos existentes">
+    <div>
+      <strong>Etiquetas dos materiais já cadastrados</strong>
+      <p>Prepare as etiquetas dos produtos ativos desta página (até 20), mantendo os códigos originais.</p>
+    </div>
+    <button type="button" (click)="prepareExistingLabels()"
+      [disabled]="loading() || batchLoading() || !rows().length">
+      {{ batchLoading() ? 'Preparando...' : 'Preparar etiquetas da página' }}
+    </button>
+    @if (batchLabels().length) {
+      <div class="barcode-batch-ready" role="status">
+        <span>{{ batchLabels().length }} etiqueta(s) prontas para reimprimir.</span>
+        <button type="button" (click)="printExistingLabels('shelf')">Imprimir prateleira</button>
+        <button type="button" (click)="printExistingLabels('drawer')">Imprimir gaveta</button>
+      </div>
+    }
+  </section>
   <details class="stock-replenishment" aria-label="Sugestões de reposição">
     <summary>Reposição sugerida <strong>{{ replenishment().length }}</strong>
       <small>Materiais que atingiram o mínimo · até 30 sugestões</small></summary>
