@@ -71,6 +71,14 @@ async function mailLink(page: Page, email: string, route: string) {
   return url!;
 }
 
+test('recursos públicos não criam sessões nem entregam cookies autenticados', async ({ request }) => {
+  const resource = await request.get('/loja.svg');
+  expect(resource.status()).toBe(200);
+  expect(resource.headers()['set-cookie']).toBeUndefined();
+  const protectedRoute = await request.get('/api/auth/me');
+  expect(protectedRoute.status()).toBe(401);
+});
+
 test('venda pelo navegador baixa de 50 para 35 e aparece no estoque', async ({ page, context }) => {
   await login(page);
   const product = await seed(context);

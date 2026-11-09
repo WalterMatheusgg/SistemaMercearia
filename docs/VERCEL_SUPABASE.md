@@ -24,3 +24,29 @@ A autenticação da Vercel foi removida apenas do domínio de **produção** (a 
 ## Limites: não é produção de loja comercial
 
 Vercel Hobby é apenas pessoal/não comercial. Container Functions são efêmeras; o servidor pode parar após inatividade. Os trabalhos agendados e e-mail da Loja não funcionam nessa implantação sem um worker persistente e SMTP real. Para operação comercial, é necessário plano/host compatível, monitoramento, testes operacionais e backups externos. Use o Compose com PostgreSQL e HTTPS no servidor persistente conforme `docs/HOSPEDAGEM.md`.
+
+## Mitigação de instâncias efêmeras (09/11/2026)
+
+Os logs de produção mostraram muitos Java cold starts ao buscar `main-*.js`,
+`styles-*.css` e demais arquivos estáticos; cada JVM criava conexões ao Supabase.
+A origem Java ainda é uma Vercel Container Function, mas as requisições a
+recursos públicos estáticos agora não criam sessão/CSRF e os arquivos com hash
+recebem TTL de CDN. A configuração `prod,vercel` carrega beans sob demanda,
+abre no máximo **1 conexão Hikari por instância** e fecha rapidamente a conexão
+ociosa. HTML, APIs, fotos e qualquer dado autenticado **não são cacheados na CDN**.
+
+**Atenção à evolução do banco:** a Vercel NÃO executa mais Flyway em cada
+cold start. As migrações versionadas devem ser aplicadas de forma controlada
+ao Supabase, com backup e verificação em um runner de manutenção confiável,
+antes de publicar qualquer release que acrescente migrações. O backend
+continua com `ddl-auto: validate`, que ajuda a detectar divergências.
+Confirme a versão de `loja.flyway_schema_history` antes de novas releases;
+na configuração atual V12 já está aplicada. Não use o runtime Vercel para
+fazer migração concorrente em inúmeras instâncias.
+
+**Limite importante:** essas medidas reduzem chamadas e conexões; não tornam
+o processo Java persistente. Primeiro acesso após inatividade ainda terá
+cold start; o plano Hobby permanece restrito a uso pessoal/não comercial.
+O projeto pode servir para homologação sem custo, mas para operação comercial
+contínua a plataforma não fornece as mesmas garantias de um servidor Java
+persistente.

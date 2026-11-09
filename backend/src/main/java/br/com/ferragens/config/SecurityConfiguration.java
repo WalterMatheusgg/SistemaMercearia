@@ -5,6 +5,7 @@ import br.com.ferragens.commerce.Db;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.core.annotation.Order;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -34,6 +35,7 @@ import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
 import org.springframework.security.web.csrf.CsrfAuthenticationStrategy;
 import org.springframework.security.web.csrf.CsrfFilter;
 import org.springframework.security.web.csrf.CsrfLogoutHandler;
+import org.springframework.security.web.util.matcher.RequestMatcher;
 
 import tools.jackson.databind.ObjectMapper;
 
@@ -41,6 +43,33 @@ import java.util.List;
 
 @Configuration
 public class SecurityConfiguration {
+
+    /**
+     * Arquivos públicos imutáveis não precisam abrir sessão nem gerar token CSRF.
+     * Na Vercel, isso permite que a CDN sirva JS/CSS sem inicializar o banco.
+     * O matcher é propositalmente restrito a GET/HEAD e arquivos estáticos.
+     */
+    @Bean
+    @Order(0)
+    SecurityFilterChain publicAssets(HttpSecurity http) throws Exception {
+        RequestMatcher staticAsset = request -> {
+            if (!("GET".equals(request.getMethod()) || "HEAD".equals(request.getMethod()))) {
+                return false;
+            }
+            String path = request.getServletPath();
+            return path.matches("^/[A-Za-z0-9_.-]+-[A-Za-z0-9_-]{7,}\\.(js|css)$")
+                    || "/loja.svg".equals(path)
+                    || "/favicon.ico".equals(path)
+                    || path.startsWith("/assets/");
+        };
+        return http.securityMatcher(staticAsset)
+                .csrf(csrf -> csrf.disable())
+                .securityContext(context -> context.disable())
+                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                .requestCache(cache -> cache.disable())
+                .authorizeHttpRequests(authorize -> authorize.anyRequest().permitAll())
+                .build();
+    }
 
     @Bean
     PasswordEncoder passwordEncoder() {

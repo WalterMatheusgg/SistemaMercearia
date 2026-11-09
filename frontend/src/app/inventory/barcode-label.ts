@@ -130,8 +130,8 @@ export function shelfLabelsHtml(items: BarcodeItem[]): string {
   }).join('\n');
   return base.replace(article, labels)
     .replace('</title>', ' · Reimpressão</title>')
-    .replace('@media print {',
-      '@media print {.label{break-after:page;page-break-after:always}.label:last-child{break-after:auto;page-break-after:auto}');
+    .replace('@media print{',
+      '@media print{.label{break-after:page;page-break-after:always}.label:last-child{break-after:auto;page-break-after:auto}');
 }
 
 function openPrintPreview(html: string): void {

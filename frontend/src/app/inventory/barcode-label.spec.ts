@@ -19,7 +19,7 @@ describe('Etiqueta Code 128 B', () => {
       quantityScale: 0, quantityStep: '1', revision: 1, active: true,
     };
     const shelf = shelfLabelHtml(product);
-    expect(shelf).toContain('size: 100mm 55mm');
+    expect(shelf).toContain('size:100mm 55mm');
     expect(shelf).toContain('FINAL 123');
     expect(shelf).toContain('2,50');
     expect(shelf).toContain('PREÇO UNITÁRIO');
