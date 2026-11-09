@@ -4,7 +4,7 @@
 
 - **Cada produto recebe automaticamente um código curto único** no formato `LF0000000001` (12 caracteres). A sequência é gerada pelo PostgreSQL no schema da Loja.
 - A migração **Flyway V12** atribui códigos aos produtos já cadastrados, sem reescrever `product.code`, preços, saldos ou histórico. Novos produtos recebem o código automaticamente.
-- A impressão usa **Code 128 B vetorial com checksum**, sem fonte de barcode ou serviço externo. O layout profissional, preto e branco para impressoras térmicas ou comuns, é usado em **prateleiras (100 × 55 mm)** e **gavetas (60 × 40 mm)**. Cada etiqueta apresenta identidade da loja, nome completo dentro do espaço disponível, preço unitário, unidade, código completo legível e final de três dígitos em destaque (ex.: **FINAL 123**).
+- A impressão usa **Code 128 B vetorial com checksum**, sem fonte de barcode ou serviço externo. O layout profissional, preto e branco para impressoras térmicas ou comuns, utiliza **um único formato de etiqueta (100 × 55 mm)**, com código de barras maior (19 mm de altura e toda a largura útil). Cada etiqueta apresenta identidade da loja, nome completo dentro do espaço disponível, preço unitário, unidade, código completo legível e final de três dígitos em destaque (ex.: **FINAL 123**).
 - **Três modos de identificação no mesmo campo (Estoque e Vendas):** câmera do celular/computador, leitor USB/Bluetooth no modo teclado + Enter e digitação de nome, código ou últimos dígitos.
 - **Pesquisa instantânea:** digite o nome, o código ou somente os **3 números finais** (ex.: `123`). A lista sugere até 10 produtos e prioriza aqueles cujo código termina com o trecho digitado. Caso mais de um material corresponda, o funcionário deve escolher a etiqueta correta. A lista geral do Estoque também pesquisa por trechos do código interno.
 - No **Estoque**, o bip mostra o nome e saldo e oferece `Entrada` ou `Saída`, abrindo o formulário existente (quantidade, motivo e confirmação).
@@ -13,14 +13,14 @@
 
 ## Como usar
 
-1. Abra **Estoque**, procure o material desejado e clique em **Etiqueta**. Escolha **Imprimir prateleira** ou **Imprimir gaveta**, escolha a impressora ou **Salvar como PDF**, imprima e cole na caixa/gaveta.
+1. Abra **Estoque**, procure o material desejado e clique em **Etiqueta**. Clique em **Imprimir**, escolha a impressora ou **Salvar como PDF**, imprima e cole na caixa/gaveta.
 2. No mesmo campo, **escolha a câmera**, ou clique e bipe com o leitor configurado como **teclado (HID) com sufixo Enter**, ou digite nome/código/final. Após identificar o produto, selecione **Entrada** ou **Saída** e confirme quantidade e motivo.
 3. Para venda, abra **Vendas > Nova venda**, coloque o foco em **Bipar ou buscar etiqueta** e bipe ou digite parte do código para escolher o produto. Confira a quantidade (especialmente produtos vendidos por metro ou quilo), calcule total, registre pagamento e confirme como de costume.
 4. Se o material for de venda, **não registre uma segunda saída manual**. A venda confirmada já desconta o estoque uma vez.
 
 ### Limites e cuidados
 
-- Impressora: escolha o papel correto (**100 × 55 mm** ou **60 × 40 mm**), escala 100% e margens zero. Teste com o scanner antes de imprimir em lote. O sistema não instala drivers.
+- Impressora: escolha o papel correto (**100 × 55 mm**), escala 100% e margens zero. Teste com o scanner antes de imprimir em lote. O sistema não instala drivers.
 - **Câmera:** toque em **Abrir câmera**, permita o acesso, centralize o Code 128 e aguarde a identificação. O reconhecimento usa ZXing no próprio dispositivo; nenhuma imagem é enviada ao servidor. A página deve estar em **HTTPS**. Para fechar ou interromper, toque em **Fechar câmera** ou saia da tela. Sem permissão de câmera, use o leitor ou digite o código.
 - O leitor físico precisa operar como teclado; dispositivos serial/SDK proprietário exigem integração adicional.
 - Esta versão gera **códigos internos** para prateleiras. Não associa automaticamente o EAN do fabricante nem permite alterar manualmente o código interno.
@@ -43,7 +43,7 @@ Confira a execução de pull request e homologue num ambiente de teste antes de 
 
 O formato de impressão é único para todos os produtos: **tanto os materiais existentes quanto os novos recebem o novo visual** quando a etiqueta é aberta para impressão. O código `LF...` que já identifica cada produto permanece o mesmo, e o estoque não é movimentado.
 
-Para substituir etiquetas físicas antigas com facilidade, em **Estoque > Materiais no estoque > Etiquetas dos materiais já cadastrados**, clique em **Preparar etiquetas da página** (até 20 produtos ativos da página de resultados) e imprima em formato de prateleira ou gaveta. Para imprimir todas as páginas, avance e repita a operação. Etiquetas já coladas nas prateleiras precisam ser reimpressas e trocadas fisicamente.
+Para substituir etiquetas físicas antigas com facilidade, em **Estoque > Materiais no estoque > Etiquetas dos materiais já cadastrados**, clique em **Preparar etiquetas da página** (até 20 produtos ativos da página de resultados) e clique no único botão **Imprimir**. Para imprimir todas as páginas, avance e repita a operação. Etiquetas já coladas nas prateleiras precisam ser reimpressas e trocadas fisicamente.
 
 ## Compatibilidade da câmera e privacidade
 

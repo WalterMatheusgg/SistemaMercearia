@@ -12,7 +12,7 @@ describe('Etiqueta Code 128 B', () => {
     expect((svg.match(/<rect /g) ?? []).length).toBeGreaterThan(30);
   });
 
-  it('mostra valor, final destacado e código em dois tamanhos de etiqueta', () => {
+  it('mostra preço e código maior no formato único de etiqueta', () => {
     const product: BarcodeItem = {
       productId: 'p-1', barcode: 'LF0000000123', name: 'Bucha 6 mm',
       unit: 'UN', price: '2.50', physical: '40', available: '40', minimumQuantity: '5',
@@ -24,13 +24,13 @@ describe('Etiqueta Code 128 B', () => {
     expect(shelf).toContain('2,50');
     expect(shelf).toContain('PREÇO UNITÁRIO');
     expect(shelf).toContain('DESCRIÇÃO DO PRODUTO');
-    expect(shelf).toContain('preserveAspectRatio="xMidYMid meet"');
+    expect(shelf).toContain('preserveAspectRatio="none"');
+    expect(shelf).toContain('height:19mm');
+    expect(shelf).toContain('min-height:19mm');
     expect(shelf).toContain('LF0000000123');
     expect(shelf).toContain('<svg');
-    const drawer = shelfLabelHtml(product, 'drawer');
-    expect(drawer).toContain('size: 60mm 40mm');
-    expect(drawer).toContain('GAVETA');
-    expect(drawer).toContain('<svg');
+    expect(shelf).not.toContain('GAVETA');
+    expect(shelf).not.toContain('PRATELEIRA');
   });
 
   it('reimprime etiquetas existentes sem mudar os códigos e com uma etiqueta por página', () => {

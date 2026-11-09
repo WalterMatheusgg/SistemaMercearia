@@ -33,15 +33,13 @@
           <button type="button" (click)="openScanned('ENTRY')">+ Entrada</button>
           <button type="button" (click)="openScanned('EXIT')">− Saída</button>
         }
-        <button type="button" (click)="printBarcode(item)">Imprimir prateleira</button>
-        <button type="button" (click)="printBarcode(item, 'drawer')">Imprimir gaveta</button>
+        <button type="button" (click)="printBarcode(item)">Imprimir</button>
       </div>
     }
     @if (labelPreview(); as item) {
       <div class="barcode-found label-ready" role="status">
         <div><strong>Etiqueta pronta: {{ item.name }}</strong><small>{{ item.barcode }} · {{ item.unit }}</small></div>
-        <button type="button" (click)="printBarcode(item)">Imprimir prateleira (100 × 55 mm)</button>
-        <button type="button" (click)="printBarcode(item, 'drawer')">Imprimir gaveta (60 × 40 mm)</button>
+        <button type="button" (click)="printBarcode(item)">Imprimir</button>
         <button type="button" (click)="labelPreview.set(null)">Fechar</button>
       </div>
     }
@@ -205,8 +203,7 @@
     @if (batchLabels().length) {
       <div class="barcode-batch-ready" role="status">
         <span>{{ batchLabels().length }} etiqueta(s) prontas para reimprimir.</span>
-        <button type="button" (click)="printExistingLabels('shelf')">Imprimir prateleira</button>
-        <button type="button" (click)="printExistingLabels('drawer')">Imprimir gaveta</button>
+        <button type="button" (click)="printExistingLabels()">Imprimir</button>
       </div>
     }
   </section>

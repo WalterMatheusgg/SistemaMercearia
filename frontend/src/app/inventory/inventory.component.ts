@@ -1,6 +1,6 @@
 import { Component, DestroyRef, inject, OnInit, signal } from '@angular/core';
 import { BarcodeApi, BarcodeItem } from './barcode-api.service';
-import { LabelSize, printShelfLabel, printShelfLabels } from './barcode-label';
+import { printShelfLabel, printShelfLabels } from './barcode-label';
 import { BarcodeSearchComponent } from './barcode-search.component';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
@@ -205,8 +205,8 @@ export class InventoryComponent implements OnInit {
       });
   }
 
-  printBarcode(item: BarcodeItem, size: 'shelf' | 'drawer' = 'shelf'): void {
-    try { printShelfLabel(item, size); }
+  printBarcode(item: BarcodeItem): void {
+    try { printShelfLabel(item); }
     catch (error) {
       this.barcodeError.set(error instanceof Error ? error.message : 'Não foi possível imprimir.');
     }
@@ -240,9 +240,9 @@ export class InventoryComponent implements OnInit {
       });
   }
 
-  printExistingLabels(size: LabelSize): void {
+  printExistingLabels(): void {
     try {
-      printShelfLabels(this.batchLabels(), size);
+      printShelfLabels(this.batchLabels());
     } catch (error) {
       this.batchError.set(error instanceof Error ? error.message : 'Falha ao imprimir etiquetas.');
     }

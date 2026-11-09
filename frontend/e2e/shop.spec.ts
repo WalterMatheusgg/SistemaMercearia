@@ -114,8 +114,9 @@ test('reimpressão das etiquetas existentes prepara lote sem movimentar estoque'
   await expect(page.locator('.stock-card').filter({ hasText: product.name })).toBeVisible();
   await page.getByRole('button', { name: 'Preparar etiquetas da página' }).click();
   await expect(page.locator('.barcode-batch-ready')).toContainText('1 etiqueta(s) prontas');
-  await expect(page.getByRole('button', { name: 'Imprimir prateleira', exact: true })).toBeVisible();
-  await expect(page.getByRole('button', { name: 'Imprimir gaveta', exact: true })).toBeVisible();
+  await expect(page.locator('.barcode-batch-ready').getByRole('button', { name: 'Imprimir', exact: true })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Imprimir gaveta' })).toHaveCount(0);
+  await expect(page.getByRole('button', { name: 'Imprimir prateleira' })).toHaveCount(0);
   const afterResponse = await context.request.get(itemUrl);
   expect(afterResponse.ok()).toBeTruthy();
   const after = await afterResponse.json();

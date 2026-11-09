@@ -36,71 +36,67 @@ export function code128Svg(value: string): string {
     }
   }
   return `<svg xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Código de barras ${value}"
-    viewBox="0 0 ${x + 11} 58" preserveAspectRatio="xMidYMid meet"
-    width="100%" height="70"><g fill="#000">${rects.join('')}</g></svg>`;
+    viewBox="0 0 ${x + 11} 58" preserveAspectRatio="none"
+    width="100%" height="100%"><g fill="#000">${rects.join('')}</g></svg>`;
 }
 
 const escapeHtml = (text: string) => text.replace(/[&<>"']/g,
   (char) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[char] ?? char);
 
-/** Dois tamanhos de papel: etiqueta de prateleira ou gaveta/organizador. */
-export type LabelSize = 'shelf' | 'drawer';
+/** Modelo único de etiqueta, 100 × 55 mm, para novos e antigos produtos. */
+export const LABEL_WIDTH_MM = 100;
+export const LABEL_HEIGHT_MM = 55;
 
 /** HTML autossuficiente e de alto contraste para impressoras comuns ou térmicas. */
-export function shelfLabelHtml(item: BarcodeItem, size: LabelSize = 'shelf'): string {
+export function shelfLabelHtml(item: BarcodeItem): string {
   const svg = code128Svg(item.barcode);
-  const drawer = size === 'drawer';
-  const w = drawer ? 60 : 100;
-  const h = drawer ? 40 : 55;
+  const w = LABEL_WIDTH_MM;
+  const h = LABEL_HEIGHT_MM;
   const money = Number(item.price).toLocaleString('pt-BR', {
     minimumFractionDigits: 2, maximumFractionDigits: 2,
   });
   if (!Number.isFinite(Number(item.price)) || Number(item.price) < 0) {
     throw new Error('Preço inválido para imprimir a etiqueta.');
   }
-  const nameClass = item.name.length > (drawer ? 27 : 50) ? 'name long' : 'name';
+  const nameClass = item.name.length > 50 ? 'name long' : 'name';
   return `<!doctype html><html lang="pt-BR"><head><meta charset="utf-8">
   <title>Etiqueta ${escapeHtml(item.barcode)} - ${escapeHtml(item.name)}</title>
   <style>
-    @page { size: ${w}mm ${h}mm; margin: 0; }
-    * { box-sizing: border-box; }
-    html,body { margin:0; padding:0; font-family:Arial,Helvetica,sans-serif; color:#111; }
-    .label {
-      width:${w}mm; height:${h}mm; padding:${drawer ? '2' : '3'}mm;
-      display:flex; flex-direction:column; overflow:hidden; background:#fff;
-    }
-    header{display:flex;align-items:center;justify-content:space-between;gap:1.5mm;
-      padding-bottom:1mm;border-bottom:1px solid #222}
-    .brand-wrap{display:grid;gap:.25mm;min-width:0}
-    .brand{font-weight:900;font-size:${drawer ? '10' : '13'}px;letter-spacing:.015em;white-space:nowrap}
-    .brand-wrap small{font-size:${drawer ? '5.6' : '7'}px;font-weight:700;letter-spacing:.08em}
-    .ref{flex:0 0 auto;background:#111;color:#fff;font-weight:900;
-      font-size:${drawer ? '10' : '13'}px;padding:${drawer ? '3px 5px' : '4px 7px'};border-radius:2px}
-    .name-label{display:block;margin-top:${drawer ? '.75' : '1.3'}mm;
-      color:#454545;font-size:${drawer ? '6' : '8'}px;font-weight:700;letter-spacing:.08em}
-    .name{font-size:${drawer ? '11' : '14'}px;font-weight:900;line-height:1.14;
-      margin-top:.5mm;min-height:${drawer ? '7' : '9'}mm;
-      max-height:${drawer ? '8' : '10'}mm;overflow:hidden;overflow-wrap:anywhere}
-    .name.long{font-size:${drawer ? '9' : '11'}px}
+    @page{size:100mm 55mm;margin:0}
+    *{box-sizing:border-box}
+    html,body{margin:0;padding:0;font-family:Arial,Helvetica,sans-serif;color:#101010}
+    .label{width:100mm;height:55mm;padding:2.2mm 3.5mm;display:flex;
+      flex-direction:column;overflow:hidden;background:#fff}
+    header{display:flex;align-items:center;justify-content:space-between;gap:2mm;
+      padding-bottom:.9mm;border-bottom:1px solid #222}
+    .brand-wrap{display:grid;gap:.2mm;min-width:0}
+    .brand{font-weight:900;font-size:12px;letter-spacing:.01em;white-space:nowrap}
+    .brand-wrap small{font-size:6.5px;font-weight:700;letter-spacing:.04em}
+    .ref{flex:0 0 auto;background:#111;color:#fff;font-weight:900;font-size:12px;
+      padding:3px 6px;border-radius:2px}
+    .name-label{display:block;margin-top:.8mm;color:#454545;font-size:7px;
+      font-weight:700;letter-spacing:.06em}
+    .name{font-size:13px;font-weight:900;line-height:1.12;margin-top:.2mm;
+      min-height:6mm;max-height:7mm;overflow:hidden;overflow-wrap:anywhere}
+    .name.long{font-size:11px}
     .details{display:flex;align-items:flex-end;justify-content:space-between;gap:2mm;
-      margin:${drawer ? '.4' : '1'}mm 0 .5mm;padding-bottom:.7mm;border-bottom:1px solid #ddd}
-    .price-block{display:grid;gap:.5mm;min-width:0}
-    .price-title{font-size:${drawer ? '6.5' : '8'}px;letter-spacing:.055em;font-weight:700}
+      margin:.4mm 0;padding-bottom:.4mm;border-bottom:1px solid #ddd}
+    .price-block{display:grid;gap:.1mm;min-width:0}
+    .price-title{font-size:7px;letter-spacing:.04em;font-weight:700}
     .price{display:flex;align-items:baseline;gap:1mm;font-weight:900;line-height:1}
-    .currency{font-size:${drawer ? '12' : '15'}px}
-    .amount{font-size:${drawer ? '21' : '31'}px;letter-spacing:-.04em}
-    .unit{font-size:${drawer ? '8' : '10'}px;text-align:right;font-weight:700}
-    .barcode{width:100%;height:${drawer ? '9.5' : '11.5'}mm;overflow:hidden;margin-top:auto;background:#fff}
+    .currency{font-size:13px}
+    .amount{font-size:25px;letter-spacing:-.03em}
+    .unit{font-size:9px;text-align:right;font-weight:700}
+    /* O código ocupa toda a largura disponível, sem cortar as zonas de silêncio. */
+    .barcode{width:100%;height:19mm;min-height:19mm;overflow:hidden;margin-top:auto;background:#fff}
     .barcode svg{display:block;width:100%;height:100%}
-    footer{display:flex;align-items:center;justify-content:space-between;gap:2mm;margin-top:.6mm;
-      font-family:Arial,monospace;font-size:${drawer ? '9' : '11'}px;font-weight:800;letter-spacing:.05em}
-    footer small{font:normal ${drawer ? '6.5' : '8.5'}px Arial,sans-serif;letter-spacing:0;color:#333}
+    footer{display:flex;align-items:center;justify-content:space-between;gap:2mm;
+      margin-top:.7mm;font-family:Arial,monospace;font-size:10px;font-weight:800;letter-spacing:.03em}
+    footer small{font:normal 8px Arial,sans-serif;letter-spacing:0;color:#333}
     .code-text{white-space:nowrap}
-    @media screen {
-      body {min-height:100vh;display:grid;place-content:center;background:#e6e9e8}
-      .label {border:1px solid #cdd5d1;box-shadow:0 12px 30px #0002}
-    }
-    @media print {html,body{width:${w}mm;height:${h}mm} .label{border:0;box-shadow:none}}
+    @media screen{body{min-height:100vh;display:grid;place-content:center;background:#e6e9e8}
+      .label{border:1px solid #cdd5d1;box-shadow:0 12px 30px #0002}}
+    @media print{html,body{width:100mm;height:55mm}.label{border:0;box-shadow:none}}
   </style></head><body><article class="label">
     <header>
       <div class="brand-wrap"><span class="brand">LOJA FERRAGENS</span><small>MATERIAIS E FERRAGENS</small></div>
@@ -116,19 +112,19 @@ export function shelfLabelHtml(item: BarcodeItem, size: LabelSize = 'shelf'): st
       <span class="unit">POR ${escapeHtml(item.unit)}</span>
     </div>
     <div class="barcode">${svg}</div>
-    <footer><span class="code-text">${escapeHtml(item.barcode)}</span><small>${drawer ? 'GAVETA' : 'PRATELEIRA'} · CÓDIGO INTERNO</small></footer>
+    <footer><span class="code-text">${escapeHtml(item.barcode)}</span><small>CÓDIGO INTERNO</small></footer>
   </article></body></html>`;
 }
 
 /** Reimpressão dos produtos já cadastrados, uma etiqueta por página de papel adesivo. */
-export function shelfLabelsHtml(items: BarcodeItem[], size: LabelSize = 'shelf'): string {
+export function shelfLabelsHtml(items: BarcodeItem[]): string {
   if (items.length === 0 || items.length > 20) {
     throw new Error('Prepare de 1 a 20 etiquetas por vez.');
   }
   const article = /<article class="label">[\s\S]*?<\/article>/;
-  const base = shelfLabelHtml(items[0], size);
+  const base = shelfLabelHtml(items[0]);
   const labels = items.map(item => {
-    const markup = shelfLabelHtml(item, size).match(article)?.[0];
+    const markup = shelfLabelHtml(item).match(article)?.[0];
     if (!markup) throw new Error('Não foi possível montar a etiqueta.');
     return markup;
   }).join('\n');
@@ -147,11 +143,11 @@ function openPrintPreview(html: string): void {
   win.document.close();
 }
 
-export function printShelfLabels(items: BarcodeItem[], size: LabelSize = 'shelf'): void {
-  openPrintPreview(shelfLabelsHtml(items, size));
+export function printShelfLabels(items: BarcodeItem[]): void {
+  openPrintPreview(shelfLabelsHtml(items));
 }
 
 /** A janela de impressão não contém controles ou dados da interface principal. */
-export function printShelfLabel(item: BarcodeItem, size: LabelSize = 'shelf'): void {
-  openPrintPreview(shelfLabelHtml(item, size));
+export function printShelfLabel(item: BarcodeItem): void {
+  openPrintPreview(shelfLabelHtml(item));
 }
