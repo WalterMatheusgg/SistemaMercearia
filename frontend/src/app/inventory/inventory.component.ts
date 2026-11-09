@@ -63,6 +63,7 @@ export class InventoryComponent implements OnInit {
   readonly barcodeLoading = signal(false);
   readonly batchLoading = signal(false);
   readonly batchLabels = signal<BarcodeItem[]>([]);
+  readonly batchError = signal('');
   readonly barcodeError = signal('');
   readonly scanned = signal<BarcodeItem | null>(null);
   readonly labelPreview = signal<BarcodeItem | null>(null);
@@ -216,13 +217,13 @@ export class InventoryComponent implements OnInit {
     const location = this.locationId();
     const rows = this.rows().filter(row => row.active);
     if (!location || !rows.length || this.batchLoading()) {
-      this.barcodeError.set('Não há materiais ativos nesta página para imprimir.');
+      this.batchError.set('Não há materiais ativos nesta página para imprimir.');
       return;
     }
     const request = ++this.labelBatchRequest;
     this.batchLabels.set([]);
     this.batchLoading.set(true);
-    this.barcodeError.set('');
+    this.batchError.set('');
     forkJoin(rows.map(row => this.barcodes.product(row.productId, location)))
       .pipe(takeUntilDestroyed(this.destroyRef), finalize(() => this.batchLoading.set(false)))
       .subscribe({
@@ -233,7 +234,7 @@ export class InventoryComponent implements OnInit {
         },
         error: e => {
           if (request === this.labelBatchRequest) {
-            this.barcodeError.set(this.detail(e, 'Falha ao preparar etiquetas da página.'));
+            this.batchError.set(this.detail(e, 'Falha ao preparar etiquetas da página.'));
           }
         },
       });
@@ -243,7 +244,7 @@ export class InventoryComponent implements OnInit {
     try {
       printShelfLabels(this.batchLabels(), size);
     } catch (error) {
-      this.barcodeError.set(error instanceof Error ? error.message : 'Falha ao imprimir etiquetas.');
+      this.batchError.set(error instanceof Error ? error.message : 'Falha ao imprimir etiquetas.');
     }
   }
 
@@ -301,6 +302,7 @@ export class InventoryComponent implements OnInit {
   loadBalances(): void {
     ++this.labelBatchRequest;
     this.batchLabels.set([]);
+    this.batchError.set('');
     if (!this.locationId()) return;
     const request = ++this.balanceRequest;
     this.loading.set(true);
