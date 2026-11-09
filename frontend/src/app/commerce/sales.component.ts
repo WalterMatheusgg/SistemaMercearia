@@ -1,6 +1,8 @@
 import { Component, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
+import { finalize } from 'rxjs';
+import { BarcodeApi } from '../inventory/barcode-api.service';
 import { AuthService } from '../auth/auth.service';
 import { ActionStatusComponent } from './action-status.component';
 import {
@@ -23,6 +25,7 @@ import {
 })
 export class SalesComponent {
   private readonly http = inject(HttpClient);
+  private readonly barcodes = inject(BarcodeApi);
   readonly auth = inject(AuthService);
   readonly action = createAction();
   readonly rows = signal<Row[]>([]);
@@ -31,6 +34,8 @@ export class SalesComponent {
   readonly customers = signal<Row[]>([]);
   readonly preview = signal<any | null>(null);
   readonly error = signal('');
+  readonly scanBusy = signal(false);
+  readonly scanMessage = signal('');
   readonly money = money;
   readonly quantity = quantity;
   readonly date = date;
@@ -76,6 +81,32 @@ export class SalesComponent {
         error: (e) => this.error.set(detail(e)),
       });
   }
+  /** O leitor age como teclado e envia Enter. Só adiciona o item ao rascunho. */
+  scanBarcode(raw: string): void {
+    const code = raw.trim();
+    if (!code || this.scanBusy() || this.action.locked()) return;
+    this.scanBusy.set(true);
+    this.scanMessage.set('');
+    this.error.set('');
+    this.barcodes.lookup(code)
+      .pipe(finalize(() => this.scanBusy.set(false)))
+      .subscribe({
+        next: item => {
+          this.open = true;
+          const previous = this.lines.find(line => line.productId === item.productId);
+          if (previous) {
+            const next = Number(previous.quantity.replace(',', '.')) + 1;
+            previous.quantity = String(Number(next.toFixed(4)));
+          } else {
+            this.lines.push({ productId: item.productId, name: item.name, unit: item.unit, quantity: '1' });
+          }
+          this.preview.set(null);
+          this.scanMessage.set(item.name + ' identificado. Confira a quantidade e calcule o total.');
+        },
+        error: e => this.error.set(e?.error?.detail ?? 'Código de barras não encontrado. Confira a etiqueta.'),
+      });
+  }
+
   searchProducts() {
     this.http.get<Page>('/api/admin/catalog', { params: { query: this.productQuery } }).subscribe({
       next: (r) => this.products.set(r.content),
