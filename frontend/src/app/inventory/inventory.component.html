@@ -26,7 +26,7 @@
       <label for="inventory-barcode">Código da etiqueta</label>
       <input id="inventory-barcode" #barcodeInput autocomplete="off" spellcheck="false"
         placeholder="Ex.: LF0000000001"
-        (keydown.enter)="$event.preventDefault(); scanBarcode(barcodeInput.value)" />
+        (keydown.enter)="$event.preventDefault(); scanBarcode(barcodeInput.value); barcodeInput.value = ''" />
       <button type="button" [disabled]="barcodeLoading() || !locationId()"
         (click)="scanBarcode(barcodeInput.value)">Identificar</button>
     </div>
