@@ -74,7 +74,8 @@ public class InventoryService {
         args.add(locationId);
         if (!includeInactive) from += " AND p.active = TRUE ";
         if (query != null && !query.isBlank()) {
-            from += " AND (lower(p.name) LIKE ? ESCAPE '\\' OR lower(p.code) LIKE ? ESCAPE '\\') ";
+            from += " AND (lower(p.name) LIKE ? ESCAPE '\\' OR lower(p.code) LIKE ? ESCAPE '\\'"
+                    + " OR lower(p.barcode) LIKE ? ESCAPE '\\') ";
             String pattern =
                     "%"
                             + query.trim()
@@ -83,6 +84,7 @@ public class InventoryService {
                                     .replace("%", "\\%")
                                     .replace("_", "\\_")
                             + "%";
+            args.add(pattern);
             args.add(pattern);
             args.add(pattern);
         }
