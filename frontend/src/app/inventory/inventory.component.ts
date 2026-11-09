@@ -1,6 +1,7 @@
 import { Component, DestroyRef, inject, OnInit, signal } from '@angular/core';
 import { BarcodeApi, BarcodeItem } from './barcode-api.service';
 import { printShelfLabel } from './barcode-label';
+import { BarcodeSearchComponent } from './barcode-search.component';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
@@ -30,6 +31,7 @@ import {
   standalone: true,
   imports: [
     ReactiveFormsModule,
+    BarcodeSearchComponent,
     A11yModule,
     RouterLink,
     ProductPhotoComponent,
@@ -159,6 +161,12 @@ export class InventoryComponent implements OnInit {
       });
   }
 
+  onBarcodePicked(item: BarcodeItem): void {
+    this.barcodeError.set('');
+    this.scanned.set(item);
+    this.labelPreview.set(null);
+  }
+
   scannedBalance(): InventoryBalance | null {
     const item = this.scanned();
     if (!item) return null;
@@ -193,8 +201,8 @@ export class InventoryComponent implements OnInit {
       });
   }
 
-  printBarcode(item: BarcodeItem): void {
-    try { printShelfLabel(item); }
+  printBarcode(item: BarcodeItem, size: 'shelf' | 'drawer' = 'shelf'): void {
+    try { printShelfLabel(item, size); }
     catch (error) {
       this.barcodeError.set(error instanceof Error ? error.message : 'Não foi possível imprimir.');
     }
