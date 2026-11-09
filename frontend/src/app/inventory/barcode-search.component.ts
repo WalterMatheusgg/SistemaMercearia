@@ -1,6 +1,6 @@
 import { Component, DestroyRef, EventEmitter, Input, OnChanges, Output, SimpleChanges, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { Subject, catchError, debounceTime, distinctUntilChanged, of, switchMap, finalize } from 'rxjs';
+import { Subject, catchError, debounceTime, distinctUntilChanged, map, of, switchMap, finalize } from 'rxjs';
 import { BarcodeApi, BarcodeItem } from './barcode-api.service';
 
 /** Um único campo para scanner HID, nome ou final do código (sem baixa automática). */
@@ -95,17 +95,20 @@ export class BarcodeSearchComponent implements OnChanges {
       distinctUntilChanged(),
       switchMap(term => {
         const value = term.trim();
-        if (!value) return of([] as BarcodeItem[]);
+        if (!value) return of({ term: value, items: [] as BarcodeItem[] });
         this.searching.set(true);
         return this.api.search(value, this.locationId).pipe(
+          map(items => ({ term: value, items })),
           catchError(() => {
             this.message.set('Não foi possível consultar as etiquetas.');
-            return of([] as BarcodeItem[]);
+            return of({ term: value, items: [] as BarcodeItem[] });
           }),
         );
       }),
       takeUntilDestroyed(this.destroyRef),
-    ).subscribe(items => {
+    ).subscribe(({ term, items }) => {
+      // Ignora respostas que chegaram após limpar, mudar ou selecionar a pesquisa.
+      if (term !== this.query().trim()) return;
       this.suggestions.set(items);
       this.searching.set(false);
       this.noMatches.set(Boolean(this.query().trim()) && items.length === 0 && !this.message());
