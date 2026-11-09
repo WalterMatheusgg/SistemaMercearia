@@ -1,4 +1,6 @@
 import { Component, DestroyRef, inject, OnInit, signal } from '@angular/core';
+import { BarcodeApi, BarcodeItem } from './barcode-api.service';
+import { printShelfLabel } from './barcode-label';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
@@ -43,6 +45,7 @@ import {
 })
 export class InventoryComponent implements OnInit {
   private readonly api = inject(InventoryApi);
+  private readonly barcodes = inject(BarcodeApi);
   private readonly auth = inject(AuthService);
   private readonly destroyRef = inject(DestroyRef);
   private readonly fb = inject(FormBuilder);
@@ -54,6 +57,10 @@ export class InventoryComponent implements OnInit {
   private operationKey = '';
   private submitted: MovementCommand | null = null;
   readonly locations = signal<InventoryLocation[]>([]);
+  readonly barcodeLoading = signal(false);
+  readonly barcodeError = signal('');
+  readonly scanned = signal<BarcodeItem | null>(null);
+  readonly labelPreview = signal<BarcodeItem | null>(null);
   readonly categories = signal<InventoryCategory[]>([]);
   readonly categoryId = signal('');
   readonly locationId = signal('');
@@ -137,6 +144,62 @@ export class InventoryComponent implements OnInit {
       });
   }
 
+  /** Lê o código enviado como teclado pelo leitor USB/Bluetooth e tecla Enter. */
+  scanBarcode(raw: string): void {
+    const code = raw.trim();
+    if (!code || !this.locationId() || this.barcodeLoading()) return;
+    this.barcodeError.set('');
+    this.scanned.set(null);
+    this.barcodeLoading.set(true);
+    this.barcodes.lookup(code, this.locationId())
+      .pipe(takeUntilDestroyed(this.destroyRef), finalize(() => this.barcodeLoading.set(false)))
+      .subscribe({
+        next: item => this.scanned.set(item),
+        error: e => this.barcodeError.set(this.detail(e, 'Etiqueta não localizada. Confira o código.')),
+      });
+  }
+
+  scannedBalance(): InventoryBalance | null {
+    const item = this.scanned();
+    if (!item) return null;
+    const available = Number(item.available);
+    const min = Number(item.minimumQuantity);
+    return {
+      productId: item.productId, locationId: this.locationId(), code: item.barcode,
+      name: item.name, unit: item.unit, quantityScale: item.quantityScale,
+      quantityStep: item.quantityStep, physical: item.physical,
+      reserved: String(Math.max(0, Number(item.physical) - available)),
+      unavailable: '0', available: item.available, minimumQuantity: item.minimumQuantity,
+      revision: item.revision, active: item.active,
+      status: available <= 0 ? 'EMPTY' : available <= min ? 'LOW' : 'NORMAL',
+    };
+  }
+
+  openScanned(kind: 'ENTRY' | 'EXIT'): void {
+    if (!this.canWrite()) return;
+    const item = this.scannedBalance();
+    if (item) this.open(item, kind);
+  }
+
+  previewBarcode(row: InventoryBalance): void {
+    if (this.barcodeLoading() || !this.locationId()) return;
+    this.barcodeLoading.set(true);
+    this.barcodeError.set('');
+    this.barcodes.product(row.productId, this.locationId())
+      .pipe(takeUntilDestroyed(this.destroyRef), finalize(() => this.barcodeLoading.set(false)))
+      .subscribe({
+        next: item => this.labelPreview.set(item),
+        error: e => this.barcodeError.set(this.detail(e, 'Não foi possível preparar a etiqueta.')),
+      });
+  }
+
+  printBarcode(item: BarcodeItem): void {
+    try { printShelfLabel(item); }
+    catch (error) {
+      this.barcodeError.set(error instanceof Error ? error.message : 'Não foi possível imprimir.');
+    }
+  }
+
   refresh(): void {
     this.loadCategories();
     this.loadBalances();
@@ -170,6 +233,8 @@ export class InventoryComponent implements OnInit {
   }
 
   changeLocation(id: string): void {
+    this.scanned.set(null);
+    this.labelPreview.set(null);
     this.locationId.set(id);
     this.page.set(0);
     this.historyPage.set(0);
