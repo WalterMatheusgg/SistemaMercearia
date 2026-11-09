@@ -1,6 +1,6 @@
 import { Component, DestroyRef, inject, OnInit, signal } from '@angular/core';
 import { BarcodeApi, BarcodeItem } from './barcode-api.service';
-import { printShelfLabel } from './barcode-label';
+import { LabelSize, printShelfLabel, printShelfLabels } from './barcode-label';
 import { BarcodeSearchComponent } from './barcode-search.component';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
@@ -10,7 +10,7 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
-import { finalize, Subject, debounceTime, distinctUntilChanged } from 'rxjs';
+import { finalize, forkJoin, Subject, debounceTime, distinctUntilChanged } from 'rxjs';
 import { AuthService } from '../auth/auth.service';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { ProductPhotoComponent } from '../products/product-photo.component';
@@ -54,12 +54,15 @@ export class InventoryComponent implements OnInit {
   private readonly route = inject(ActivatedRoute);
   private readonly typedSearch = new Subject<string>();
   private balanceRequest = 0;
+  private labelBatchRequest = 0;
   private shortcutPending = false;
   private historyRequest = 0;
   private operationKey = '';
   private submitted: MovementCommand | null = null;
   readonly locations = signal<InventoryLocation[]>([]);
   readonly barcodeLoading = signal(false);
+  readonly batchLoading = signal(false);
+  readonly batchLabels = signal<BarcodeItem[]>([]);
   readonly barcodeError = signal('');
   readonly scanned = signal<BarcodeItem | null>(null);
   readonly labelPreview = signal<BarcodeItem | null>(null);
@@ -208,6 +211,42 @@ export class InventoryComponent implements OnInit {
     }
   }
 
+  /** Reimpressão dos produtos ativos da página atual (até 20), sem alterar códigos ou estoque. */
+  prepareExistingLabels(): void {
+    const location = this.locationId();
+    const rows = this.rows().filter(row => row.active);
+    if (!location || !rows.length || this.batchLoading()) {
+      this.barcodeError.set('Não há materiais ativos nesta página para imprimir.');
+      return;
+    }
+    const request = ++this.labelBatchRequest;
+    this.batchLabels.set([]);
+    this.batchLoading.set(true);
+    this.barcodeError.set('');
+    forkJoin(rows.map(row => this.barcodes.product(row.productId, location)))
+      .pipe(takeUntilDestroyed(this.destroyRef), finalize(() => this.batchLoading.set(false)))
+      .subscribe({
+        next: items => {
+          if (request === this.labelBatchRequest && location === this.locationId()) {
+            this.batchLabels.set(items);
+          }
+        },
+        error: e => {
+          if (request === this.labelBatchRequest) {
+            this.barcodeError.set(this.detail(e, 'Falha ao preparar etiquetas da página.'));
+          }
+        },
+      });
+  }
+
+  printExistingLabels(size: LabelSize): void {
+    try {
+      printShelfLabels(this.batchLabels(), size);
+    } catch (error) {
+      this.barcodeError.set(error instanceof Error ? error.message : 'Falha ao imprimir etiquetas.');
+    }
+  }
+
   refresh(): void {
     this.loadCategories();
     this.loadBalances();
@@ -260,6 +299,8 @@ export class InventoryComponent implements OnInit {
   }
 
   loadBalances(): void {
+    ++this.labelBatchRequest;
+    this.batchLabels.set([]);
     if (!this.locationId()) return;
     const request = ++this.balanceRequest;
     this.loading.set(true);
