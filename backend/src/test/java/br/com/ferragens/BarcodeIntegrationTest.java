@@ -36,9 +36,9 @@ class BarcodeIntegrationTest {
         UUID a = UUID.randomUUID(), b = UUID.randomUUID();
         UUID category = UUID.fromString("00000000-0000-0000-0000-000000000104");
         jdbc.update("INSERT INTO product (id,code,name,category_id,base_unit_code,cost,price)"
-                + " VALUES (?,?,?,?,'UN',1,2)", a, "TEST-"+a, "Bucha 6 mm", category);
+                + " VALUES (?,?,?,?,'UN',1,2)", a, "TEST-" + a.toString().substring(0, 20), "Bucha 6 mm", category);
         jdbc.update("INSERT INTO product (id,code,name,category_id,base_unit_code,cost,price)"
-                + " VALUES (?,?,?,?,'UN',1,2)", b, "TEST-"+b, "Parafuso 8 mm", category);
+                + " VALUES (?,?,?,?,'UN',1,2)", b, "TEST-" + b.toString().substring(0, 20), "Parafuso 8 mm", category);
 
         var first = barcodes.byProduct(actor, LOCATION, a);
         var second = barcodes.byProduct(actor, LOCATION, b);
