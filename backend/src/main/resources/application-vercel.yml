@@ -1,9 +1,11 @@
 # Perfil de homologação da aplicação em Vercel Container Functions (stateless).
 # O Java e o Angular são publicados juntos. Sem tarefas periódicas: o contêiner pode hibernar.
+# Flyway/Spring podem precisar de uma segunda conexão na inicialização.
+# Um pool de 1 causou timeout de startup em produção ao aplicar a V12.
 spring:
   datasource:
     hikari:
-      maximum-pool-size: 1
+      maximum-pool-size: 2
       minimum-idle: 0
       idle-timeout: 30000
       max-lifetime: 120000
