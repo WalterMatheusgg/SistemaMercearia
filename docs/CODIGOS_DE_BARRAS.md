@@ -4,7 +4,7 @@
 
 - **Cada produto recebe automaticamente um código curto único** no formato `LF0000000001` (12 caracteres). A sequência é gerada pelo PostgreSQL no schema da Loja.
 - A migração **Flyway V12** atribui códigos aos produtos já cadastrados, sem reescrever `product.code`, preços, saldos ou histórico. Novos produtos recebem o código automaticamente.
-- A impressão usa **Code 128 B vetorial com checksum**, sem fonte de barcode ou serviço externo. As novas etiquetas de **prateleira (100 × 55 mm)** e **gaveta (60 × 40 mm)** têm nome, valor cadastrado, unidade, código completo e os três últimos dígitos em destaque (ex.: **FINAL 123**).
+- A impressão usa **Code 128 B vetorial com checksum**, sem fonte de barcode ou serviço externo. O layout profissional, preto e branco para impressoras térmicas ou comuns, é usado em **prateleiras (100 × 55 mm)** e **gavetas (60 × 40 mm)**. Cada etiqueta apresenta identidade da loja, nome completo dentro do espaço disponível, preço unitário, unidade, código completo legível e final de três dígitos em destaque (ex.: **FINAL 123**).
 - **Três modos de identificação no mesmo campo (Estoque e Vendas):** câmera do celular/computador, leitor USB/Bluetooth no modo teclado + Enter e digitação de nome, código ou últimos dígitos.
 - **Pesquisa instantânea:** digite o nome, o código ou somente os **3 números finais** (ex.: `123`). A lista sugere até 10 produtos e prioriza aqueles cujo código termina com o trecho digitado. Caso mais de um material corresponda, o funcionário deve escolher a etiqueta correta. A lista geral do Estoque também pesquisa por trechos do código interno.
 - No **Estoque**, o bip mostra o nome e saldo e oferece `Entrada` ou `Saída`, abrindo o formulário existente (quantidade, motivo e confirmação).
@@ -50,3 +50,5 @@ Para substituir etiquetas físicas antigas com facilidade, em **Estoque > Materi
 - A leitura utiliza `@zxing/browser` e `@zxing/library` carregados somente ao abrir a câmera, inclusive como alternativa em navegadores que não possuem `BarcodeDetector` nativo (como o Safari do iPhone). São lidos códigos de barras lineares Code 128, sem enviar frames ao backend.
 - O acesso à câmera deve ser autorizado pelo usuário, pode ser recusado e exige HTTPS. Sem câmera disponível ou após negar a permissão, o campo continua aceitando leitor HID e digitação. Teste a posição do código, iluminação e foco em aparelho real.
 - Na tela de vendas, o código identificado apenas adiciona ou atualiza um item no carrinho em rascunho; o estoque só muda depois de concluir a venda. No Estoque, a identificação também não altera quantidades.
+
+**Regra de padronização:** a etiqueta é gerada pela função `shelfLabelHtml` para qualquer produto ativo consultado, independente da data de cadastro. A reimpressão em lote usa exatamente essa mesma função. Não há etiqueta antiga e etiqueta nova com modelos distintos; o modelo único é atualizado na próxima impressão. Os códigos `LF...` continuam intactos.

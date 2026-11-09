@@ -22,6 +22,9 @@ describe('Etiqueta Code 128 B', () => {
     expect(shelf).toContain('size: 100mm 55mm');
     expect(shelf).toContain('FINAL 123');
     expect(shelf).toContain('2,50');
+    expect(shelf).toContain('PREÇO UNITÁRIO');
+    expect(shelf).toContain('DESCRIÇÃO DO PRODUTO');
+    expect(shelf).toContain('preserveAspectRatio="xMidYMid meet"');
     expect(shelf).toContain('LF0000000123');
     expect(shelf).toContain('<svg');
     const drawer = shelfLabelHtml(product, 'drawer');
@@ -42,6 +45,8 @@ describe('Etiqueta Code 128 B', () => {
     expect((markup.match(/<article class="label">/g) ?? []).length).toBe(2);
     expect(markup).toContain('LF0000000123');
     expect(markup).toContain('LF0000000456');
+    expect(markup).toContain('PREÇO UNITÁRIO');
+    expect((markup.match(/MATERIAIS E FERRAGENS/g) ?? []).length).toBe(2);
     expect(markup).toContain('page-break-after:always');
     expect(() => shelfLabelsHtml([])).toThrow();
   });

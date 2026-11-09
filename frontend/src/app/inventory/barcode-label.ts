@@ -36,7 +36,7 @@ export function code128Svg(value: string): string {
     }
   }
   return `<svg xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Código de barras ${value}"
-    viewBox="0 0 ${x + 11} 58" preserveAspectRatio="none"
+    viewBox="0 0 ${x + 11} 58" preserveAspectRatio="xMidYMid meet"
     width="100%" height="70"><g fill="#000">${rects.join('')}</g></svg>`;
 }
 
@@ -55,6 +55,9 @@ export function shelfLabelHtml(item: BarcodeItem, size: LabelSize = 'shelf'): st
   const money = Number(item.price).toLocaleString('pt-BR', {
     minimumFractionDigits: 2, maximumFractionDigits: 2,
   });
+  if (!Number.isFinite(Number(item.price)) || Number(item.price) < 0) {
+    throw new Error('Preço inválido para imprimir a etiqueta.');
+  }
   const nameClass = item.name.length > (drawer ? 27 : 50) ? 'name long' : 'name';
   return `<!doctype html><html lang="pt-BR"><head><meta charset="utf-8">
   <title>Etiqueta ${escapeHtml(item.barcode)} - ${escapeHtml(item.name)}</title>
@@ -66,40 +69,54 @@ export function shelfLabelHtml(item: BarcodeItem, size: LabelSize = 'shelf'): st
       width:${w}mm; height:${h}mm; padding:${drawer ? '2' : '3'}mm;
       display:flex; flex-direction:column; overflow:hidden; background:#fff;
     }
-    header { display:flex;align-items:center;justify-content:space-between;gap:2mm;
-      padding-bottom:1.1mm;border-bottom:1.5px solid #111;white-space:nowrap; }
-    .brand {font-weight:900;font-size:${drawer ? '10' : '13'}px;letter-spacing:.04em}
-    .ref {font-weight:700;font-size:${drawer ? '8' : '10'}px;border:1px solid #111;padding:2px 4px}
-    .name {font-size:${drawer ? '11' : '14'}px;font-weight:800;line-height:1.18;
-      margin-top:${drawer ? '1.2' : '2'}mm;min-height:${drawer ? '8' : '10'}mm;
-      max-height:${drawer ? '8.5' : '11'}mm;overflow:hidden;overflow-wrap:anywhere}
-    .name.long {font-size:${drawer ? '9' : '11'}px}
-    .details {display:flex;align-items:flex-end;justify-content:space-between;gap:2mm;
-      margin:${drawer ? '0' : '1'}mm 0 1mm}
-    .price {display:flex;align-items:baseline;gap:1mm;font-weight:900;line-height:1}
-    .currency {font-size:${drawer ? '12' : '15'}px}
-    .amount {font-size:${drawer ? '21' : '31'}px;letter-spacing:-.05em}
-    .unit {font-size:${drawer ? '8' : '10'}px;text-align:right;font-weight:700}
-    .barcode {width:100%;height:${drawer ? '9.5' : '11.5'}mm;overflow:hidden;margin-top:auto}
-    .barcode svg {display:block;width:100%;height:100%}
-    footer {display:flex;align-items:center;justify-content:space-between;gap:2mm;margin-top:1mm;
-      font-family:Arial,monospace;font-size:${drawer ? '9' : '11'}px;letter-spacing:.08em;font-weight:700}
-    footer small {font:normal ${drawer ? '7' : '9'}px Arial,sans-serif;letter-spacing:0}
+    header{display:flex;align-items:center;justify-content:space-between;gap:1.5mm;
+      padding-bottom:1mm;border-bottom:1px solid #222}
+    .brand-wrap{display:grid;gap:.25mm;min-width:0}
+    .brand{font-weight:900;font-size:${drawer ? '10' : '13'}px;letter-spacing:.015em;white-space:nowrap}
+    .brand-wrap small{font-size:${drawer ? '5.6' : '7'}px;font-weight:700;letter-spacing:.08em}
+    .ref{flex:0 0 auto;background:#111;color:#fff;font-weight:900;
+      font-size:${drawer ? '10' : '13'}px;padding:${drawer ? '3px 5px' : '4px 7px'};border-radius:2px}
+    .name-label{display:block;margin-top:${drawer ? '.75' : '1.3'}mm;
+      color:#454545;font-size:${drawer ? '6' : '8'}px;font-weight:700;letter-spacing:.08em}
+    .name{font-size:${drawer ? '11' : '14'}px;font-weight:900;line-height:1.14;
+      margin-top:.5mm;min-height:${drawer ? '7' : '9'}mm;
+      max-height:${drawer ? '8' : '10'}mm;overflow:hidden;overflow-wrap:anywhere}
+    .name.long{font-size:${drawer ? '9' : '11'}px}
+    .details{display:flex;align-items:flex-end;justify-content:space-between;gap:2mm;
+      margin:${drawer ? '.4' : '1'}mm 0 .5mm;padding-bottom:.7mm;border-bottom:1px solid #ddd}
+    .price-block{display:grid;gap:.5mm;min-width:0}
+    .price-title{font-size:${drawer ? '6.5' : '8'}px;letter-spacing:.055em;font-weight:700}
+    .price{display:flex;align-items:baseline;gap:1mm;font-weight:900;line-height:1}
+    .currency{font-size:${drawer ? '12' : '15'}px}
+    .amount{font-size:${drawer ? '21' : '31'}px;letter-spacing:-.04em}
+    .unit{font-size:${drawer ? '8' : '10'}px;text-align:right;font-weight:700}
+    .barcode{width:100%;height:${drawer ? '9.5' : '11.5'}mm;overflow:hidden;margin-top:auto;background:#fff}
+    .barcode svg{display:block;width:100%;height:100%}
+    footer{display:flex;align-items:center;justify-content:space-between;gap:2mm;margin-top:.6mm;
+      font-family:Arial,monospace;font-size:${drawer ? '9' : '11'}px;font-weight:800;letter-spacing:.05em}
+    footer small{font:normal ${drawer ? '6.5' : '8.5'}px Arial,sans-serif;letter-spacing:0;color:#333}
+    .code-text{white-space:nowrap}
     @media screen {
       body {min-height:100vh;display:grid;place-content:center;background:#e6e9e8}
       .label {border:1px solid #cdd5d1;box-shadow:0 12px 30px #0002}
     }
     @media print {html,body{width:${w}mm;height:${h}mm} .label{border:0;box-shadow:none}}
   </style></head><body><article class="label">
-    <header><span class="brand">LOJA FERRAGENS</span>
-      <span class="ref">FINAL ${escapeHtml(item.barcode.slice(-3))}</span></header>
+    <header>
+      <div class="brand-wrap"><span class="brand">LOJA FERRAGENS</span><small>MATERIAIS E FERRAGENS</small></div>
+      <span class="ref">FINAL ${escapeHtml(item.barcode.slice(-3))}</span>
+    </header>
+    <span class="name-label">DESCRIÇÃO DO PRODUTO</span>
     <div class="${nameClass}">${escapeHtml(item.name)}</div>
     <div class="details">
-      <div class="price"><span class="currency">R$</span><span class="amount">${money}</span></div>
-      <span class="unit">PREÇO POR ${escapeHtml(item.unit)}</span>
+      <div class="price-block">
+        <span class="price-title">PREÇO UNITÁRIO</span>
+        <div class="price"><span class="currency">R$</span><span class="amount">${money}</span></div>
+      </div>
+      <span class="unit">POR ${escapeHtml(item.unit)}</span>
     </div>
     <div class="barcode">${svg}</div>
-    <footer><span>${escapeHtml(item.barcode)}</span><small>CÓDIGO INTERNO · ${drawer ? 'GAVETA' : 'PRATELEIRA'}</small></footer>
+    <footer><span class="code-text">${escapeHtml(item.barcode)}</span><small>${drawer ? 'GAVETA' : 'PRATELEIRA'} · CÓDIGO INTERNO</small></footer>
   </article></body></html>`;
 }
 
