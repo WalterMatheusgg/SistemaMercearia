@@ -194,12 +194,14 @@
   <section class="barcode-batch" aria-label="Reimprimir etiquetas de produtos existentes">
     <div>
       <strong>Etiquetas dos materiais já cadastrados</strong>
-      <p>Prepare as etiquetas dos produtos ativos desta página (até 20), mantendo os códigos originais.</p>
+      <p>Prepare as etiquetas dos produtos ativos desta página (até 20), mantendo os códigos originais e exibindo o preço atualizado.</p>
     </div>
     <button type="button" (click)="prepareExistingLabels()"
-      [disabled]="loading() || batchLoading() || !rows().length">
+      [disabled]="loading() || batchLoading() || !rows().length"
+      [attr.aria-busy]="batchLoading()">
       {{ batchLoading() ? 'Preparando...' : 'Preparar etiquetas da página' }}
     </button>
+    @if (batchError()) { <p class="barcode-batch-error" role="alert">{{ batchError() }}</p> }
     @if (batchLabels().length) {
       <div class="barcode-batch-ready" role="status">
         <span>{{ batchLabels().length }} etiqueta(s) prontas para reimprimir.</span>
