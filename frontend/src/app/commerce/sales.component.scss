@@ -59,3 +59,15 @@
 .empty-activity p { color:#7a8c92; font-size:13px; }
 @media(max-width:690px) { .sales-heading { align-items:stretch; } .new-sale-button { width:100%; } .sale-editor { padding:15px!important; } .editor-section { padding:14px; } .add-item-row { grid-template-columns:1fr 92px; } .add-item-button { grid-column:1/-1; } .selected-line { grid-template-columns:1fr 90px; } .selected-line button { grid-column:1/-1; } .payment-entry { grid-template-columns:1fr 1fr; } .payment-entry button { grid-column:1/-1; } .sale-submit button { width:100%; } .product-search-row button { padding:10px; } }
 @media print { .sales-heading .new-sale-button,.sale-editor,.sales-filter,.sales-history { display:none!important; } }
+
+
+/* Leitura rápida de etiquetas no carrinho: não confirma venda nem movimenta saldo. */
+.sale-barcode-scanner { display:flex; align-items:end; flex-wrap:wrap; gap:10px; padding:15px; margin-bottom:16px;
+  background:#f2faf6; border:1px solid #cae7d5; border-radius:12px; }
+.sale-barcode-scanner label { flex:1 1 225px; display:grid; gap:6px; color:#205842; font-size:12px; font-weight:800; }
+.sale-barcode-scanner input { min-height:44px; border-radius:9px; padding:10px; border:1px solid #bad7c5; font:16px monospace; text-transform:uppercase; width:100%; }
+.sale-barcode-scanner button { min-height:44px; padding:10px 13px; border:1px solid #1d684f; background:#1d684f; color:#fff; border-radius:9px; cursor:pointer; }
+.sale-barcode-scanner button:disabled { opacity:.6; cursor:wait; }
+.sale-barcode-scanner small { flex:1 1 100%; font-size:11px; color:#5a7169; }
+.sale-barcode-scanner .scan-success { flex:1 1 100%; color:#166944; font-weight:750; font-size:12px; }
+@media(max-width:520px){.sale-barcode-scanner button{width:100%;}}

@@ -35,7 +35,7 @@ O repositório se chama **SistemaMercearia**, enquanto a marca apresentada na in
 |:--|:--|
 | 📊 **Painel** | Indicadores e atalhos para as principais operações |
 | 🧱 **Produtos** | Cadastro com categoria, marca, unidade, preço, quantidade inicial e foto opcional |
-| 📦 **Estoque** | Entrada, saída, contagem, perda, mínimo, estorno, reposição sugerida e histórico |
+| 📦 **Estoque** | Entrada, saída, contagem, perda, mínimo, estorno, reposição sugerida histórico, leitura de etiquetas e impressão Code 128 |
 | 🛒 **Vendas** | Seleção de itens, conferência do total, descontos autorizados, pagamentos e devoluções |
 | 👥 **Clientes e fornecedores** | Cadastros, contatos e vínculos com operações |
 | 🚚 **Compras** | Pedidos e recebimentos parciais ou integrais, com atualização do estoque |
@@ -175,6 +175,7 @@ O [GitHub Actions](https://github.com/WalterMatheusgg/SistemaMercearia/actions/w
 | [Operação](docs/OPERACAO.md) | Fluxos e limites de negócio |
 | [Arquitetura](docs/ARQUITETURA.md) | Organização, segurança e notificações |
 | [Estoque](docs/ESTOQUE.md) | Movimentações, saldos e APIs |
+| [Códigos de barras](docs/CODIGOS_DE_BARRAS.md) | Etiquetas, leitor e registro seguro de quantidades |
 | [Codespaces](docs/CODESPACE.md) | Inicialização e sincronização |
 | [Hospedagem](docs/HOSPEDAGEM.md) | HTTPS, backups e requisitos de produção |
 | [Railway](docs/RAILWAY.md) | Alternativa persistente com Supabase |

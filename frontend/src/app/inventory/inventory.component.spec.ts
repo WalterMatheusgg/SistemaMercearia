@@ -3,6 +3,7 @@ import { signal } from '@angular/core';
 import { provideRouter } from '@angular/router';
 import { of, throwError } from 'rxjs';
 import { InventoryComponent } from './inventory.component';
+import { BarcodeApi } from './barcode-api.service';
 import { InventoryApi, InventoryBalance, InventoryMovement } from './inventory-api.service';
 import { AuthService } from '../auth/auth.service';
 
@@ -18,9 +19,13 @@ const movement: InventoryMovement = {
 };
 
 describe('Operação de estoque', () => {
+  const barcodeApi = { lookup: vi.fn(), product: vi.fn() };
   const api = { locations: vi.fn(), categories: vi.fn(), replenishment: vi.fn(), balances: vi.fn(), history: vi.fn(), execute: vi.fn() };
   beforeEach(async () => {
     vi.resetAllMocks();
+    barcodeApi.lookup.mockReturnValue(of({ productId: 'product-1', barcode: 'LF0000000001', name: 'Parafuso', unit: 'UN',
+      price: '2', physical: '50', available: '50', minimumQuantity: '10', quantityScale: 0,
+      quantityStep: '1', revision: 1, active: true }));
     api.locations.mockReturnValue(of([{ id: 'location-1', name: 'Principal' }]));
     api.replenishment.mockReturnValue(of([]));
     api.categories.mockReturnValue(of([
@@ -32,6 +37,7 @@ describe('Operação de estoque', () => {
     await TestBed.configureTestingModule({ imports: [InventoryComponent], providers: [
       provideRouter([]),
       { provide: InventoryApi, useValue: api },
+      { provide: BarcodeApi, useValue: barcodeApi },
       { provide: AuthService, useValue: { currentUser: signal({ username: 'dono', roles: ['OWNER'] }) } },
     ] }).compileComponents();
   });
@@ -49,6 +55,19 @@ describe('Operação de estoque', () => {
     component.setCategory('');
     expect(api.balances).toHaveBeenLastCalledWith(
       'location-1', '', false, false, 0, '');
+  });
+
+  it('identifica material bipado sem movimentar e permite escolher a operação', () => {
+    const fixture = TestBed.createComponent(InventoryComponent); fixture.detectChanges();
+    const component = fixture.componentInstance;
+    component.scanBarcode(' LF0000000001 ');
+    expect(barcodeApi.lookup).toHaveBeenCalledWith('LF0000000001', 'location-1');
+    expect(component.scanned()?.name).toBe('Parafuso');
+    expect(api.execute).not.toHaveBeenCalled();
+    component.openScanned('EXIT');
+    expect(component.formOpen()).toBe(true);
+    expect(component.selected()?.productId).toBe('product-1');
+    expect(api.execute).not.toHaveBeenCalled();
   });
 
   it('registra saída e atualiza a lista com o saldo retornado pelo servidor', () => {

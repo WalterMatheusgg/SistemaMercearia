@@ -17,6 +17,40 @@
     <p class="notice error" role="alert">{{ error() }}</p>
   }
 
+  <section class="barcode-panel" aria-label="Leitura de etiquetas do estoque">
+    <div>
+      <h2>▥ Leitura rápida</h2>
+      <p>Bipe a etiqueta da prateleira ou digite o código e pressione Enter. A leitura não altera o saldo.</p>
+    </div>
+    <div class="barcode-scan-row">
+      <label for="inventory-barcode">Código da etiqueta</label>
+      <input id="inventory-barcode" #barcodeInput autocomplete="off" spellcheck="false"
+        placeholder="Ex.: LF0000000001"
+        (keydown.enter)="$event.preventDefault(); scanBarcode(barcodeInput.value)" />
+      <button type="button" [disabled]="barcodeLoading() || !locationId()"
+        (click)="scanBarcode(barcodeInput.value)">Identificar</button>
+    </div>
+    @if (barcodeError()) { <p class="notice error" role="alert">{{ barcodeError() }}</p> }
+    @if (scanned(); as item) {
+      <div class="barcode-found" role="status">
+        <div><strong>{{ item.name }}</strong><small>{{ item.barcode }} · {{ item.unit }}</small>
+          <span>Disponível: <b>{{ number(item.available) }} {{ item.unit }}</b></span></div>
+        @if (canWrite()) {
+          <button type="button" (click)="openScanned('ENTRY')">+ Entrada</button>
+          <button type="button" (click)="openScanned('EXIT')">− Saída</button>
+        }
+        <button type="button" (click)="printBarcode(item)">Imprimir etiqueta</button>
+      </div>
+    }
+    @if (labelPreview(); as item) {
+      <div class="barcode-found label-ready" role="status">
+        <div><strong>Etiqueta pronta: {{ item.name }}</strong><small>{{ item.barcode }} · {{ item.unit }}</small></div>
+        <button type="button" (click)="printBarcode(item)">Imprimir etiqueta de prateleira</button>
+        <button type="button" (click)="labelPreview.set(null)">Fechar</button>
+      </div>
+    }
+  </section>
+
   <div class="filters">
     <mat-form-field appearance="outline"
       ><mat-label>Local de estoque</mat-label>
@@ -236,6 +270,7 @@
                   </button>
                 }
                 <button mat-button type="button" (click)="showHistory(row)">Histórico</button>
+                <button mat-button type="button" [disabled]="barcodeLoading()" (click)="previewBarcode(row)">Etiqueta</button>
                 @if (canWrite()) {
                   <button
                     mat-button
@@ -273,6 +308,7 @@
                 [attr.aria-label]="'Registrar saída de ' + row.name">− Saída</button>
             }
             <button class="quick-history" type="button" (click)="showHistory(row)">Histórico</button>
+            <button class="quick-label" type="button" [disabled]="barcodeLoading()" (click)="previewBarcode(row)">▥ Etiqueta</button>
             @if (canWrite()) {
               <a class="stock-edit-link" [routerLink]="['/admin/products']"
                 [queryParams]="{ editar: row.productId }">Editar cadastro</a>

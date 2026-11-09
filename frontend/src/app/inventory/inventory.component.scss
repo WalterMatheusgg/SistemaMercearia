@@ -236,3 +236,21 @@ td small { display: block; margin-top: 4px; color: var(--ink-soft); overflow-wra
   .stock-card-numbers { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .stock-card-numbers > div:first-child { grid-column: 1 / -1; }
 }
+
+
+/* Leitor de prateleira: funciona com teclado e leitor USB/Bluetooth. */
+.barcode-panel { display:grid; gap:12px; padding:18px; margin:0 0 18px; border:1px solid #d3e6da;
+  border-radius:16px; background:#f8fdf9; }
+.barcode-panel h2 { font:800 19px Inter,system-ui,sans-serif; margin:0 0 5px; }
+.barcode-panel p { font-size:13px; color:#607d70; margin:0; }
+.barcode-scan-row { display:flex; gap:9px; flex-wrap:wrap; align-items:center; }
+.barcode-scan-row label { font-size:12px; font-weight:700; }
+.barcode-scan-row input { flex:1; min-width:170px; padding:11px 12px; border:1px solid #bed8c7; border-radius:9px; font:16px monospace; text-transform:uppercase; }
+.barcode-panel button { min-height:44px; background:#e2f2e8; border:1px solid #c3dfce; color:#165d44; border-radius:9px; font-weight:750; padding:8px 13px; cursor:pointer; }
+.barcode-panel button:disabled { opacity:.5; cursor:wait; }
+.barcode-found { display:flex; gap:10px; align-items:center; flex-wrap:wrap; border:1px solid #bfdbc7; background:white; padding:12px; border-radius:11px; }
+.barcode-found > div { display:grid; flex:1; min-width:150px; gap:3px; }
+.barcode-found small { color:#637d72; }
+.barcode-found span { font-size:13px; }
+.stock-card-actions .quick-label { background:#f4f8ff; border-color:#d5e4ed; color:#21516b; }
+@media(max-width:640px) { .barcode-panel{padding:13px}.barcode-scan-row>*{width:100%;}.barcode-found button{flex:1 1 130px} }
