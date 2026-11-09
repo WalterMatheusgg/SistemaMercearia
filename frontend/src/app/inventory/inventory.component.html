@@ -61,7 +61,7 @@
       </mat-select>
     </mat-form-field>
     <mat-form-field appearance="outline" class="search"
-      ><mat-label>Nome do produto</mat-label
+      ><mat-label>Nome, código ou final da etiqueta</mat-label
       ><input #searchInput matInput [value]="query()" (input)="searchTyping(searchInput.value)" (keyup.enter)="search(searchInput.value)"
     /></mat-form-field>
     <button mat-button type="button" (click)="search(searchInput.value)">Buscar</button>
