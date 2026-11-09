@@ -15,13 +15,13 @@ describe('Pesquisa assistida de etiquetas', () => {
 
   beforeEach(async () => {
     vi.resetAllMocks();
-    vi.useFakeTimers();
     api.search.mockReturnValue(of([item]));
     api.lookup.mockReturnValue(of(item));
     await TestBed.configureTestingModule({
       imports: [BarcodeSearchComponent],
       providers: [{ provide: BarcodeApi, useValue: api }],
     }).compileComponents();
+    vi.useFakeTimers();
   });
   afterEach(() => { vi.useRealTimers(); });
 
