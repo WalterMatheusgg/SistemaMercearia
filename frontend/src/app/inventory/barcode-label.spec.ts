@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { code128Svg, shelfLabelHtml } from './barcode-label';
+import { code128Svg, shelfLabelHtml, shelfLabelsHtml } from './barcode-label';
 import { BarcodeItem } from './barcode-api.service';
 
 describe('Etiqueta Code 128 B', () => {
@@ -28,6 +28,22 @@ describe('Etiqueta Code 128 B', () => {
     expect(drawer).toContain('size: 60mm 40mm');
     expect(drawer).toContain('GAVETA');
     expect(drawer).toContain('<svg');
+  });
+
+  it('reimprime etiquetas existentes sem mudar os códigos e com uma etiqueta por página', () => {
+    const example: BarcodeItem = {
+      productId: 'p-3', barcode: 'LF0000000123', name: 'Bucha 6 mm',
+      unit: 'UN', price: '1.50', physical: '100', available: '100', minimumQuantity: '5',
+      quantityScale: 0, quantityStep: '1', revision: 1, active: true,
+    };
+    const markup = shelfLabelsHtml([
+      example, { ...example, productId: 'p-4', barcode: 'LF0000000456', name: 'Parafuso 8 mm' },
+    ]);
+    expect((markup.match(/<article class="label">/g) ?? []).length).toBe(2);
+    expect(markup).toContain('LF0000000123');
+    expect(markup).toContain('LF0000000456');
+    expect(markup).toContain('page-break-after:always');
+    expect(() => shelfLabelsHtml([])).toThrow();
   });
 
   it('escapa nome do produto, sem injetar HTML na etiqueta', () => {
