@@ -108,13 +108,13 @@ export function shelfLabelsHtml(items: BarcodeItem[], size: LabelSize = 'shelf')
   if (items.length === 0 || items.length > 20) {
     throw new Error('Prepare de 1 a 20 etiquetas por vez.');
   }
-  const article = /<article class="label">[\\s\\S]*?<\\/article>/;
+  const article = /<article class="label">[\s\S]*?<\/article>/;
   const base = shelfLabelHtml(items[0], size);
   const labels = items.map(item => {
     const markup = shelfLabelHtml(item, size).match(article)?.[0];
     if (!markup) throw new Error('Não foi possível montar a etiqueta.');
     return markup;
-  }).join('\\n');
+  }).join('\n');
   return base.replace(article, labels)
     .replace('</title>', ' · Reimpressão</title>')
     .replace('@media print {',
