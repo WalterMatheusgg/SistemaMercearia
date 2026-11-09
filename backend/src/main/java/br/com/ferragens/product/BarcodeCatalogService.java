@@ -8,6 +8,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.util.List;
 import java.util.Locale;
 import java.util.UUID;
 
@@ -47,6 +50,38 @@ public class BarcodeCatalogService {
         return query(actor, locationId, " AND p.barcode = ?", code);
     }
 
+
+    /**
+     * Sugestões sem escrita: nome ou trecho do código. A pesquisa por final (ex.: 001)
+     * é priorizada, mas nunca escolhe automaticamente quando há colisões.
+     */
+    public List<Item> search(Actor actor, UUID locationId, String rawQuery) {
+        String term = rawQuery == null ? "" : rawQuery.strip();
+        if (term.isEmpty()) return List.of();
+        if (term.length() > 80) term = term.substring(0, 80);
+        String safe = term.toUpperCase(Locale.ROOT)
+                .replace("!", "!!").replace("%", "!%").replace("_", "!_");
+        String any = "%" + safe + "%";
+        String suffix = "%" + safe;
+        String prefix = safe + "%";
+        UUID location = locationId == null ? Db.LOCATION : locationId;
+        String sql = SELECT + """
+                AND (UPPER(p.name) LIKE ? ESCAPE '!'
+                     OR UPPER(p.barcode) LIKE ? ESCAPE '!')
+                ORDER BY CASE
+                    WHEN UPPER(p.barcode) = ? THEN 0
+                    WHEN UPPER(p.barcode) LIKE ? ESCAPE '!' THEN 1
+                    WHEN UPPER(p.barcode) LIKE ? ESCAPE '!' THEN 2
+                    WHEN UPPER(p.name) LIKE ? ESCAPE '!' THEN 3
+                    ELSE 4 END,
+                    p.name, p.barcode
+                LIMIT 10
+                """;
+        return jdbc.query(sql, (rs, row) -> item(rs),
+                location, actor.storeId(), any, any,
+                safe, suffix, prefix, prefix);
+    }
+
     public Item byProduct(Actor actor, UUID locationId, UUID productId) {
         if (productId == null) throw new NotFoundException("Produto não encontrado.");
         return query(actor, locationId, " AND p.id = ?", productId);
@@ -54,15 +89,20 @@ public class BarcodeCatalogService {
 
     private Item query(Actor actor, UUID locationId, String predicate, Object value) {
         UUID location = locationId == null ? Db.LOCATION : locationId;
-        return jdbc.query(SELECT + predicate + " LIMIT 1", (rs, row) -> new Item(
+        return jdbc.query(SELECT + predicate + " LIMIT 1", (rs, row) -> item(rs),
+                location, actor.storeId(), value)
+            .stream().findFirst()
+            .orElseThrow(() -> new NotFoundException("Material não encontrado neste local de estoque."));
+    }
+
+    private static Item item(ResultSet rs) throws SQLException {
+        return new Item(
                 rs.getObject("id", UUID.class), rs.getString("barcode"), rs.getString("name"),
                 rs.getString("unit"), decimal(rs.getBigDecimal("price")),
                 decimal(rs.getBigDecimal("physical")), decimal(rs.getBigDecimal("available")),
                 decimal(rs.getBigDecimal("minimum_quantity")), rs.getInt("quantity_scale"),
                 decimal(rs.getBigDecimal("quantity_step")), rs.getLong("revision"),
-                rs.getBoolean("active")), location, actor.storeId(), value)
-            .stream().findFirst()
-            .orElseThrow(() -> new NotFoundException("Material não encontrado neste local de estoque."));
+                rs.getBoolean("active"));
     }
 
     private static String decimal(BigDecimal value) {

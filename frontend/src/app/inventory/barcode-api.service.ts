@@ -28,6 +28,13 @@ export class BarcodeApi {
     return this.http.get<BarcodeItem>('/api/admin/barcodes/lookup', { params });
   }
 
+  /** Até 10 sugestões; pesquisa por nome, código completo ou final da etiqueta. */
+  search(query: string, locationId = ''): Observable<BarcodeItem[]> {
+    let params = new HttpParams().set('query', query.trim());
+    if (locationId) params = params.set('locationId', locationId);
+    return this.http.get<BarcodeItem[]>('/api/admin/barcodes/search', { params });
+  }
+
   product(id: string, locationId = ''): Observable<BarcodeItem> {
     let params = new HttpParams();
     if (locationId) params = params.set('locationId', locationId);

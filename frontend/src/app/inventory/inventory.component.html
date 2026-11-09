@@ -22,14 +22,8 @@
       <h2>▥ Leitura rápida</h2>
       <p>Bipe a etiqueta da prateleira ou digite o código e pressione Enter. A leitura não altera o saldo.</p>
     </div>
-    <div class="barcode-scan-row">
-      <label for="inventory-barcode">Código da etiqueta</label>
-      <input id="inventory-barcode" #barcodeInput autocomplete="off" spellcheck="false"
-        placeholder="Ex.: LF0000000001"
-        (keydown.enter)="$event.preventDefault(); scanBarcode(barcodeInput.value); barcodeInput.value = ''" />
-      <button type="button" [disabled]="barcodeLoading() || !locationId()"
-        (click)="scanBarcode(barcodeInput.value)">Identificar</button>
-    </div>
+    <app-barcode-search inputId="inventory-barcode" label="Código ou nome do material"
+      [locationId]="locationId()" (picked)="onBarcodePicked($event)" />
     @if (barcodeError()) { <p class="notice error" role="alert">{{ barcodeError() }}</p> }
     @if (scanned(); as item) {
       <div class="barcode-found" role="status">
@@ -39,13 +33,15 @@
           <button type="button" (click)="openScanned('ENTRY')">+ Entrada</button>
           <button type="button" (click)="openScanned('EXIT')">− Saída</button>
         }
-        <button type="button" (click)="printBarcode(item)">Imprimir etiqueta</button>
+        <button type="button" (click)="printBarcode(item)">Imprimir prateleira</button>
+        <button type="button" (click)="printBarcode(item, 'drawer')">Imprimir gaveta</button>
       </div>
     }
     @if (labelPreview(); as item) {
       <div class="barcode-found label-ready" role="status">
         <div><strong>Etiqueta pronta: {{ item.name }}</strong><small>{{ item.barcode }} · {{ item.unit }}</small></div>
-        <button type="button" (click)="printBarcode(item)">Imprimir etiqueta de prateleira</button>
+        <button type="button" (click)="printBarcode(item)">Imprimir prateleira (100 × 55 mm)</button>
+        <button type="button" (click)="printBarcode(item, 'drawer')">Imprimir gaveta (60 × 40 mm)</button>
         <button type="button" (click)="labelPreview.set(null)">Fechar</button>
       </div>
     }
@@ -65,7 +61,7 @@
       </mat-select>
     </mat-form-field>
     <mat-form-field appearance="outline" class="search"
-      ><mat-label>Nome do produto</mat-label
+      ><mat-label>Nome, código ou final da etiqueta</mat-label
       ><input #searchInput matInput [value]="query()" (input)="searchTyping(searchInput.value)" (keyup.enter)="search(searchInput.value)"
     /></mat-form-field>
     <button mat-button type="button" (click)="search(searchInput.value)">Buscar</button>
@@ -195,6 +191,25 @@
         [class.selected]="viewMode() === 'list'" (click)="setViewMode('list')">☷ Lista</button>
     </div>
   </div>
+  <section class="barcode-batch" aria-label="Reimprimir etiquetas de produtos existentes">
+    <div>
+      <strong>Etiquetas dos materiais já cadastrados</strong>
+      <p>Prepare as etiquetas dos produtos ativos desta página (até 20), mantendo os códigos originais e exibindo o preço atualizado.</p>
+    </div>
+    <button type="button" (click)="prepareExistingLabels()"
+      [disabled]="loading() || batchLoading() || !rows().length"
+      [attr.aria-busy]="batchLoading()">
+      {{ batchLoading() ? 'Preparando...' : 'Preparar etiquetas da página' }}
+    </button>
+    @if (batchError()) { <p class="barcode-batch-error" role="alert">{{ batchError() }}</p> }
+    @if (batchLabels().length) {
+      <div class="barcode-batch-ready" role="status">
+        <span>{{ batchLabels().length }} etiqueta(s) prontas para reimprimir.</span>
+        <button type="button" (click)="printExistingLabels('shelf')">Imprimir prateleira</button>
+        <button type="button" (click)="printExistingLabels('drawer')">Imprimir gaveta</button>
+      </div>
+    }
+  </section>
   <details class="stock-replenishment" aria-label="Sugestões de reposição">
     <summary>Reposição sugerida <strong>{{ replenishment().length }}</strong>
       <small>Materiais que atingiram o mínimo · até 30 sugestões</small></summary>

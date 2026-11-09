@@ -25,14 +25,9 @@
             <div class="section-label"><span>01</span><div><h2>Escolha os produtos</h2>
               <p>Busque pelo nome e adicione os materiais do atendimento.</p></div></div>
             <div class="sale-barcode-scanner" aria-label="Leitura rápida de código de barras">
-              <label for="sale-barcode">▥ Bipar etiqueta da prateleira
-                <input id="sale-barcode" #saleBarcode autocomplete="off" spellcheck="false"
-                  placeholder="Ex.: LF0000000001" aria-label="Código de barras da venda"
-                  (keydown.enter)="$event.preventDefault(); scanBarcode(saleBarcode.value); saleBarcode.value = ''" />
-              </label>
-              <button type="button" [disabled]="scanBusy() || action.locked()"
-                (click)="scanBarcode(saleBarcode.value); saleBarcode.value = ''">Adicionar pelo código</button>
-              <small>O leitor USB/Bluetooth digita o código e envia Enter. Bipes repetidos aumentam a quantidade.</small>
+              <app-barcode-search inputId="sale-barcode"
+                label="▥ Bipar ou buscar etiqueta"
+                (picked)="onBarcodePicked($event)" />
               @if (scanMessage()) { <p class="scan-success" role="status">{{ scanMessage() }}</p> }
             </div>
             <div class="product-search-row">

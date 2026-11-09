@@ -2,7 +2,8 @@ import { Component, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
 import { finalize } from 'rxjs';
-import { BarcodeApi } from '../inventory/barcode-api.service';
+import { BarcodeApi, BarcodeItem } from '../inventory/barcode-api.service';
+import { BarcodeSearchComponent } from '../inventory/barcode-search.component';
 import { AuthService } from '../auth/auth.service';
 import { ActionStatusComponent } from './action-status.component';
 import {
@@ -19,7 +20,7 @@ import {
 } from './ui';
 @Component({
   standalone: true,
-  imports: [FormsModule, ActionStatusComponent],
+  imports: [FormsModule, ActionStatusComponent, BarcodeSearchComponent],
   templateUrl: './sales.component.html',
   styleUrls: ['./ui.scss', './sales.component.scss'],
 })
@@ -91,20 +92,24 @@ export class SalesComponent {
     this.barcodes.lookup(code)
       .pipe(finalize(() => this.scanBusy.set(false)))
       .subscribe({
-        next: item => {
-          this.open = true;
-          const previous = this.lines.find(line => line.productId === item.productId);
-          if (previous) {
-            const next = Number(previous.quantity.replace(',', '.')) + 1;
-            previous.quantity = String(Number(next.toFixed(4)));
-          } else {
-            this.lines.push({ productId: item.productId, name: item.name, unit: item.unit, quantity: '1' });
-          }
-          this.preview.set(null);
-          this.scanMessage.set(item.name + ' identificado. Confira a quantidade e calcule o total.');
-        },
+        next: item => this.onBarcodePicked(item),
         error: e => this.error.set(e?.error?.detail ?? 'Código de barras não encontrado. Confira a etiqueta.'),
       });
+  }
+
+  /** Seleção por sugestão ou leitor: adiciona apenas ao rascunho, nunca baixa estoque. */
+  onBarcodePicked(item: BarcodeItem): void {
+    this.open = true;
+    const previous = this.lines.find(line => line.productId === item.productId);
+    if (previous) {
+      const next = Number(previous.quantity.replace(',', '.')) + 1;
+      previous.quantity = String(Number(next.toFixed(4)));
+    } else {
+      this.lines.push({ productId: item.productId, name: item.name, unit: item.unit, quantity: '1' });
+    }
+    this.preview.set(null);
+    this.scanMessage.set(item.name + ' identificado. Confira a quantidade e calcule o total.');
+    this.error.set('');
   }
 
   searchProducts() {
