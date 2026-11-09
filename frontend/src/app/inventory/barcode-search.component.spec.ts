@@ -57,4 +57,17 @@ describe('Pesquisa assistida de etiquetas', () => {
     expect(found).toHaveBeenCalledWith(item);
     fixture.destroy();
   });
+  it('usa a mesma consulta exata para a câmera, sem registrar estoque nem venda', () => {
+    const fixture = TestBed.createComponent(BarcodeSearchComponent);
+    fixture.detectChanges();
+    const found = vi.fn();
+    fixture.componentInstance.picked.subscribe(found);
+    expect(fixture.nativeElement.querySelector('.camera-button').textContent).toContain('Abrir câmera');
+    fixture.componentInstance.onCameraScanned('LF0000000123');
+    expect(api.lookup).toHaveBeenCalledWith('LF0000000123', '');
+    expect(found).toHaveBeenCalledWith(item);
+    expect(fixture.componentInstance.cameraOpen()).toBe(false);
+    fixture.destroy();
+  });
+
 });

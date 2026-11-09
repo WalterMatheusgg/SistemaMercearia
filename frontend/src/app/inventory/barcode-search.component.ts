@@ -2,11 +2,13 @@ import { Component, DestroyRef, EventEmitter, Input, OnChanges, Output, SimpleCh
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Subject, catchError, debounceTime, distinctUntilChanged, map, of, switchMap, finalize } from 'rxjs';
 import { BarcodeApi, BarcodeItem } from './barcode-api.service';
+import { BarcodeCameraComponent } from './barcode-camera.component';
 
 /** Um único campo para scanner HID, nome ou final do código (sem baixa automática). */
 @Component({
   selector: 'app-barcode-search',
   standalone: true,
+  imports: [BarcodeCameraComponent],
   template: `
     <div class="barcode-search">
       <label [for]="inputId">{{ label }}</label>
@@ -21,8 +23,13 @@ import { BarcodeApi, BarcodeItem } from './barcode-api.service';
         <button type="button" (click)="identify()" [disabled]="busy() || !query().trim()">
           {{ busy() ? 'Lendo...' : 'Identificar' }}
         </button>
+        <button type="button" class="camera-button" [attr.aria-expanded]="cameraOpen()"
+          (click)="toggleCamera()">{{ cameraOpen() ? 'Fechar câmera' : 'Abrir câmera' }}</button>
       </div>
-      <small>Bipe com o leitor e pressione Enter, ou digite para ver sugestões.</small>
+      <small>Leitor USB/Bluetooth (com Enter), câmera do celular ou digitação por nome e código.</small>
+      @if (cameraOpen()) {
+        <app-barcode-camera (scanned)="onCameraScanned($event)" (closed)="cameraOpen.set(false)" />
+      }
       @if (searching()) { <p class="hint" role="status">Pesquisando materiais...</p> }
       @if (message()) { <p class="error" role="alert">{{ message() }}</p> }
       @if (suggestions().length > 0) {
@@ -56,6 +63,7 @@ import { BarcodeApi, BarcodeItem } from './barcode-api.service';
     input:focus{outline:2px solid #83c4a3;outline-offset:1px}
     .search-control button{flex:0 0 auto;min-height:46px;padding:8px 14px;border:0;
       border-radius:9px;background:#1f684f;color:#fff;font-weight:800;cursor:pointer}
+    .search-control .camera-button{background:#fff;color:#185c41;border:1px solid #9ec8ae}
     button:disabled{opacity:.55;cursor:wait}
     small,.hint{font-size:11px;color:#5f7b6a;margin:0}
     .error{font-size:12px;background:#fcefeb;color:#a33932;padding:9px;border-radius:8px;margin:0}
@@ -82,6 +90,7 @@ export class BarcodeSearchComponent implements OnChanges {
   private readonly destroyRef = inject(DestroyRef);
   private readonly typed = new Subject<string>();
   readonly query = signal('');
+  readonly cameraOpen = signal(false);
   readonly suggestions = signal<BarcodeItem[]>([]);
   readonly active = signal(-1);
   readonly searching = signal(false);
@@ -148,6 +157,20 @@ export class BarcodeSearchComponent implements OnChanges {
     }
   }
 
+  toggleCamera(): void {
+    this.message.set('');
+    this.cameraOpen.update(open => !open);
+  }
+
+  onCameraScanned(code: string): void {
+    this.cameraOpen.set(false);
+    this.query.set(code);
+    this.suggestions.set([]);
+    this.noMatches.set(false);
+    this.message.set('');
+    this.identify();
+  }
+
   identify(): void {
     const value = this.query().trim();
     if (!value || this.busy()) return;
@@ -187,6 +210,7 @@ export class BarcodeSearchComponent implements OnChanges {
   }
 
   private reset(): void {
+    this.cameraOpen.set(false);
     this.query.set('');
     this.suggestions.set([]);
     this.active.set(-1);
