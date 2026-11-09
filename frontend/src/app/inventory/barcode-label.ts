@@ -103,13 +103,38 @@ export function shelfLabelHtml(item: BarcodeItem, size: LabelSize = 'shelf'): st
   </article></body></html>`;
 }
 
-/** A janela de impressão não contém controles ou dados da interface principal. */
-export function printShelfLabel(item: BarcodeItem, size: LabelSize = 'shelf'): void {
-  const html = shelfLabelHtml(item, size);
+/** Reimpressão dos produtos já cadastrados, uma etiqueta por página de papel adesivo. */
+export function shelfLabelsHtml(items: BarcodeItem[], size: LabelSize = 'shelf'): string {
+  if (items.length === 0 || items.length > 20) {
+    throw new Error('Prepare de 1 a 20 etiquetas por vez.');
+  }
+  const article = /<article class="label">[\\s\\S]*?<\\/article>/;
+  const base = shelfLabelHtml(items[0], size);
+  const labels = items.map(item => {
+    const markup = shelfLabelHtml(item, size).match(article)?.[0];
+    if (!markup) throw new Error('Não foi possível montar a etiqueta.');
+    return markup;
+  }).join('\\n');
+  return base.replace(article, labels)
+    .replace('</title>', ' · Reimpressão</title>')
+    .replace('@media print {',
+      '@media print {.label{break-after:page;page-break-after:always}.label:last-child{break-after:auto;page-break-after:auto}');
+}
+
+function openPrintPreview(html: string): void {
   const win = window.open('', '_blank', 'width=700,height=550');
   if (!win) throw new Error('O navegador bloqueou a impressão. Autorize a janela pop-up da Loja.');
   win.addEventListener('load', () => { win.focus(); win.print(); }, { once: true });
   win.document.open();
   win.document.write(html);
   win.document.close();
+}
+
+export function printShelfLabels(items: BarcodeItem[], size: LabelSize = 'shelf'): void {
+  openPrintPreview(shelfLabelsHtml(items, size));
+}
+
+/** A janela de impressão não contém controles ou dados da interface principal. */
+export function printShelfLabel(item: BarcodeItem, size: LabelSize = 'shelf'): void {
+  openPrintPreview(shelfLabelHtml(item, size));
 }
