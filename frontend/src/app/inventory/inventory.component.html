@@ -22,14 +22,8 @@
       <h2>▥ Leitura rápida</h2>
       <p>Bipe a etiqueta da prateleira ou digite o código e pressione Enter. A leitura não altera o saldo.</p>
     </div>
-    <div class="barcode-scan-row">
-      <label for="inventory-barcode">Código da etiqueta</label>
-      <input id="inventory-barcode" #barcodeInput autocomplete="off" spellcheck="false"
-        placeholder="Ex.: LF0000000001"
-        (keydown.enter)="$event.preventDefault(); scanBarcode(barcodeInput.value); barcodeInput.value = ''" />
-      <button type="button" [disabled]="barcodeLoading() || !locationId()"
-        (click)="scanBarcode(barcodeInput.value)">Identificar</button>
-    </div>
+    <app-barcode-search inputId="inventory-barcode" label="Código ou nome do material"
+      [locationId]="locationId()" (picked)="onBarcodePicked($event)" />
     @if (barcodeError()) { <p class="notice error" role="alert">{{ barcodeError() }}</p> }
     @if (scanned(); as item) {
       <div class="barcode-found" role="status">
@@ -39,13 +33,15 @@
           <button type="button" (click)="openScanned('ENTRY')">+ Entrada</button>
           <button type="button" (click)="openScanned('EXIT')">− Saída</button>
         }
-        <button type="button" (click)="printBarcode(item)">Imprimir etiqueta</button>
+        <button type="button" (click)="printBarcode(item)">Imprimir prateleira</button>
+        <button type="button" (click)="printBarcode(item, 'drawer')">Imprimir gaveta</button>
       </div>
     }
     @if (labelPreview(); as item) {
       <div class="barcode-found label-ready" role="status">
         <div><strong>Etiqueta pronta: {{ item.name }}</strong><small>{{ item.barcode }} · {{ item.unit }}</small></div>
-        <button type="button" (click)="printBarcode(item)">Imprimir etiqueta de prateleira</button>
+        <button type="button" (click)="printBarcode(item)">Imprimir prateleira (100 × 55 mm)</button>
+        <button type="button" (click)="printBarcode(item, 'drawer')">Imprimir gaveta (60 × 40 mm)</button>
         <button type="button" (click)="labelPreview.set(null)">Fechar</button>
       </div>
     }
