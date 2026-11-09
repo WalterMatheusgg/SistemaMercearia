@@ -36,3 +36,10 @@
 O CI executa testes Java/PostgreSQL em schema isolado, teste de formato e unicidade, consulta por estoque e loja, além de testes frontend para o Code 128 e verificação de que bipar **não** gera movimentação automaticamente.
 
 Confira a execução de pull request e homologue num ambiente de teste antes de usar a nova função nas vendas reais.
+
+
+## Atualização das etiquetas antigas
+
+O formato de impressão é único para todos os produtos: **tanto os materiais existentes quanto os novos recebem o novo visual** quando a etiqueta é aberta para impressão. O código `LF...` que já identifica cada produto permanece o mesmo, e o estoque não é movimentado.
+
+Para substituir etiquetas físicas antigas com facilidade, em **Estoque > Materiais no estoque > Etiquetas dos materiais já cadastrados**, clique em **Preparar etiquetas da página** (até 20 produtos ativos da página de resultados) e imprima em formato de prateleira ou gaveta. Para imprimir todas as páginas, avance e repita a operação. Etiquetas já coladas nas prateleiras precisam ser reimpressas e trocadas fisicamente.
