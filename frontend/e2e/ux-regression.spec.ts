@@ -142,7 +142,7 @@ test('reposição sugere quantidade e prepara compra sem criar pedido', async ({
   await expect(page.locator('.success-notice')).toContainText('Saldo inicial registrado');
 
   await page.goto('/admin/inventory');
-  await page.getByLabel('Nome do produto').fill(name);
+  await page.getByLabel('Nome, código ou final da etiqueta').fill(name);
   await page.getByRole('button', { name: 'Buscar', exact: true }).click();
   const card = page.locator('.stock-card').filter({ hasText: name });
   await expect(card).toBeVisible();
@@ -192,7 +192,7 @@ test('cartões do estoque ajustam imagem, largura e botões em celular, tablet e
 
   await page.goto('/admin/inventory');
   await page.getByRole('button', { name: /Quadradinhos/ }).click();
-  await page.getByLabel('Nome do produto').fill(name);
+  await page.getByLabel('Nome, código ou final da etiqueta').fill(name);
   await page.getByRole('button', { name: 'Buscar', exact: true }).click();
   const card = page.locator('.stock-card').filter({ hasText: name });
   await expect(card).toBeVisible();
