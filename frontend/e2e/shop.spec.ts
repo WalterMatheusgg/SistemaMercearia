@@ -90,7 +90,7 @@ test('venda pelo navegador baixa de 50 para 35 e aparece no estoque', async ({ p
   await page.getByRole('button', { name: 'Concluir venda' }).click();
   await expect(page.getByRole('status')).toContainText('Operação confirmada');
   await page.goto('/admin/inventory');
-  await page.getByLabel('Nome do produto').fill(product.name);
+  await page.getByLabel('Nome, código ou final da etiqueta').fill(product.name);
   await page.getByRole('button', { name: 'Buscar', exact: true }).click();
   const card = page.locator('.stock-card').filter({ hasText: product.name });
   await expect(card).toContainText('35');
@@ -98,6 +98,26 @@ test('venda pelo navegador baixa de 50 para 35 e aparece no estoque', async ({ p
   expect(
     await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth + 2),
   ).toBeTruthy();
+});
+
+test('reimpressão das etiquetas existentes prepara lote sem movimentar estoque', async ({ page, context }) => {
+  await login(page);
+  const product = await seed(context);
+  const itemUrl = '/api/admin/barcodes/product/' + product.id;
+  const beforeResponse = await context.request.get(itemUrl);
+  expect(beforeResponse.ok()).toBeTruthy();
+  const before = await beforeResponse.json();
+  await page.goto('/admin/inventory');
+  await page.getByRole('button', { name: 'Preparar etiquetas da página' }).click();
+  await expect(page.locator('.barcode-batch-ready')).toContainText('1 etiqueta(s) prontas');
+  await expect(page.getByRole('button', { name: 'Imprimir prateleira', exact: true })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Imprimir gaveta', exact: true })).toBeVisible();
+  const afterResponse = await context.request.get(itemUrl);
+  expect(afterResponse.ok()).toBeTruthy();
+  const after = await afterResponse.json();
+  expect(after.barcode).toBe(before.barcode);
+  expect(after.physical).toBe(before.physical);
+  expect(after.available).toBe(before.available);
 });
 
 test('recuperação usa link recebido no Mailpit e invalida a senha antiga', async ({
@@ -224,7 +244,7 @@ test('cadastro rápido permite criar e editar sem código manual', async ({ page
   expect(photoResponse.status()).toBe(200);
   expect(photoResponse.headers()['content-type']).toContain('image/png');
   await page.goto('/admin/inventory');
-  await page.getByLabel('Nome do produto').fill(name);
+  await page.getByLabel('Nome, código ou final da etiqueta').fill(name);
   await page.getByRole('button', { name: 'Buscar', exact: true }).click();
   const stockCard = page.locator('.stock-card').filter({hasText: name});
   await expect(stockCard).toContainText('8');
@@ -272,7 +292,7 @@ test('assistente consulta dados e prepara importação em lote com prévia', asy
   await page.getByRole('searchbox', { name: 'Buscar produto' }).fill(name);
   await expect(page.locator('tr').filter({ hasText: name })).toBeVisible();
   await page.goto('/admin/inventory');
-  await page.getByLabel('Nome do produto').fill(name);
+  await page.getByLabel('Nome, código ou final da etiqueta').fill(name);
   await page.getByRole('button', { name: 'Buscar', exact: true }).click();
   await expect(page.locator('.stock-card').filter({ hasText: name })).toContainText('12');
 });
