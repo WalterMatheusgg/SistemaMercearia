@@ -24,7 +24,7 @@ import { ConnectionHealth } from './shared/connection-health.service';
     .connection-notice strong{font-weight:850}.connection-notice span{line-height:1.5}
     .connection-notice button{min-height:44px;border:1px solid #987450;border-radius:9px;padding:10px 16px;
       background:#fff;color:#553a22;font:inherit;font-weight:750;cursor:pointer}
-  `,
+  `],
 })
 export class App {
   readonly health = inject(ConnectionHealth);
