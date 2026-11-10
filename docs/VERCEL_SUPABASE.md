@@ -56,3 +56,27 @@ persistente.
 - A sessão é reutilizada **apenas na memória do navegador por no máximo 30 segundos** entre rotas já autorizadas, evitando mais uma consulta em cada clique. Não há armazenamento de token/senha em localStorage, e os filtros de segurança no Java continuam verificando autenticação e revisões de conta em toda requisição ao backend.
 - A lista de vendas agora consulta apenas o histórico inicial. O catálogo é carregado quando o caixa inicia um atendimento, e os clientes apenas quando o seletor opcional é aberto ou quando o operador pesquisa. Não há mudança em regras de pagamento/estoque e nenhuma escrita é repetida automaticamente.
 - Retentativas de leitura continuam restritas a GET em falhas transitórias; POST/PUT/PATCH/DELETE nunca são repetidos automaticamente.
+
+## Separação de interface estática e API (10/11/2026)
+
+Para evitar que a Vercel tenha de inicializar a JVM em cada arquivo do Angular
+(chunks JS de rotas, CSS, SVG), o projeto utiliza **Vercel Services**, recurso beta
+disponível no Hobby. Mantém-se um único projeto Vercel, mesmo domínio e mesma
+branch `main`. O Serviço `frontend` compila o Angular 22 para
+`frontend/dist/frontend/browser` e publica arquivos estáticos na CDN.
+O Serviço `backend` utiliza o `Dockerfile.api`, que compila apenas Spring Boot,
+reduzindo o tempo de build. O endpoint `/api/**` e `/actuator/**`
+continuam no Java, com as mesmas credenciais e cookies de sessão pelo mesmo domínio.
+
+Rotas de navegação `/admin/**`, `/login` e demais páginas ficam no frontend;
+o fallback da SPA aponta para `/index.html`. As regras de cache antigas para
+JS/CSS permanecem válidas, sem cache dos dados pessoais ou da API.
+
+**Limites:** abrir a interface estática não inicia mais o Java, mas login e API
+ainda podem sofrer *cold start* por serem funções efêmeras. Vercel Services
+é beta e seu uso conta para cotas padrão do Hobby; não torna Java persistente
+nem altera a regra do plano gratuito para uso não comercial.
+
+**Fallback:** se um deploy do beta falhar, restaure o `vercel.json` anterior
+(sem `services`), mantenha o `Dockerfile` original, e reconfigure o framework
+do projeto Vercel de `services` para `container`. Não há migração de dados.
