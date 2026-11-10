@@ -7,11 +7,22 @@ spring:
     lazy-initialization: true
   flyway:
     enabled: false
+  # No ambiente efêmero a V12 já foi aplicada; schema validado na CI.
+  # Evita consultas ao Supabase durante o boot da JVM.
+  jpa:
+    hibernate:
+      ddl-auto: none
+    properties:
+      "hibernate.boot.allow_jdbc_metadata_access": false
+      "jakarta.persistence.database-product-name": PostgreSQL
+      "jakarta.persistence.database-major-version": 17
+      "jakarta.persistence.database-minor-version": 0
   datasource:
     hikari:
       # Uma conexão por instância. O pool Session do Supabase é limitado.
       maximum-pool-size: 1
       minimum-idle: 0
+      initialization-fail-timeout: -1
       idle-timeout: 15000
       max-lifetime: 60000
       keepalive-time: 0

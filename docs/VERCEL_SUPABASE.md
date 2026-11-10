@@ -80,3 +80,20 @@ nem altera a regra do plano gratuito para uso não comercial.
 **Fallback:** se um deploy do beta falhar, restaure o `vercel.json` anterior
 (sem `services`), mantenha o `Dockerfile` original, e reconfigure o framework
 do projeto Vercel de `services` para `container`. Não há migração de dados.
+
+## Inicialização rápida do Java na Vercel
+
+O perfil `vercel` desativa somente nesse runtime efêmero o `ddl-auto: validate`
+e a consulta JDBC de metadados do Hibernate no arranque. É explícito que a
+plataforma é PostgreSQL 17, igual à versão confirmada no Supabase. O plano
+de migrações Flyway e a validação contra banco nos testes permanecem
+obrigatórios antes de cada publicação. Essa redução de conexões no boot
+não altera dados nem desativa autorização por requisição.
+
+O Hikari não bloqueia o boot para abrir a primeira conexão
+(`initialization-fail-timeout: -1`); cada tentativa de uso efetivo do banco
+continua respeitando `connection-timeout: 8000` e a cota de **1 conexão por
+instância**. O container específico de API usa JIT C1 com
+`-XX:TieredStopAtLevel=1` para priorizar o tempo de partida em funções
+efêmeras, embora isso possa reduzir throughput máximo sob carga sustentada.
+Ajuste após medir tempos de inicialização nos logs reais.
