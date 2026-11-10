@@ -120,6 +120,9 @@ test('reimpressão das etiquetas existentes prepara lote sem movimentar estoque'
   await page.getByLabel('Nome, código ou final da etiqueta').fill(product.name);
   await page.getByRole('button', { name: 'Buscar', exact: true }).click();
   await expect(page.locator('.stock-card').filter({ hasText: product.name })).toBeVisible();
+  // Aguarda os resultados filtrados, não os cartões da consulta anterior.
+  await expect(page.locator('.stock-card')).toHaveCount(1);
+  await expect(page.getByRole('button', { name: 'Preparar etiquetas da página' })).toBeEnabled();
   await page.getByRole('button', { name: 'Preparar etiquetas da página' }).click();
   await expect(page.locator('.barcode-batch-ready')).toContainText('1 etiqueta(s) prontas');
   await expect(page.locator('.barcode-batch-ready').getByRole('button', { name: 'Imprimir', exact: true })).toBeVisible();

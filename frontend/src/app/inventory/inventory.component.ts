@@ -132,7 +132,11 @@ export class InventoryComponent implements OnInit {
   ngOnInit(): void {
     this.loadCategories();
     this.typedSearch.pipe(debounceTime(240), distinctUntilChanged(),
-      takeUntilDestroyed(this.destroyRef)).subscribe(value => this.search(value));
+      takeUntilDestroyed(this.destroyRef)).subscribe(value => {
+        // O botão Buscar ou Enter já pode ter consultado esta mesma busca:
+        // não recarregar a lista nem invalidar etiquetas 240ms depois.
+        if (value.trim() !== this.query()) this.search(value);
+      });
     this.query.set(this.route.snapshot.queryParamMap.get('produto')?.trim() ?? '');
     this.shortcutPending = this.route.snapshot.queryParamMap.get('acao') === 'entrada';
     this.api
