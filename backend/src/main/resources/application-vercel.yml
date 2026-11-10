@@ -35,3 +35,10 @@ server:
 app:
   jobs:
     enabled: false
+
+# Mailpit localhost:1025 só existe nos testes; não declarar a loja DOWN por
+# não haver SMTP configurado em funções efêmeras. Mantém o indicador DB ativo.
+management:
+  health:
+    mail:
+      enabled: false
