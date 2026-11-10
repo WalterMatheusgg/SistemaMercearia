@@ -115,3 +115,9 @@
   .topbar-user{gap:6px}
   .topbar{gap:7px}
 }
+
+/* Diagnóstico técnico só no desktop; não comprimir o cabeçalho do PDV em 320px. */
+.diagnostics-action{min-height:40px;padding:8px 11px;background:#f2f8f4;color:#285d46;border-radius:9px;
+  font-size:12px;font-weight:750;white-space:nowrap;cursor:pointer}
+.diagnostics-action:disabled{opacity:.65}
+@media(max-width:900px){.topbar-user .diagnostics-action{display:none}}
