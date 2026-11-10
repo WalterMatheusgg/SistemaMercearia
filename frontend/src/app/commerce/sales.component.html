@@ -2,7 +2,7 @@
   <header class="sales-heading">
     <div><p class="eyebrow">ATENDIMENTO</p><h1>Vendas e orçamentos</h1>
       <small>Atenda, confira o total e registre a movimentação.</small></div>
-    <button class="primary new-sale-button" type="button" (click)="open = !open; error.set('')"
+    <button class="primary new-sale-button" type="button" (click)="toggleSale()"
       [disabled]="action.locked()">{{ open ? 'Fechar atendimento' : '+ Nova venda ou orçamento' }}</button>
   </header>
   <app-action-status [action]="action" />
@@ -35,12 +35,12 @@
                 <input name="productQuery" [(ngModel)]="productQuery" placeholder="Ex.: Parafuso 8 mm"
                   (keyup.enter)="searchProducts(); $event.preventDefault()" />
               </label>
-              <button type="button" (click)="searchProducts()">Buscar</button>
+              <button type="button" (click)="searchProducts()" [disabled]="catalogLoading()">{{ catalogLoading() ? 'Buscando...' : 'Buscar' }}</button>
             </div>
             <div class="add-item-row">
               <label>Produto
                 <select aria-label="Produto" name="product" [(ngModel)]="productId">
-                  <option value="">Selecione um material...</option>
+                  <option value="">{{ catalogLoading() ? 'Carregando materiais...' : 'Selecione um material...' }}</option>
                   @for (product of products(); track product.id) {
                     <option [value]="product.id">{{ product['name'] }} · {{ money(product['price']) }} ·
                       saldo {{ quantity(product['available']) }} {{ product['unit'] }}</option>
@@ -83,7 +83,7 @@
                 <div class="grand-total"><span>Total conferido</span><strong>{{ money(values.total) }}</strong></div>
               </div>
             }
-            <details class="optional-block">
+            <details class="optional-block" (toggle)="onCustomerOptionsToggle($event)">
               <summary>Cliente, desconto e observações (opcional)</summary>
               <div class="optional-content">
                 <div class="product-search-row">

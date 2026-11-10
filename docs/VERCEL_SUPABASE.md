@@ -50,3 +50,9 @@ cold start; o plano Hobby permanece restrito a uso pessoal/não comercial.
 O projeto pode servir para homologação sem custo, mas para operação comercial
 contínua a plataforma não fornece as mesmas garantias de um servidor Java
 persistente.
+
+## Otimizações de navegação (10/11/2026)
+
+- A sessão é reutilizada **apenas na memória do navegador por no máximo 30 segundos** entre rotas já autorizadas, evitando mais uma consulta em cada clique. Não há armazenamento de token/senha em localStorage, e os filtros de segurança no Java continuam verificando autenticação e revisões de conta em toda requisição ao backend.
+- A lista de vendas agora consulta apenas o histórico inicial. O catálogo é carregado quando o caixa inicia um atendimento, e os clientes apenas quando o seletor opcional é aberto ou quando o operador pesquisa. Não há mudança em regras de pagamento/estoque e nenhuma escrita é repetida automaticamente.
+- Retentativas de leitura continuam restritas a GET em falhas transitórias; POST/PUT/PATCH/DELETE nunca são repetidos automaticamente.

@@ -63,10 +63,25 @@ export class SalesComponent {
   cashTendered = '';
   confirmTendered = '';
   readonly changeValue = signal<any | null>(null);
+  readonly catalogLoading = signal(false);
+  private customerListLoaded = false;
+  private customersRequest = 0;
+  private catalogRequest = 0;
   constructor() {
+    // Abrir a lista de vendas não deve carregar catálogo/100 clientes sem necessidade.
     this.load();
-    this.searchProducts();
-    this.searchCustomers();
+  }
+
+  toggleSale(): void {
+    if (this.action.locked()) return;
+    this.open = !this.open;
+    this.error.set('');
+    if (this.open && !this.products().length && !this.catalogLoading()) this.searchProducts();
+  }
+
+  onCustomerOptionsToggle(event: Event): void {
+    const details = event.target as HTMLDetailsElement;
+    if (details.open && !this.customerListLoaded) this.searchCustomers();
   }
   management() {
     return this.auth.currentUser()?.roles.some((r) => ['OWNER', 'MANAGER'].includes(r));
@@ -112,20 +127,37 @@ export class SalesComponent {
     this.error.set('');
   }
 
-  searchProducts() {
+  searchProducts(): void {
+    const request = ++this.catalogRequest;
+    this.catalogLoading.set(true);
     this.http.get<Page>('/api/admin/catalog', { params: { query: this.productQuery } }).subscribe({
-      next: (r) => this.products.set(r.content),
-      error: (e) => this.error.set(detail(e)),
+      next: r => {
+        if (request !== this.catalogRequest) return;
+        this.products.set(r.content);
+        this.catalogLoading.set(false);
+      },
+      error: e => {
+        if (request !== this.catalogRequest) return;
+        this.catalogLoading.set(false);
+        this.error.set(detail(e));
+      },
     });
   }
-  searchCustomers() {
+  searchCustomers(): void {
+    const request = ++this.customersRequest;
     this.http
       .get<Page>('/api/admin/contacts/CUSTOMER', {
         params: { query: this.customerQuery, size: 100 },
       })
       .subscribe({
-        next: (r) => this.customers.set(r.content.filter((c) => c['active'])),
-        error: (e) => this.error.set(detail(e)),
+        next: r => {
+          if (request !== this.customersRequest) return;
+          this.customers.set(r.content.filter(c => c['active']));
+          this.customerListLoaded = true;
+        },
+        error: e => {
+          if (request === this.customersRequest) this.error.set(detail(e));
+        },
       });
   }
   add() {
