@@ -1,6 +1,6 @@
 import { inject } from '@angular/core';
 import { CanActivateFn, Router } from '@angular/router';
-import { map } from 'rxjs';
+import { catchError, map, of } from 'rxjs';
 import { AuthService } from './auth.service';
 export const roleGuard =
   (...roles: string[]): CanActivateFn =>
@@ -17,6 +17,7 @@ export const roleGuard =
                 user ? (user.roles.includes('CUSTOMER') ? '/account' : '/admin/home') : '/login',
               ]),
         ),
+        catchError(() => of(router.createUrlTree(['/indisponivel']))),
       );
   };
 export const adminGuard = roleGuard(

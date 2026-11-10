@@ -20,6 +20,7 @@
     <a routerLink="/admin/assistant"><app-ui-icon name="wand" /><strong>Assistente</strong><span>Pergunte ou cadastre até 200 materiais</span></a>
   </section>
 
+  @if (summaryError()) { <p class="notice error" role="status">{{ summaryError() }}</p> }
   <div class="section-top">
     <div><p class="eyebrow">RESUMO OPERACIONAL</p><h2>Indicadores</h2></div>
     @if (lastUpdated()) { <span class="updated">Atualizado às {{ lastUpdated() }}</span> }

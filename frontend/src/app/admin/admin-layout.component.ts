@@ -1,10 +1,9 @@
 import { Component, HostListener, inject, signal } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
 import { AuthService } from '../auth/auth.service';
-import { finalize, timer, switchMap, catchError, of } from 'rxjs';
+import { finalize } from 'rxjs';
 import { QuickNavComponent } from './quick-nav.component';
 
 @Component({
@@ -22,14 +21,17 @@ export class AdminLayoutComponent {
   readonly isMobile = signal(typeof window !== 'undefined' && window.innerWidth <= 760);
   @HostListener('window:resize') onResize(): void { this.isMobile.set(window.innerWidth <= 760); }
   menuExpanded(): boolean { return this.isMobile() ? this.mobileMenuOpen() : this.menuOpen(); }
-  constructor() {
-    if (this.has('OWNER','MANAGER')) {
-      timer(0,90000).pipe(
-        switchMap(() => this.http.get<{failures24h:number}>('/api/admin/assistant/diagnostics')
-          .pipe(catchError(() => of(null)))),
-        takeUntilDestroyed(),
-      ).subscribe(result => this.failures24h.set(result?.failures24h ?? null));
-    }
+  readonly diagnosticsLoading = signal(false);
+  /** Diagnóstico sob demanda: evita polling que desperta instâncias Java a cada 90s. */
+  checkDiagnostics(): void {
+    if (!this.has('OWNER','MANAGER') || this.diagnosticsLoading()) return;
+    this.diagnosticsLoading.set(true);
+    this.http.get<{failures24h:number}>('/api/admin/assistant/diagnostics')
+      .pipe(finalize(() => this.diagnosticsLoading.set(false)))
+      .subscribe({
+        next: value => this.failures24h.set(value.failures24h),
+        error: () => this.failures24h.set(null),
+      });
   }
   @HostListener('document:keydown.escape')
   onEscape(): void { this.mobileMenuOpen.set(false); }

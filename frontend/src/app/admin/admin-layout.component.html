@@ -8,6 +8,12 @@
     </a>
     <div class="topbar-user">
       <app-quick-nav />
+      @if (has('OWNER','MANAGER')) {
+        <button type="button" class="diagnostics-action" (click)="checkDiagnostics()"
+          [disabled]="diagnosticsLoading()" aria-label="Consultar falhas do sistema">
+          {{ diagnosticsLoading() ? 'Verificando...' : 'Verificar falhas' }}
+        </button>
+      }
       @if (failures24h() !== null && failures24h()! > 0) {
         <a class="error-indicator" routerLink="/admin/assistant"
           [attr.aria-label]="failures24h() + ' falha(s) internas nas últimas 24 horas; consultar diagnóstico'">

@@ -7,6 +7,12 @@ const finance = roleGuard('OWNER', 'MANAGER', 'FINANCE');
 const stock = roleGuard('OWNER', 'MANAGER', 'STOCKKEEPER');
 export const routes: Routes = [
   {
+    path: 'indisponivel',
+    title: 'Conexão indisponível',
+    loadComponent: () => import('./shared/service-unavailable.component')
+      .then(m => m.ServiceUnavailableComponent),
+  },
+  {
     path: 'login',
     title: 'Entrar',
     loadComponent: () => import('./auth/login.component').then((m) => m.LoginComponent),

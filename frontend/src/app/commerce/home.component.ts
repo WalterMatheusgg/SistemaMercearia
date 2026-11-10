@@ -22,6 +22,7 @@ export class HomeComponent {
   readonly todaySales = signal<number | null>(null);
   readonly todayRevenue = signal<string | null>(null);
   readonly lastUpdated = signal('');
+  readonly summaryError = signal('');
   readonly filteredLinks = computed(() => {
     const search = this.searchTerm().toLocaleLowerCase('pt-BR');
     const group = this.activeGroup();
@@ -34,23 +35,25 @@ export class HomeComponent {
   constructor() { this.refreshDashboard(); }
 
   refreshDashboard(): void {
+    if (this.updating()) return;
+    this.summaryError.set('');
     this.updating.set(true);
     const canProducts = this.has(['OWNER','MANAGER','STOCKKEEPER']);
     const canInventory = this.has(['OWNER','MANAGER','STOCKKEEPER','SELLER','CASHIER']);
     const canReports = this.has(['OWNER','MANAGER','FINANCE']);
     const products$ = canProducts
-      ? this.http.get<{ totalElements: number }>('/api/admin/products', { params: { active: 'true', size: 1 } }).pipe(catchError(() => of(null)))
+      ? this.http.get<{ totalElements: number }>('/api/admin/products', { params: { active: 'true', size: 1 } }).pipe(catchError(() => { this.summaryError.set('Alguns indicadores não foram carregados. Tente Atualizar dados.'); return of(null); }))
       : of(null);
     const lowStock$ = canInventory
       ? this.http.get<{ id: string }[]>('/api/admin/inventory/locations').pipe(
           switchMap((locations) => locations.length
             ? this.http.get<{ totalElements: number }>('/api/admin/inventory/balances',
                 { params: { locationId: locations[0].id, onlyLow: true, size: 1 } })
-            : of(null)), catchError(() => of(null)))
+            : of(null)), catchError(() => { this.summaryError.set('Alguns indicadores não foram carregados. Tente Atualizar dados.'); return of(null); }))
       : of(null);
     const report$ = canReports
       ? this.http.get<{ sales: number; revenue: string }>('/api/admin/reports',
-          { params: { start: this.todayLocal(), end: this.todayLocal() } }).pipe(catchError(() => of(null)))
+          { params: { start: this.todayLocal(), end: this.todayLocal() } }).pipe(catchError(() => { this.summaryError.set('Alguns indicadores não foram carregados. Tente Atualizar dados.'); return of(null); }))
       : of(null);
     forkJoin({ products: products$, lowStock: lowStock$, report: report$ }).subscribe({
       next: (result) => {
@@ -61,7 +64,10 @@ export class HomeComponent {
         this.lastUpdated.set(new Intl.DateTimeFormat('pt-BR', { timeStyle: 'short' }).format(new Date()));
         this.updating.set(false);
       },
-      error: () => this.updating.set(false),
+      error: () => {
+        this.summaryError.set('Não foi possível consultar os indicadores. Tente Atualizar dados.');
+        this.updating.set(false);
+      },
     });
   }
 
