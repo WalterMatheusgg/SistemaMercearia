@@ -349,11 +349,13 @@ public class StoreWorkbookService {
                                   type==Type.QUANTITY?s.quantity:s.integer);
             }
             case DATE -> {
-                cell.setCellValue(Date.from(LocalDate.parse(text).atStartOfDay(Db.ZONE).toInstant()));
+                cell.setCellValue(LocalDate.parse(text));
                 cell.setCellStyle(s.date);
             }
             case DATETIME -> {
-                cell.setCellValue(Date.from(Instant.parse(text)));
+                // Fuso de Brasília para exibir a hora correta no Excel,
+                // independentemente do fuso da JVM/contêiner.
+                cell.setCellValue(Instant.parse(text).atZone(Db.ZONE).toLocalDateTime());
                 cell.setCellStyle(s.datetime);
             }
             case TEXT -> {
