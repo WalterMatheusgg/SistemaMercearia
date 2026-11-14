@@ -1,24 +1,34 @@
 <section class="page insights-page">
   <header class="insights-header">
     <div><p class="eyebrow">ANÁLISE DA LOJA</p><h1>Relatórios</h1>
-      <p>Vendas, recebimentos e movimentações por período.</p></div>
-    <button type="button" (click)="export()" class="insights-export">↓ Exportar vendas (CSV)</button>
+      <p>Resultados da loja e exportação completa de movimentações por período.</p></div>
+    <button type="button" (click)="export()" class="insights-export"
+      [disabled]="exporting() || loading || !report() || hasUnappliedDates()"
+      [attr.aria-busy]="exporting()">
+      {{ exporting() ? 'Preparando Excel...' : '↓ Exportar planilha Excel (.xlsx)' }}
+    </button>
   </header>
   <div class="insights-range" aria-label="Período do relatório">
     <div class="range-buttons" role="group" aria-label="Selecionar período">
       <button type="button" [class.selected]="range==='today'" (click)="chooseRange('today')">Hoje</button>
-      <button type="button" [class.selected]="range==='week'" (click)="chooseRange('week')">7 dias</button>
-      <button type="button" [class.selected]="range==='month'" (click)="chooseRange('month')">Este mês</button>
+      <button type="button" [class.selected]="range==='days5'" (click)="chooseRange('days5')">Últimos 5 dias</button>
+      <button type="button" [class.selected]="range==='days7'" (click)="chooseRange('days7')">Últimos 7 dias</button>
+      <button type="button" [class.selected]="range==='month'" (click)="chooseRange('month')">Últimos 30 dias</button>
+      <button type="button" [class.selected]="range==='thisMonth'" (click)="chooseRange('thisMonth')">Este mês</button>
       <button type="button" [class.selected]="range==='custom'" (click)="range='custom'">Escolher datas</button>
     </div>
     @if (range === 'custom') {
       <form class="range-custom" (ngSubmit)="load()">
-        <label>De<input type="date" [(ngModel)]="start" name="start" required/></label>
-        <label>Até<input type="date" [(ngModel)]="end" name="end" required/></label>
-        <button class="insights-primary" type="submit" [disabled]="loading || start>end">Aplicar</button>
+        <label>De<input type="date" [(ngModel)]="start" name="start" required [max]="todayLimit"/></label>
+        <label>Até<input type="date" [(ngModel)]="end" name="end" required [max]="todayLimit"/></label>
+        <button class="insights-primary" type="submit" [disabled]="loading || !canApply()">Aplicar período</button>
       </form>
     }
   </div>
+  <p class="insights-export-note">O Excel inclui resumo, vendas, itens vendidos, entradas e saídas,
+    estoque atual, pagamentos, contas, caixa e compras. O estoque e as pendências são saldos atuais.</p>
+  @if (hasUnappliedDates()) { <p class="insights-loading" role="status">Clique em Aplicar período para atualizar os dados antes de exportar.</p> }
+  @if (exportError()) { <p class="insights-error" role="alert">{{ exportError() }}</p> }
   @if (loading) { <p class="insights-loading" role="status">Atualizando os números da sua loja...</p> }
   @if (error()) { <p class="insights-error" role="alert">{{ error() }}</p> }
   @if (report(); as data) {
@@ -26,7 +36,7 @@
       <div class="insights-focus-copy">
         <span class="insights-kicker">RESULTADO DO PERÍODO</span>
         <strong>{{ money(data.revenue) }}</strong>
-        <span>Valor das vendas confirmadas entre {{ date(start) }} e {{ date(end) }}</span>
+        <span>Valor das vendas confirmadas entre {{ date(appliedStart) }} e {{ date(appliedEnd) }}</span>
         <div class="insights-spark" aria-hidden="true">
           @for (day of data.days; track day.day) {
             <div [style.height.%]="barWidth(day.revenue, data.days)" title=""></div>

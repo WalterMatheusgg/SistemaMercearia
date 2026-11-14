@@ -19,6 +19,9 @@ import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
 
 import java.math.*;
+import java.io.ByteArrayInputStream;
+import java.time.LocalDate;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import java.util.*;
 import java.util.concurrent.*;
 
@@ -41,6 +44,7 @@ class CommerceIntegrationTest {
     @Autowired CashService cash;
     @Autowired CatalogService catalog;
     @Autowired ReportingService reports;
+    @Autowired StoreWorkbookService workbooks;
     @Autowired AccountsService accounts;
     @Autowired JavaMailSender mail;
     Actor actor, customerActor;
@@ -98,6 +102,33 @@ class CommerceIntegrationTest {
                 "UPDATE cash_session SET closed_at=now(),counted_amount=opening_amount WHERE"
                         + " store_id=? AND closed_at IS NULL",
                 Db.STORE);
+    }
+
+    @Test
+    void excelReportContainsSeparateManagementSheetsAndFiltersByDate() throws Exception {
+        opening("3");
+        byte[] content = workbooks.export(actor, Db.today(), Db.today());
+        assertThat(content).startsWith((byte) 'P', (byte) 'K');
+        try (var book = new XSSFWorkbook(new ByteArrayInputStream(content))) {
+            assertThat(book.getNumberOfSheets()).isEqualTo(10);
+            assertThat(book.getSheet("Resumo")).isNotNull();
+            assertThat(book.getSheet("Vendas")).isNotNull();
+            assertThat(book.getSheet("Itens vendidos")).isNotNull();
+            assertThat(book.getSheet("Entradas e saídas")).isNotNull();
+            assertThat(book.getSheet("Estoque atual")).isNotNull();
+            assertThat(book.getSheet("Pagamentos")).isNotNull();
+            assertThat(book.getSheet("Contas")).isNotNull();
+            assertThat(book.getSheet("Movimentos de caixa")).isNotNull();
+            assertThat(book.getSheet("Compras")).isNotNull();
+            assertThat(book.getSheet("Receb. compras")).isNotNull();
+            var movementSheet = book.getSheet("Entradas e saídas");
+            assertThat(movementSheet.getRow(3).getCell(7).getStringCellValue()).isEqualTo("Variação (+/-)");
+            assertThat(movementSheet.getLastRowNum()).isGreaterThanOrEqualTo(4);
+            assertThat(book.getSheet("Estoque atual").getRow(3).getCell(9).getStringCellValue())
+                    .isEqualTo("Disponível");
+        }
+        assertThatThrownBy(() -> workbooks.export(actor, Db.today(), Db.today().minusDays(1)))
+                .isInstanceOf(BusinessRuleException.class);
     }
 
     @Test

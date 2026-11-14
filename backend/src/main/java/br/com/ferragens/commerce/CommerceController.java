@@ -25,6 +25,7 @@ public class CommerceController {
     private final CashService cash;
     private final FinanceService finance;
     private final ReportingService reports;
+    private final StoreWorkbookService workbooks;
 
     public CommerceController(
             CurrentActorService actors,
@@ -33,7 +34,8 @@ public class CommerceController {
             PurchasingService purchases,
             CashService cash,
             FinanceService finance,
-            ReportingService reports) {
+            ReportingService reports,
+            StoreWorkbookService workbooks) {
         this.actors = actors;
         this.contacts = contacts;
         this.sales = sales;
@@ -41,6 +43,7 @@ public class CommerceController {
         this.cash = cash;
         this.finance = finance;
         this.reports = reports;
+        this.workbooks = workbooks;
     }
 
     public record Reason(@NotBlank @Size(min = 3, max = 500) String reason) {}
@@ -308,6 +311,24 @@ public class CommerceController {
             @RequestParam(required = false) LocalDate start,
             @RequestParam(required = false) LocalDate end) {
         return reports.report(actor(auth), start, end);
+    }
+
+    @GetMapping(value = "/reports.xlsx", produces = StoreWorkbookService.CONTENT_TYPE)
+    @PreAuthorize("hasAnyRole('OWNER','MANAGER','FINANCE')")
+    public ResponseEntity<byte[]> excel(
+            Authentication auth,
+            @RequestParam(required = false) LocalDate start,
+            @RequestParam(required = false) LocalDate end) {
+        LocalDate from = start == null ? Db.today().withDayOfMonth(1) : start;
+        LocalDate until = end == null ? Db.today() : end;
+        byte[] bytes = workbooks.export(actor(auth), from, until);
+        String filename = "relatorio-loja-" + from + "_a_" + until + ".xlsx";
+        return ResponseEntity.ok()
+                .cacheControl(org.springframework.http.CacheControl.noStore())
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + filename + "\"")
+                .contentType(MediaType.parseMediaType(StoreWorkbookService.CONTENT_TYPE))
+                .contentLength(bytes.length)
+                .body(bytes);
     }
 
     @GetMapping(value = "/reports.csv", produces = "text/csv")
