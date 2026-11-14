@@ -330,6 +330,32 @@ test('financeiro e relatórios oferecem filtros simples', async ({ page }) => {
   await expect(page.getByText('Materiais parados há 90 dias')).toBeVisible();
 });
 
+test('relatórios exporta planilha Excel com período escolhido e dados completos', async ({ page }) => {
+  await login(page);
+  await page.goto('/admin/reports');
+  await page.getByRole('button', { name: 'Últimos 5 dias', exact: true }).click();
+  const excel = page.getByRole('button', { name: /Exportar planilha Excel/ });
+  await expect(excel).toBeEnabled();
+
+  const firstDownload = page.waitForEvent('download');
+  await excel.click();
+  const file = await firstDownload;
+  expect(file.suggestedFilename()).toMatch(/^relatorio-loja-\d{4}-\d{2}-\d{2}_a_\d{4}-\d{2}-\d{2}\.xlsx$/);
+  expect(await file.failure()).toBeNull();
+
+  await page.getByRole('button', { name: 'Escolher datas' }).click();
+  const end = await page.locator('input[name="end"]').inputValue();
+  await page.locator('input[name="start"]').fill(end);
+  await expect(excel).toBeDisabled();
+  await page.getByRole('button', { name: 'Aplicar período' }).click();
+  await expect(excel).toBeEnabled();
+  const secondDownload = page.waitForEvent('download');
+  await excel.click();
+  const otherFile = await secondDownload;
+  expect(otherFile.suggestedFilename()).toBe(`relatorio-loja-${end}_a_${end}.xlsx`);
+  expect(await otherFile.failure()).toBeNull();
+});
+
 test('estoque alterna entre quadradinhos e lista', async ({ page }) => {
   await login(page);
   await page.goto('/admin/inventory');
