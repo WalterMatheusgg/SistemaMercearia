@@ -83,7 +83,12 @@ public class ReportingService {
                 "products",
                 db.rows(
                         "SELECT i.product_id,i.code,i.name,i.unit_code,sum(i.quantity) AS"
-                            + " quantity,sum(i.line_total) AS gross_revenue FROM sale_item i JOIN"
+                            + " quantity,sum(i.line_total) AS gross_revenue,"
+                            + " sum(i.quantity*i.unit_cost) AS goods_cost,"
+                            + " sum(i.line_total)-sum(i.quantity*i.unit_cost) AS gross_profit,"
+                            + " CASE WHEN sum(i.line_total)=0 THEN NULL ELSE"
+                            + " round((sum(i.line_total)-sum(i.quantity*i.unit_cost))*100/sum(i.line_total),1)"
+                            + " END AS gross_margin_percent FROM sale_item i JOIN"
                             + " sale s ON s.id=i.sale_id WHERE s.store_id=? AND s.confirmed_at>=?"
                             + " AND s.confirmed_at<? AND s.status NOT IN"
                             + " ('CANCELLED','EXPIRED','QUOTE','PENDING_PAYMENT') GROUP BY"
