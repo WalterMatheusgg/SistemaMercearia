@@ -275,7 +275,9 @@ public class PurchasingService {
                                     receipt,
                                     line.itemId(),
                                     line.quantity(),
-                                    movement.id()
+                                    movement.id(),
+                                    Db.id(item, "productId"),
+                                    Db.decimal(item, "unitCost")
                                 });
                     }
                     boolean full =
@@ -314,42 +316,34 @@ public class PurchasingService {
                             Db.money(freightDelta, false),
                             actor.userId(),
                             note);
-                    for (var item : received)
-                        db.jdbc.update(
-                                "INSERT INTO"
-                                    + " purchase_receipt_item(id,receipt_id,purchase_item_id,quantity,movement_id)"
-                                    + " VALUES(?,?,?,?,?)",
-                                item);
-                    // Rateia o frete da remessa por valor dos itens e calcula o custo posto na loja.
-                    var receiptLines = db.rows(
-                            "SELECT ri.id,ri.movement_id,ri.quantity,pi.product_id,pi.unit_cost "
-                                    + "FROM purchase_receipt_item ri JOIN purchase_item pi "
-                                    + "ON pi.id=ri.purchase_item_id WHERE ri.receipt_id=? "
-                                    + "ORDER BY pi.product_id", receipt);
-                    BigDecimal receiptGoods = receiptLines.stream()
-                            .map(line -> Db.decimal(line, "quantity")
-                                    .multiply(Db.decimal(line, "unitCost"))
+                    // Calcula o custo posto antes do INSERT. O histórico de recebimentos é
+                    // imutável após a gravação, portanto o frete nunca é aplicado por UPDATE.
+                    BigDecimal receiptGoods = received.stream()
+                            .map(item -> ((BigDecimal) item[3]).multiply((BigDecimal) item[6])
                                     .setScale(2, RoundingMode.HALF_UP))
                             .reduce(BigDecimal.ZERO, BigDecimal::add);
                     BigDecimal freightRemaining = freightDelta;
-                    for (int index = 0; index < receiptLines.size(); index++) {
-                        var line = receiptLines.get(index);
-                        BigDecimal lineGoods = Db.decimal(line, "quantity")
-                                .multiply(Db.decimal(line, "unitCost"))
+                    for (int index = 0; index < received.size(); index++) {
+                        Object[] item = received.get(index);
+                        BigDecimal quantity = (BigDecimal) item[3];
+                        BigDecimal unitCost = (BigDecimal) item[6];
+                        BigDecimal lineGoods = quantity.multiply(unitCost)
                                 .setScale(2, RoundingMode.HALF_UP);
-                        BigDecimal freightShare = index == receiptLines.size() - 1
+                        BigDecimal freightShare = index == received.size() - 1
                                 ? freightRemaining
                                 : receiptGoods.signum() == 0 ? BigDecimal.ZERO
                                     : freightDelta.multiply(lineGoods)
                                         .divide(receiptGoods, 2, RoundingMode.HALF_UP)
                                         .min(freightRemaining);
                         freightRemaining = freightRemaining.subtract(freightShare);
-                        BigDecimal quantity = Db.decimal(line, "quantity");
-                        BigDecimal landedUnitCost = Db.decimal(line, "unitCost")
-                                .add(freightShare.divide(quantity, 6, RoundingMode.HALF_UP));
-                        db.jdbc.update("UPDATE purchase_receipt_item SET landed_unit_cost=? WHERE id=?",
-                                landedUnitCost, Db.id(line, "id"));
-                        costing.add(Db.id(line, "productId"), Db.id(line, "movementId"), receipt,
+                        BigDecimal landedUnitCost = unitCost.add(
+                                freightShare.divide(quantity, 6, RoundingMode.HALF_UP));
+                        db.jdbc.update(
+                                "INSERT INTO"
+                                    + " purchase_receipt_item(id,receipt_id,purchase_item_id,quantity,movement_id,landed_unit_cost)"
+                                    + " VALUES(?,?,?,?,?,?)",
+                                item[0], item[1], item[2], item[3], item[4], landedUnitCost);
+                        costing.add((UUID) item[5], (UUID) item[4], receipt,
                                 "PURCHASE_RECEIPT", quantity, landedUnitCost);
                     }
                     finance.createTitle(
