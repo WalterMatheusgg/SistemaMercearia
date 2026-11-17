@@ -44,7 +44,12 @@ public class PurchasingService {
             @NotNull UUID supplierId,
             @NotEmpty @Size(max = 100) List<@Valid Item> items,
             @NotNull LocalDate dueDate,
-            @Size(max = 500) String note) {}
+            @Size(max = 500) String note,
+            @DecimalMin("0.00") BigDecimal freightCost) {
+        public Order(UUID supplierId, List<Item> items, LocalDate dueDate, String note) {
+            this(supplierId, items, dueDate, note, BigDecimal.ZERO);
+        }
+    }
 
     public record Received(@NotNull UUID itemId, @NotNull BigDecimal quantity) {}
 
@@ -140,15 +145,19 @@ public class PurchasingService {
                                             line
                                         });
                             }
+                            BigDecimal freight = Db.money(
+                                    body.freightCost() == null ? BigDecimal.ZERO : body.freightCost(), false);
+                            total = total.add(freight);
                             db.jdbc.update(
                                     "INSERT INTO"
-                                        + " purchase_order(id,store_id,supplier_id,supplier_name,total,due_date,note,created_by)"
-                                        + " VALUES(?,?,?,?,?,?,?,?)",
+                                        + " purchase_order(id,store_id,supplier_id,supplier_name,total,freight_cost,due_date,note,created_by)"
+                                        + " VALUES(?,?,?,?,?,?,?,?,?)",
                                     order,
                                     actor.storeId(),
                                     body.supplierId(),
                                     supplier,
                                     Db.money(total, false),
+                                    freight,
                                     body.dueDate(),
                                     Db.optional(body.note(), 500),
                                     actor.userId());
@@ -266,12 +275,40 @@ public class PurchasingService {
                                     movement.id()
                                 });
                     }
+                    boolean full =
+                            Boolean.TRUE.equals(
+                                    db.jdbc.queryForObject(
+                                            "SELECT bool_and(received=quantity) FROM purchase_item"
+                                                    + " WHERE purchase_id=?",
+                                            Boolean.class,
+                                            id));
+                    BigDecimal orderGoods = db.jdbc.queryForObject(
+                            "SELECT COALESCE(sum(line_total),0) FROM purchase_item WHERE purchase_id=?",
+                            BigDecimal.class, id);
+                    BigDecimal cumulativeGoods = db.jdbc.queryForObject(
+                            "SELECT COALESCE(sum(round(received*unit_cost,2)),0) FROM purchase_item WHERE purchase_id=?",
+                            BigDecimal.class, id);
+                    BigDecimal freightTotal = Db.decimal(order, "freightCost");
+                    BigDecimal previouslyAllocated = db.jdbc.queryForObject(
+                            "SELECT COALESCE(sum(freight_cost),0) FROM purchase_receipt WHERE purchase_id=? AND cancelled_at IS NULL",
+                            BigDecimal.class, id);
+                    BigDecimal cumulativeFreight = full
+                            ? freightTotal
+                            : orderGoods.signum() == 0
+                                    ? BigDecimal.ZERO
+                                    : freightTotal.multiply(cumulativeGoods)
+                                            .divide(orderGoods, 2, RoundingMode.HALF_UP);
+                    BigDecimal freightDelta = cumulativeFreight.subtract(previouslyAllocated);
+                    if (freightDelta.signum() < 0)
+                        throw new ConflictException("Não foi possível reconciliar o frete dos recebimentos.");
+                    total = total.add(freightDelta);
                     db.jdbc.update(
-                            "INSERT INTO purchase_receipt(id,purchase_id,total,actor_id,note)"
-                                    + " VALUES(?,?,?,?,?)",
+                            "INSERT INTO purchase_receipt(id,purchase_id,total,freight_cost,actor_id,note)"
+                                    + " VALUES(?,?,?,?,?,?)",
                             receipt,
                             id,
-                            total,
+                            Db.money(total, false),
+                            Db.money(freightDelta, false),
                             actor.userId(),
                             note);
                     for (var item : received)
@@ -289,13 +326,6 @@ public class PurchasingService {
                             LocalDate.parse(Db.text(order, "dueDate")),
                             null,
                             receipt);
-                    boolean full =
-                            Boolean.TRUE.equals(
-                                    db.jdbc.queryForObject(
-                                            "SELECT bool_and(received=quantity) FROM purchase_item"
-                                                    + " WHERE purchase_id=?",
-                                            Boolean.class,
-                                            id));
                     db.jdbc.update(
                             "UPDATE purchase_order SET status=? WHERE id=?",
                             full ? "RECEIVED" : "PARTIAL",
