@@ -111,7 +111,7 @@ class CommerceIntegrationTest {
         byte[] content = workbooks.export(actor, Db.today(), Db.today());
         assertThat(content).startsWith((byte) 'P', (byte) 'K');
         try (var book = new XSSFWorkbook(new ByteArrayInputStream(content))) {
-            assertThat(book.getNumberOfSheets()).isEqualTo(10);
+            assertThat(book.getNumberOfSheets()).isEqualTo(11);
             assertThat(book.getSheet("Resumo")).isNotNull();
             assertThat(book.getSheet("Vendas")).isNotNull();
             assertThat(book.getSheet("Itens vendidos")).isNotNull();
@@ -122,6 +122,7 @@ class CommerceIntegrationTest {
             assertThat(book.getSheet("Movimentos de caixa")).isNotNull();
             assertThat(book.getSheet("Compras")).isNotNull();
             assertThat(book.getSheet("Receb. compras")).isNotNull();
+            assertThat(book.getSheet("Histórico de custos")).isNotNull();
             assertThat(book.getSheet("Compras").getRow(3).getCell(4).getStringCellValue())
                     .isEqualTo("Frete do pedido");
             assertThat(book.getSheet("Receb. compras").getRow(3).getCell(3).getStringCellValue())
