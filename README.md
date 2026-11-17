@@ -203,4 +203,4 @@ O frete da cotação é levado ao pedido de compra como custo separado. Em receb
 
 As revisões de uma cotação desativam a versão anterior e criam um novo registro, mantendo os preços e as faixas antigas para auditoria e comparação histórica.
 
-**Limite atual do custo:** o frete compõe o total do pedido, dos recebimentos e das contas a pagar, mas ainda não altera automaticamente o custo unitário mantido no cadastro do produto nem o custo histórico gravado nas vendas. Portanto, a margem bruta por produto não deve ser interpretada como margem líquida de frete de aquisição.
+**Custeio:** o frete é rateado entre os itens de cada recebimento e incorporado ao custo unitário efetivo. O cadastro do produto é atualizado por custo médio ponderado móvel; a venda grava o custo vigente no momento da confirmação, preservando o histórico mesmo após novas compras. Devoluções integrais de vendas e recebimentos geram movimentos compensatórios e eventos de custo auditáveis. O método é gerencial e não substitui escrituração fiscal/contábil nem inclui tributos ou despesas indiretas não cadastradas.
