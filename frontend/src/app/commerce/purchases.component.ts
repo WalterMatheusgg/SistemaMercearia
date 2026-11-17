@@ -158,6 +158,16 @@ export class PurchasesComponent {
     this.offerTiers = ((offer['tiers'] as Row[]) ?? []).map(t => ({
       minimumQuantity: String(t['minimumQuantity']), unitCost: String(t['unitCost']),
     }));
+    if (!this.products().some(p => p.id === this.offerForm.productId)) {
+      this.http.get<Row>('/api/admin/products/' + encodeURIComponent(this.offerForm.productId))
+        .subscribe({ next: p => this.products.update(rows => [...rows.filter(x => x.id !== p.id), p]),
+          error: e => this.error.set(detail(e)) });
+    }
+    if (!this.suppliers().some(s => s.id === this.offerForm.supplierId)) {
+      this.http.get<Row>('/api/admin/contacts/SUPPLIER/' + encodeURIComponent(this.offerForm.supplierId))
+        .subscribe({ next: s => this.suppliers.update(rows => [...rows.filter(x => x.id !== s.id), s]),
+          error: e => this.error.set(detail(e)) });
+    }
   }
   saveOffer() {
     const body = {
