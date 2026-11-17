@@ -136,6 +136,24 @@ export class PurchasesComponent {
       params: { productId: this.compareProductId, quantity: decimal(this.compareQuantity) },
     }).subscribe({ next: r => this.comparisons.set(r.content), error: e => this.error.set(detail(e)) });
   }
+  useOfferForPurchase(offer: Row) {
+    const productId = String(offer['productId']);
+    const product = this.products().find(p => p.id === productId);
+    const apply = (name: string) => {
+      this.supplierId = String(offer['supplierId']);
+      this.productId = productId;
+      this.amount = this.compareQuantity;
+      this.cost = String(offer['effectiveUnitCost']);
+      this.lines = [{ productId, name, quantity: this.compareQuantity, unitCost: this.cost }];
+      this.open = true;
+      this.suggestedNotice.set('Cotação selecionada: confira os dados e o prazo antes de registrar o pedido.');
+    };
+    if (product) apply(String(product['name']));
+    else this.http.get<Row>('/api/admin/products/' + encodeURIComponent(productId)).subscribe({
+      next: p => { this.products.update(rows => [...rows.filter(x => x.id !== p.id), p]); apply(String(p['name'])); },
+      error: e => this.error.set(detail(e)),
+    });
+  }
   newOffer() {
     this.offerEditing = null;
     this.offerOpen = true;
