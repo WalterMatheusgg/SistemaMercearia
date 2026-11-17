@@ -98,7 +98,7 @@
         } @empty { <p class="insights-empty">Ainda não há vendas confirmadas nesse período.</p> }
       </section>
       <section class="insights-panel">
-        <div class="insights-panel-title"><h2>Materiais mais vendidos</h2><p>Até 30 produtos ordenados pelo valor bruto</p></div>
+        <div class="insights-panel-title"><h2>Materiais mais vendidos</h2><p>Até 30 produtos ordenados pela quantidade vendida</p></div>
         @for (product of data.products; track product.productId + product.unitCode + product.name; let i = $index) {
           <div class="best-product"><span class="product-ranking">{{ i+1 }}</span>
             <div><strong>{{ product.name }}</strong><small>{{ quantity(product.quantity) }} {{ product.unitCode }}</small></div>
