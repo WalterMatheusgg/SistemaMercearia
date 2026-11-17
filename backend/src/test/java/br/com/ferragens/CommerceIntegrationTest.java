@@ -417,6 +417,45 @@ class CommerceIntegrationTest {
     }
 
     @Test
+    void receivedFreightUpdatesWeightedAverageAndSaleCostSnapshot() {
+        opening("10");
+        UUID orderId = Db.id(purchases.create(actor, UUID.randomUUID(),
+                new PurchasingService.Order(supplier,
+                        List.of(new PurchasingService.Item(product, m("10"), m("3.00"))),
+                        Db.today(), "Compra com frete", m("10.00"))), "id");
+        UUID purchaseItemId = Db.id(((List<Map<String,Object>>) purchases.detail(actor, orderId)
+                .get("items")).getFirst(), "id");
+        purchases.receive(actor, UUID.randomUUID(), new PurchasingService.Receipt(
+                List.of(new PurchasingService.Received(purchaseItemId, m("10"))),
+                "Recebimento integral"));
+        assertThat(db.jdbc.queryForObject("SELECT cost FROM product WHERE id=?",
+                BigDecimal.class, product)).isEqualByComparingTo("2.50");
+        assertThat(db.jdbc.queryForObject(
+                "SELECT landed_unit_cost FROM purchase_receipt_item ri JOIN purchase_item pi "
+                        + "ON pi.id=ri.purchase_item_id WHERE pi.purchase_id=?",
+                BigDecimal.class, orderId)).isEqualByComparingTo("4.000000");
+
+        cash.open(actor, UUID.randomUUID(), new CashService.Open(m("0")));
+        UUID saleId = Db.id(sales.create(actor, UUID.randomUUID(),
+                order("2", List.of(payment("4.00", "PIX")), false)), "id");
+        assertThat(db.jdbc.queryForObject("SELECT unit_cost FROM sale_item WHERE sale_id=?",
+                BigDecimal.class, saleId)).isEqualByComparingTo("2.50");
+        sales.cancel(actor, UUID.randomUUID(), saleId, "Devolução integral", false);
+        assertThat(db.jdbc.queryForObject("SELECT cost FROM product WHERE id=?",
+                BigDecimal.class, product)).isEqualByComparingTo("2.50");
+
+        UUID receiptId = Db.id(((List<Map<String,Object>>) purchases.detail(actor, orderId)
+                .get("receipts")).getFirst(), "id");
+        purchases.returnReceipt(actor, UUID.randomUUID(), orderId, receiptId,
+                "Devolução ao fornecedor");
+        assertThat(db.jdbc.queryForObject("SELECT cost FROM product WHERE id=?",
+                BigDecimal.class, product)).isEqualByComparingTo("2.50");
+        assertThat(db.jdbc.queryForObject(
+                "SELECT count(*) FROM product_cost_event WHERE product_id=?",
+                Long.class, product)).isEqualTo(3L);
+    }
+
+    @Test
     void partialReceiptsCreateOnlyReceivedStockAndPayables() {
         opening("50");
         UUID id =
