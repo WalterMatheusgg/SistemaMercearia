@@ -46,3 +46,5 @@ O catálogo/local/caixa desta versão atendem uma loja principal; não há prome
 
 
 O campo `purchase_order.freight_cost` armazena o frete total do pedido. `purchase_receipt.freight_cost` registra a parcela reconhecida em cada recebimento; o rateio acompanha o valor acumulado de mercadoria recebida e é reconciliado quando uma remessa é devolvida.
+
+As revisões de uma cotação desativam a versão anterior e criam um novo registro, mantendo os preços e as faixas antigas para auditoria e comparação histórica.
