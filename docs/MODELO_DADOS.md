@@ -11,7 +11,7 @@
 
 ## Relações comerciais
 
-Uma `party` representa CUSTOMER ou SUPPLIER. Fornecedores também guardam representante, WhatsApp, cidade, produtos, marcas, pedido mínimo, descontos, pagamento, prazo, frete, troca e garantia. Cliente online tem `user_id` único; compras de balcão identificadas usam explicitamente esse cadastro. O sistema não associa compras por semelhança de nome/telefone.
+Uma `party` representa CUSTOMER ou SUPPLIER. Fornecedores também guardam representante, WhatsApp, cidade, produtos, marcas, pedido mínimo, descontos, pagamento, prazo, frete, troca e garantia. Esses campos comerciais são descritivos (texto livre); ainda não representam uma tabela normalizada de ofertas/preços por produto, marca e faixa de quantidade. Cliente online tem `user_id` único; compras de balcão identificadas usam explicitamente esse cadastro. O sistema não associa compras por semelhança de nome/telefone.
 
 `sale` guarda canal, status, cliente, subtotal/desconto/entrega/total, datas e snapshots em `sale_item`. Itens podem apontar para seu movimento físico. Pedido online tem `inventory_reservation` por item e prazo em `sale.expires_at`. Orçamento não cria reserva ou financeiro.
 
