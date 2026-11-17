@@ -202,3 +202,5 @@ O módulo Compras permite registrar cotações por fornecedor e produto, com mar
 O frete da cotação é levado ao pedido de compra como custo separado. Em recebimentos parciais, o sistema rateia o frete proporcionalmente ao valor dos itens recebidos; ao devolver um recebimento, a parcela correspondente é cancelada junto da conta a pagar.
 
 As revisões de uma cotação desativam a versão anterior e criam um novo registro, mantendo os preços e as faixas antigas para auditoria e comparação histórica.
+
+**Limite atual do custo:** o frete compõe o total do pedido, dos recebimentos e das contas a pagar, mas ainda não altera automaticamente o custo unitário mantido no cadastro do produto nem o custo histórico gravado nas vendas. Portanto, a margem bruta por produto não deve ser interpretada como margem líquida de frete de aquisição.
