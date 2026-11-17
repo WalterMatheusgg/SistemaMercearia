@@ -6,7 +6,7 @@
       <small>{{ explanation }}</small>
     </div>
     <div class="header-actions">
-      @if (kind === 'SUPPLIER') { <button type="button" (click)="exportSuppliers()">Exportar planilha CSV (até 100)</button> }
+      @if (kind === 'SUPPLIER') { <button type="button" (click)="exportSuppliers()" [disabled]="exporting || loading">{{ exporting ? 'Preparando planilha...' : 'Exportar todos os fornecedores (CSV)' }}</button> }
       <button class="primary" (click)="edit()" [disabled]="action.locked()">Novo cadastro</button>
     </div>
   </header>
