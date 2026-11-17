@@ -392,7 +392,7 @@ class CommerceIntegrationTest {
                 .isEqualByComparingTo("110.00");
         UUID itemId = Db.id(((List<Map<String,Object>>) purchases.detail(actor, orderId)
                 .get("items")).getFirst(), "id");
-        purchases.receive(actor, UUID.randomUUID(),
+        purchases.receive(actor, UUID.randomUUID(), orderId,
                 new PurchasingService.Receipt(List.of(new PurchasingService.Received(itemId, m("5"))),
                         "Primeira parte recebida"));
         var first = ((List<Map<String,Object>>) purchases.detail(actor, orderId).get("receipts")).getFirst();
@@ -400,14 +400,14 @@ class CommerceIntegrationTest {
         assertThat(Db.decimal(first, "freightCost")).isEqualByComparingTo("5.00");
         assertThat(Db.decimal(first, "total")).isEqualByComparingTo("55.00");
 
-        purchases.receive(actor, UUID.randomUUID(),
+        purchases.receive(actor, UUID.randomUUID(), orderId,
                 new PurchasingService.Receipt(List.of(new PurchasingService.Received(itemId, m("5"))),
                         "Segunda parte recebida"));
         purchases.returnReceipt(actor, UUID.randomUUID(), orderId, firstReceiptId,
                 "Devolução integral da primeira remessa");
         assertThat(balance("physical")).isEqualByComparingTo("55");
 
-        purchases.receive(actor, UUID.randomUUID(),
+        purchases.receive(actor, UUID.randomUUID(), orderId,
                 new PurchasingService.Receipt(List.of(new PurchasingService.Received(itemId, m("5"))),
                         "Reposição após devolução"));
         BigDecimal activePayables = db.jdbc.queryForObject(
@@ -426,7 +426,7 @@ class CommerceIntegrationTest {
                         Db.today(), "Compra com frete", m("10.00"))), "id");
         UUID purchaseItemId = Db.id(((List<Map<String,Object>>) purchases.detail(actor, orderId)
                 .get("items")).getFirst(), "id");
-        purchases.receive(actor, UUID.randomUUID(), new PurchasingService.Receipt(
+        purchases.receive(actor, UUID.randomUUID(), orderId, new PurchasingService.Receipt(
                 List.of(new PurchasingService.Received(purchaseItemId, m("10"))),
                 "Recebimento integral"));
         assertThat(db.jdbc.queryForObject("SELECT cost FROM product WHERE id=?",
