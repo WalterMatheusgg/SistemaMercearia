@@ -144,8 +144,10 @@
           </tbody>
         </table>
       </div>
+    } @else if (compareRequested) {
+      <p class="muted">Nenhuma cotação válida atende ao produto e à quantidade selecionados. Confira o pedido mínimo, a validade e se há cotações cadastradas.</p>
     } @else {
-      <p class="muted">Nenhuma cotação válida atende ao produto e à quantidade selecionados.</p>
+      <p class="muted">Selecione um produto e uma quantidade para consultar as cotações registradas.</p>
     }
     @if (management() && offerOpen) {
       <form class="panel gap" (ngSubmit)="saveOffer()" #offerFormRef="ngForm">
