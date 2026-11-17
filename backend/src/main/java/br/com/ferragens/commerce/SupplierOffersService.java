@@ -73,7 +73,7 @@ public class SupplierOffersService {
             "FROM supplier_offer o JOIN party s ON s.id=o.supplier_id JOIN product p ON p.id=o.product_id "+
             "LEFT JOIN LATERAL (SELECT unit_cost FROM supplier_offer_tier WHERE offer_id=o.id "+
             "AND minimum_quantity<=? ORDER BY minimum_quantity DESC LIMIT 1) t ON true "+
-            "WHERE o.store_id=? AND o.product_id=? AND o.active AND s.active "+
+            "WHERE o.store_id=? AND o.product_id=? AND o.active AND s.active AND p.active "+
             "AND o.quoted_at<=CURRENT_DATE AND (o.valid_until IS NULL OR o.valid_until>=CURRENT_DATE) "+
             "AND o.minimum_order_quantity<=? ORDER BY (COALESCE(t.unit_cost,o.unit_cost)*?+o.freight_cost),o.delivery_days NULLS LAST,s.name",
             quantity, quantity, actor.storeId(), productId, quantity, quantity));
