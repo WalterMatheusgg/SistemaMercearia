@@ -23,18 +23,21 @@ public class PurchasingService {
     private final CatalogService catalog;
     private final InventoryService inventory;
     private final FinanceService finance;
+    private final ProductCostingService costing;
 
     public PurchasingService(
             Db db,
             CommandGate gate,
             CatalogService catalog,
             InventoryService inventory,
-            FinanceService finance) {
+            FinanceService finance,
+            ProductCostingService costing) {
         this.db = db;
         this.gate = gate;
         this.catalog = catalog;
         this.inventory = inventory;
         this.finance = finance;
+        this.costing = costing;
     }
 
     public record Item(
@@ -317,6 +320,38 @@ public class PurchasingService {
                                     + " purchase_receipt_item(id,receipt_id,purchase_item_id,quantity,movement_id)"
                                     + " VALUES(?,?,?,?,?)",
                                 item);
+                    // Rateia o frete da remessa por valor dos itens e calcula o custo posto na loja.
+                    var receiptLines = db.rows(
+                            "SELECT ri.id,ri.movement_id,ri.quantity,pi.product_id,pi.unit_cost "
+                                    + "FROM purchase_receipt_item ri JOIN purchase_item pi "
+                                    + "ON pi.id=ri.purchase_item_id WHERE ri.receipt_id=? "
+                                    + "ORDER BY pi.product_id", receipt);
+                    BigDecimal receiptGoods = receiptLines.stream()
+                            .map(line -> Db.decimal(line, "quantity")
+                                    .multiply(Db.decimal(line, "unitCost"))
+                                    .setScale(2, RoundingMode.HALF_UP))
+                            .reduce(BigDecimal.ZERO, BigDecimal::add);
+                    BigDecimal freightRemaining = freightDelta;
+                    for (int index = 0; index < receiptLines.size(); index++) {
+                        var line = receiptLines.get(index);
+                        BigDecimal lineGoods = Db.decimal(line, "quantity")
+                                .multiply(Db.decimal(line, "unitCost"))
+                                .setScale(2, RoundingMode.HALF_UP);
+                        BigDecimal freightShare = index == receiptLines.size() - 1
+                                ? freightRemaining
+                                : receiptGoods.signum() == 0 ? BigDecimal.ZERO
+                                    : freightDelta.multiply(lineGoods)
+                                        .divide(receiptGoods, 2, RoundingMode.HALF_UP)
+                                        .min(freightRemaining);
+                        freightRemaining = freightRemaining.subtract(freightShare);
+                        BigDecimal quantity = Db.decimal(line, "quantity");
+                        BigDecimal landedUnitCost = Db.decimal(line, "unitCost")
+                                .add(freightShare.divide(quantity, 6, RoundingMode.HALF_UP));
+                        db.jdbc.update("UPDATE purchase_receipt_item SET landed_unit_cost=? WHERE id=?",
+                                landedUnitCost, Db.id(line, "id"));
+                        costing.add(Db.id(line, "productId"), Db.id(line, "movementId"), receipt,
+                                "PURCHASE_RECEIPT", quantity, landedUnitCost);
+                    }
                     finance.createTitle(
                             actor,
                             Db.id(order, "supplierId"),
@@ -398,6 +433,9 @@ public class PurchasingService {
                                 "UPDATE purchase_item SET received=received-? WHERE id=?",
                                 Db.decimal(line, "quantity"),
                                 Db.id(line, "purchaseItemId"));
+                        costing.remove(Db.id(line, "productId"), movement.id(), receiptId,
+                                "PURCHASE_RETURN", Db.decimal(line, "quantity"),
+                                Db.decimal(line, "landedUnitCost"));
                         db.jdbc.update(
                                 "INSERT INTO"
                                     + " purchase_return_item(id,return_id,receipt_item_id,movement_id)"
