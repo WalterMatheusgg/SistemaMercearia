@@ -336,9 +336,11 @@ class CommerceIntegrationTest {
         assertThat(rows).hasSize(1);
         assertThat(Db.decimal(rows.getFirst(), "effectiveUnitCost")).isEqualByComparingTo("8.00");
         assertThat(Db.decimal(rows.getFirst(), "estimatedTotal")).isEqualByComparingTo("85.00");
-        assertThat(supplierOffers.compare(actor, product, m("1")).get("content")).isEmpty();
+        var belowMinimum = (List<?>) supplierOffers.compare(actor, product, m("1")).get("content");
+        assertThat(belowMinimum).isEmpty();
         supplierOffers.deactivate(actor, UUID.randomUUID(), offerId);
-        assertThat(supplierOffers.compare(actor, product, m("10")).get("content")).isEmpty();
+        var afterDeactivate = (List<?>) supplierOffers.compare(actor, product, m("10")).get("content");
+        assertThat(afterDeactivate).isEmpty();
     }
 
     @Test
