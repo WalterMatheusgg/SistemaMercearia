@@ -138,6 +138,16 @@ public class StoreWorkbookService {
                 WHERE o.store_id=? AND r.received_at>=? AND r.received_at<?
                 ORDER BY r.received_at,r.id
                 """, storeId, from, to);
+        List<Map<String, Object>> costEvents = rows("""
+                SELECT e.created_at,p.code,p.name AS product,e.source_type,e.source_id,
+                       e.quantity,e.unit_cost,e.stock_before,e.stock_after,
+                       e.cost_before,e.cost_after,m.actor_name AS actor,m.reason
+                FROM product_cost_event e
+                JOIN product p ON p.id=e.product_id
+                JOIN inventory_movement m ON m.id=e.movement_id
+                WHERE m.store_id=? AND e.created_at>=? AND e.created_at<?
+                ORDER BY e.created_at,e.id
+                """, storeId, from, to);
 
         try (XSSFWorkbook workbook = new XSSFWorkbook();
              ByteArrayOutputStream bytes = new ByteArrayOutputStream()) {
@@ -205,6 +215,14 @@ public class StoreWorkbookService {
                     text("Fornecedor","supplierName",32),money("Valor recebido","total"),
                     time("Cancelado em","cancelledAt"),text("Observação","note",44),
                     text("ID da compra","purchaseId",38));
+            section(workbook, styles, "Histórico de custos", "EVENTOS DE CUSTO MÉDIO PONDERADO NO PERÍODO",
+                    costEvents,time("Registrado em","createdAt"),
+                    text("Código","code",18),text("Produto","product",36),
+                    text("Origem","sourceType",22),text("Documento / evento","sourceId",38),
+                    quantity("Quantidade","quantity"),money("Custo unitário aplicado","unitCost"),
+                    quantity("Estoque antes","stockBefore"),quantity("Estoque depois","stockAfter"),
+                    money("Custo médio anterior","costBefore"),money("Custo médio novo","costAfter"),
+                    text("Operador","actor",20),text("Motivo","reason",48));
 
             workbook.setActiveSheet(0);
             workbook.write(bytes);
