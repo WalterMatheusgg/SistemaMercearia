@@ -135,6 +135,8 @@ export class PurchasesComponent {
       return;
     }
     this.compareRequested = true;
+    this.comparisons.set([]);
+    this.error.set('');
     this.http.get<{content: Row[]}>('/api/admin/supplier-offers/compare', {
       params: { productId: this.compareProductId, quantity: decimal(this.compareQuantity) },
     }).subscribe({ next: r => this.comparisons.set(r.content), error: e => this.error.set(detail(e)) });
