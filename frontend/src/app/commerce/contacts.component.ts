@@ -41,7 +41,7 @@ export class ContactsComponent {
     this.loading.set(true);
     this.http
       .get<Page>('/api/admin/contacts/' + this.kind, {
-        params: { query: this.query, page: this.page, size: 20 },
+        params: { query: this.query, page: this.page, size: 100 },
       })
       .subscribe({
         next: (r) => {
