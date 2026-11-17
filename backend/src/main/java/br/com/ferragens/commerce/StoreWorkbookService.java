@@ -213,7 +213,8 @@ public class StoreWorkbookService {
             section(workbook, styles, "Receb. compras", "RECEBIMENTOS DE COMPRAS NO PERÍODO",
                     receipts,time("Recebido em","receivedAt"),
                     text("Fornecedor","supplierName",32),money("Valor recebido","total"),
-                    time("Cancelado em","cancelledAt"),text("Observação","note",44),
+                    money("Frete alocado","freightCost"),time("Cancelado em","cancelledAt"),
+                    text("Observação","note",44),
                     text("ID da compra","purchaseId",38));
             section(workbook, styles, "Histórico de custos", "EVENTOS DE CUSTO MÉDIO PONDERADO NO PERÍODO",
                     costEvents,time("Registrado em","createdAt"),
