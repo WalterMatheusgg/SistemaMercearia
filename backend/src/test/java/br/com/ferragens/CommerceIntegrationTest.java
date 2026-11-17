@@ -348,6 +348,28 @@ class CommerceIntegrationTest {
     }
 
     @Test
+    void revisingSupplierOfferPreservesPreviousPriceAndQuantityTiers() {
+        var first = supplierOffers.save(actor, UUID.randomUUID(), null,
+                new SupplierOffersService.Offer(
+                        supplier, product, "Marca", null, m("10.00"), m("1"),
+                        Db.today(), null, null, m("0"), "Cotação inicial", true,
+                        List.of(new SupplierOffersService.Tier(m("5"), m("9.00")))));
+        UUID firstId = Db.id(first, "id");
+        var revised = supplierOffers.save(actor, UUID.randomUUID(), firstId,
+                new SupplierOffersService.Offer(
+                        supplier, product, "Marca", null, m("8.50"), m("1"),
+                        Db.today(), null, null, m("0"), "Nova cotação", true, List.of()));
+        UUID revisedId = Db.id(revised, "id");
+        assertThat(revisedId).isNotEqualTo(firstId);
+        var historical = supplierOffers.detail(actor, firstId);
+        assertThat(historical.get("active")).isEqualTo(false);
+        assertThat(Db.decimal(historical, "unitCost")).isEqualByComparingTo("10.00");
+        assertThat((List<?>) historical.get("tiers")).hasSize(1);
+        assertThat(Db.decimal(supplierOffers.detail(actor, revisedId), "unitCost"))
+                .isEqualByComparingTo("8.50");
+    }
+
+    @Test
     void supplierOfferRejectsTierBelowMinimumOrderQuantity() {
         assertThatThrownBy(() -> supplierOffers.save(actor, UUID.randomUUID(), null,
                 new SupplierOffersService.Offer(
