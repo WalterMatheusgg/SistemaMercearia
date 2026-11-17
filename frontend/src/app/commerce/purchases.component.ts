@@ -150,6 +150,11 @@ export class PurchasesComponent {
       this.open = true;
       this.suggestedNotice.set('Cotação selecionada: confira os dados e o prazo antes de registrar o pedido.');
     };
+    if (!this.suppliers().some(s => s.id === String(offer['supplierId']))) {
+      this.http.get<Row>('/api/admin/contacts/SUPPLIER/' + encodeURIComponent(String(offer['supplierId'])))
+        .subscribe({ next: s => this.suppliers.update(rows => [...rows.filter(x => x.id !== s.id), s]),
+          error: e => this.error.set(detail(e)) });
+    }
     if (product) apply(String(product['name']));
     else this.http.get<Row>('/api/admin/products/' + encodeURIComponent(productId)).subscribe({
       next: p => { this.products.update(rows => [...rows.filter(x => x.id !== p.id), p]); apply(String(p['name'])); },
