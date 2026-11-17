@@ -128,7 +128,7 @@ export class PurchasesComponent {
       .subscribe({ next: r => this.offers.set(r.content), error: e => this.error.set(detail(e)) });
   }
   compareOffers() {
-    if (!this.compareProductId || !/^\\d+([.,]\\d{1,4})?$/.test(this.compareQuantity) || Number(decimal(this.compareQuantity)) <= 0) {
+    if (!this.compareProductId || !/^\d+([.,]\d{1,4})?$/.test(this.compareQuantity) || Number(decimal(this.compareQuantity)) <= 0) {
       this.error.set('Selecione um produto e informe uma quantidade válida para comparar.');
       return;
     }
