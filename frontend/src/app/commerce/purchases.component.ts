@@ -30,6 +30,8 @@ export class PurchasesComponent {
   readonly rows = signal<Row[]>([]);
   readonly products = signal<Row[]>([]);
   readonly suppliers = signal<Row[]>([]);
+  readonly offers = signal<Row[]>([]);
+  readonly comparisons = signal<Row[]>([]);
   readonly selected = signal<Row | null>(null);
   readonly error = signal('');
   readonly money = money;
@@ -51,6 +53,13 @@ export class PurchasesComponent {
   receiptNote = '';
   cancelReason = '';
   lines: { productId: string; name: string; quantity: string; unitCost: string }[] = [];
+  offerEditing: string | null = null;
+  offerForm = { supplierId: '', productId: '', brand: '', supplierProductCode: '',
+    unitCost: '', minimumOrderQuantity: '1', quotedAt: today(), validUntil: '',
+    deliveryDays: '', freightCost: '0', notes: '', active: true };
+  offerTiers: { minimumQuantity: string; unitCost: string }[] = [];
+  compareProductId = '';
+  compareQuantity = '1';
   receiveLines: {
     itemId: string;
     name: string;
@@ -63,6 +72,7 @@ export class PurchasesComponent {
     this.load();
     this.searchProducts();
     this.searchSuppliers();
+    this.loadOffers();
     const params = this.route.snapshot.queryParamMap;
     const suggestedProductId = params.get('produto');
     if (suggestedProductId && this.management()) {
@@ -111,6 +121,60 @@ export class PurchasesComponent {
         next: (r) => this.suppliers.set(r.content.filter((c) => c['active'])),
         error: (e) => this.error.set(detail(e)),
       });
+  }
+  loadOffers() {
+    this.http.get<{content: Row[]}>('/api/admin/supplier-offers', { params: { includeInactive: true } })
+      .subscribe({ next: r => this.offers.set(r.content), error: e => this.error.set(detail(e)) });
+  }
+  compareOffers() {
+    if (!this.compareProductId || !/^\\d+([.,]\\d{1,4})?$/.test(this.compareQuantity) || Number(decimal(this.compareQuantity)) <= 0) {
+      this.error.set('Selecione um produto e informe uma quantidade válida para comparar.');
+      return;
+    }
+    this.http.get<{content: Row[]}>('/api/admin/supplier-offers/compare', {
+      params: { productId: this.compareProductId, quantity: decimal(this.compareQuantity) },
+    }).subscribe({ next: r => this.comparisons.set(r.content), error: e => this.error.set(detail(e)) });
+  }
+  newOffer() {
+    this.offerEditing = null;
+    this.offerForm = { supplierId: this.supplierId || '', productId: this.productId || '',
+      brand: '', supplierProductCode: '', unitCost: '', minimumOrderQuantity: '1',
+      quotedAt: today(), validUntil: '', deliveryDays: '', freightCost: '0', notes: '', active: true };
+    this.offerTiers = [];
+  }
+  editOffer(offer: Row) {
+    this.offerEditing = offer.id;
+    this.offerForm = {
+      supplierId: String(offer['supplierId'] ?? ''), productId: String(offer['productId'] ?? ''),
+      brand: String(offer['brand'] ?? ''), supplierProductCode: String(offer['supplierProductCode'] ?? ''),
+      unitCost: String(offer['unitCost'] ?? ''), minimumOrderQuantity: String(offer['minimumOrderQuantity'] ?? '1'),
+      quotedAt: String(offer['quotedAt'] ?? today()), validUntil: String(offer['validUntil'] ?? ''),
+      deliveryDays: String(offer['deliveryDays'] ?? ''), freightCost: String(offer['freightCost'] ?? '0'),
+      notes: String(offer['notes'] ?? ''), active: Boolean(offer['active']),
+    };
+    this.offerTiers = ((offer['tiers'] as Row[]) ?? []).map(t => ({
+      minimumQuantity: String(t['minimumQuantity']), unitCost: String(t['unitCost']),
+    }));
+  }
+  saveOffer() {
+    const body = {
+      ...this.offerForm,
+      unitCost: decimal(this.offerForm.unitCost),
+      minimumOrderQuantity: decimal(this.offerForm.minimumOrderQuantity),
+      quotedAt: this.offerForm.quotedAt || null,
+      validUntil: this.offerForm.validUntil || null,
+      deliveryDays: this.offerForm.deliveryDays ? Number(this.offerForm.deliveryDays) : null,
+      freightCost: decimal(this.offerForm.freightCost),
+      tiers: this.offerTiers.map(t => ({ minimumQuantity: decimal(t.minimumQuantity), unitCost: decimal(t.unitCost) })),
+    };
+    this.action.submit('/api/admin/supplier-offers' + (this.offerEditing ? '/' + this.offerEditing : ''),
+      body, () => { this.offerEditing = null; this.loadOffers(); this.compareOffers(); },
+      this.offerEditing ? 'PUT' : 'POST');
+  }
+  deactivateOffer(offer: Row) {
+    if (window.confirm('Desativar esta cotação? O histórico será preservado.'))
+      this.action.submit('/api/admin/supplier-offers/' + offer.id + '/deactivate', {},
+        () => this.loadOffers());
   }
   add() {
     const p = this.products().find((p) => p.id === this.productId);
