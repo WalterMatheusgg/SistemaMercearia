@@ -7,7 +7,7 @@
 | Acesso | Login/sessão/CSRF, contas de funcionários por papel, desativação com invalidação de sessão, cadastro de cliente, verificação de e-mail e recuperação por link de uso único |
 | Catálogo | Produtos, marca opcional, categorias, novas unidades com precisão, filtros e cadastros a revisar, inativação e catálogo público sem custo interno |
 | Estoque | Saldo inicial, entrada/saída/perda, mínimo, contagem, histórico imutável, estorno manual, proteção contra saldo negativo, acesso à edição pelo estoque e reposição sugerida até 2× o mínimo, sem criação automática de compras |
-| Pessoas | Clientes e fornecedores; ficha comercial do fornecedor com representante, WhatsApp, cidade, produtos, marcas, pedido mínimo, descontos, pagamento, prazo, frete, troca e garantia; inativação e histórico de documentos/contas vinculadas |
+| Pessoas | Clientes e fornecedores; ficha comercial do fornecedor com representante, WhatsApp, cidade, produtos, marcas, pedido mínimo, preços/descontos informados, pagamento, prazo, frete, troca e garantia; exportação CSV de todos os fornecedores do filtro atual (paginação automática); inativação e histórico de documentos/contas vinculadas |
 | Venda | Balcão, orçamento com validade de 7 dias, confirmação, desconto autorizado, pagamentos divididos, venda a prazo e devolução integral |
 | Caixa | Um caixa físico por loja, abertura, suprimento, sangria, lançamentos em dinheiro e fechamento com diferença justificada e troco calculado no servidor |
 | Compras | Pedido ao fornecedor, recebimento parcial/completo, entrada física e contas a pagar apenas do material recebido e devolução integral de recebimentos |
