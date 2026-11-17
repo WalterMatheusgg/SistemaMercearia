@@ -7,6 +7,7 @@
 | V3 | Configuração, contatos cliente/fornecedor, comandos idempotentes, auditoria, caixa/entradas, venda/itens, reservas, compras/itens/recebimentos, contas/pagamentos, tokens, preferências e outbox |
 | V4 | Devolução integral de recebimento ao fornecedor, referência aos movimentos compensatórios e preservação do documento original |
 | V5 | Dinheiro entregue e troco calculado na venda; somente o pagamento líquido movimenta a gaveta |
+| V6 | Dados comerciais complementares de fornecedores: representante, WhatsApp, cidade, portfólio, marcas, pedido mínimo, descontos, pagamento, entrega, frete, troca e garantia |
 
 ## Relações comerciais
 
