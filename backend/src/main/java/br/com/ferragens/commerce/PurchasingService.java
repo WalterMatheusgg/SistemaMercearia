@@ -433,9 +433,11 @@ public class PurchasingService {
                                 "UPDATE purchase_item SET received=received-? WHERE id=?",
                                 Db.decimal(line, "quantity"),
                                 Db.id(line, "purchaseItemId"));
+                        // No custo médio móvel, a saída é valorizada pelo custo médio vigente,
+                        // pois os itens em estoque são fungíveis e podem ter sido parcialmente vendidos.
                         costing.remove(Db.id(line, "productId"), movement.id(), receiptId,
                                 "PURCHASE_RETURN", Db.decimal(line, "quantity"),
-                                Db.decimal(line, "landedUnitCost"));
+                                costing.currentCost(Db.id(line, "productId")));
                         db.jdbc.update(
                                 "INSERT INTO"
                                     + " purchase_return_item(id,return_id,receipt_item_id,movement_id)"
