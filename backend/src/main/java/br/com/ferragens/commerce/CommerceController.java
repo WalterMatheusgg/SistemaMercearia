@@ -22,6 +22,7 @@ public class CommerceController {
     private final ContactsService contacts;
     private final SalesService sales;
     private final PurchasingService purchases;
+    private final SupplierOffersService supplierOffers;
     private final CashService cash;
     private final FinanceService finance;
     private final ReportingService reports;
@@ -32,6 +33,7 @@ public class CommerceController {
             ContactsService contacts,
             SalesService sales,
             PurchasingService purchases,
+            SupplierOffersService supplierOffers,
             CashService cash,
             FinanceService finance,
             ReportingService reports,
@@ -40,6 +42,7 @@ public class CommerceController {
         this.contacts = contacts;
         this.sales = sales;
         this.purchases = purchases;
+        this.supplierOffers = supplierOffers;
         this.cash = cash;
         this.finance = finance;
         this.reports = reports;
@@ -158,6 +161,46 @@ public class CommerceController {
             @RequestHeader("Idempotency-Key") UUID key,
             @Valid @RequestBody Status body) {
         return sales.fulfillment(actor(auth), key, id, body.status());
+    }
+
+    @GetMapping("/supplier-offers")
+    @PreAuthorize("hasAnyRole('OWNER','MANAGER','STOCKKEEPER','FINANCE')")
+    public Map<String,Object> supplierOffers(
+            Authentication auth,
+            @RequestParam(required=false) UUID productId,
+            @RequestParam(required=false) UUID supplierId,
+            @RequestParam(defaultValue="false") boolean includeInactive) {
+        return supplierOffers.list(actor(auth),productId,supplierId,includeInactive);
+    }
+
+    @GetMapping("/supplier-offers/compare")
+    @PreAuthorize("hasAnyRole('OWNER','MANAGER','STOCKKEEPER','FINANCE')")
+    public Map<String,Object> compareSupplierOffers(
+            Authentication auth,@RequestParam UUID productId,@RequestParam java.math.BigDecimal quantity) {
+        return supplierOffers.compare(actor(auth),productId,quantity);
+    }
+
+    @PostMapping("/supplier-offers")
+    @PreAuthorize("hasAnyRole('OWNER','MANAGER')")
+    public Map<String,Object> createSupplierOffer(
+            Authentication auth,@RequestHeader("Idempotency-Key") UUID key,
+            @Valid @RequestBody SupplierOffersService.Offer body) {
+        return supplierOffers.save(actor(auth),key,null,body);
+    }
+
+    @PutMapping("/supplier-offers/{id}")
+    @PreAuthorize("hasAnyRole('OWNER','MANAGER')")
+    public Map<String,Object> updateSupplierOffer(
+            Authentication auth,@PathVariable UUID id,@RequestHeader("Idempotency-Key") UUID key,
+            @Valid @RequestBody SupplierOffersService.Offer body) {
+        return supplierOffers.save(actor(auth),key,id,body);
+    }
+
+    @PostMapping("/supplier-offers/{id}/deactivate")
+    @PreAuthorize("hasAnyRole('OWNER','MANAGER')")
+    public Map<String,Object> deactivateSupplierOffer(
+            Authentication auth,@PathVariable UUID id,@RequestHeader("Idempotency-Key") UUID key) {
+        return supplierOffers.deactivate(actor(auth),key,id);
     }
 
     @GetMapping("/purchases")
