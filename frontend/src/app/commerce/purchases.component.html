@@ -130,7 +130,7 @@
     @if (comparisons().length) {
       <div class="scroll gap">
         <table>
-          <thead><tr><th>Fornecedor</th><th>Marca</th><th>Preço unitário</th><th>Frete</th><th>Prazo</th><th>Total estimado</th></tr></thead>
+          <thead><tr><th>Fornecedor</th><th>Marca</th><th>Preço unitário</th><th>Frete</th><th>Prazo</th><th>Total estimado</th><th></th></tr></thead>
           <tbody>
             @for (offer of comparisons(); track offer.id) {
               <tr>
@@ -138,6 +138,7 @@
                 <td>{{ money(offer['effectiveUnitCost']) }}</td><td>{{ money(offer['freightCost']) }}</td>
                 <td>{{ offer['deliveryDays'] == null ? 'Não informado' : offer['deliveryDays'] + ' dias' }}</td>
                 <td><strong>{{ money(offer['estimatedTotal']) }}</strong></td>
+                <td>@if (management()) { <button type="button" (click)="useOfferForPurchase(offer)">Usar no pedido</button> }</td>
               </tr>
             }
           </tbody>
