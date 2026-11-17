@@ -60,3 +60,6 @@ Esta versão atende uma loja, um local principal e um caixa físico. Ainda não 
 
 
 | Cotações | Em Compras, registre uma cotação para cada combinação fornecedor/produto, incluindo preço base, pedido mínimo, marca, código do fornecedor, frete, prazo, validade e faixas de preço por quantidade. Use Comparar preços para ordenar ofertas válidas pelo total estimado da quantidade escolhida (preço aplicável × quantidade + frete). Impostos e condições negociadas fora dos campos estruturados devem ser conferidos separadamente. Cotações antigas podem ser desativadas sem apagar o histórico. |
+
+
+O frete informado no pedido compõe o total da compra e é rateado proporcionalmente entre os recebimentos parciais. A devolução integral de um recebimento cancela também a parcela de frete e a conta vinculada.
