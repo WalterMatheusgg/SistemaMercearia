@@ -86,9 +86,10 @@ export class ContactsComponent {
     if (this.kind !== 'SUPPLIER' || this.exporting) return;
     this.exporting = true;
     const all: Row[] = [];
+    const query = this.query;
     const loadPage = (page: number, expectedTotal?: number): void => {
       this.http.get<Page>('/api/admin/contacts/SUPPLIER', {
-        params: { query: this.query, page, size: 100 },
+        params: { query, page, size: 100 },
       }).subscribe({
         next: (result) => {
           all.push(...result.content);
@@ -115,7 +116,7 @@ export class ContactsComponent {
     const escapeCell = (value: unknown) => {
       let text = String(value ?? '');
       // Evita que planilhas interpretem dados do cadastro como fórmulas.
-      if (/^[\\s\\u0000-\\u001f]*[=+@-]/.test(text)) text = "'" + text;
+      if (/^[\s\u0000-\u001f]*[=+@-]/.test(text)) text = "'" + text;
       return '"' + text.replace(/"/g, '""') + '"';
     };
     const lines = [headers, ...rows.map(row => keys.map(key =>
