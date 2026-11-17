@@ -9,8 +9,10 @@
 | V5 | Dinheiro entregue e troco calculado na venda; somente o pagamento líquido movimenta a gaveta |
 | V6 | Dados comerciais complementares de fornecedores: representante, WhatsApp, cidade, portfólio, marcas, pedido mínimo, descontos, pagamento, entrega, frete, troca e garantia |
 | V10 | Cotações estruturadas por fornecedor/produto, faixas de preço por volume e frete no pedido/recebimento |
-| V11 | Custo de aquisição efetivo por item recebido e livro de eventos do custo médio ponderado |
-| V12 | Proteção contra alteração ou exclusão do histórico de eventos de custo |
+| V11 | Correção do search_path da função de proteção do histórico |
+| V12 | Identificação e leitura por código de barras de prateleira |
+| V13 | Custo de aquisição efetivo por item recebido e livro de eventos do custo médio ponderado |
+| V14 | Proteção contra alteração ou exclusão do histórico de eventos de custo |
 
 ## Relações comerciais
 
@@ -52,4 +54,4 @@ O campo `purchase_order.freight_cost` armazena o frete total do pedido. `purchas
 
 As revisões de uma cotação desativam a versão anterior e criam um novo registro, mantendo os preços e as faixas antigas para auditoria e comparação histórica.
 
-O frete de cada recebimento é distribuído proporcionalmente pelo valor dos itens e incorporado ao `landed_unit_cost` em `purchase_receipt_item`. O serviço `ProductCostingService` atualiza `product.cost` pelo método de custo médio ponderado móvel e grava cada alteração em `product_cost_event`, vinculada à movimentação física. Na confirmação, `sale_item.unit_cost` recebe o custo vigente, tornando o custo da venda histórico e imutável frente a compras futuras. Devoluções de vendas recompõem o estoque ao custo histórico da venda; devoluções a fornecedores retiram estoque pelo custo médio vigente. Eventos de custo não são apagados nem atualizados. Esse custeio é gerencial, não fiscal, e não inclui tributos ou despesas indiretas que não estejam modelados. Na implantação, o custo já cadastrado de cada produto é a base inicial; o sistema não recalcula retroativamente o custo médio de todo o estoque nem reescreve custos de vendas anteriores à V11.
+O frete de cada recebimento é distribuído proporcionalmente pelo valor dos itens e incorporado ao `landed_unit_cost` em `purchase_receipt_item`. O serviço `ProductCostingService` atualiza `product.cost` pelo método de custo médio ponderado móvel e grava cada alteração em `product_cost_event`, vinculada à movimentação física. Na confirmação, `sale_item.unit_cost` recebe o custo vigente, tornando o custo da venda histórico e imutável frente a compras futuras. Devoluções de vendas recompõem o estoque ao custo histórico da venda; devoluções a fornecedores retiram estoque pelo custo médio vigente. Eventos de custo não são apagados nem atualizados. Esse custeio é gerencial, não fiscal, e não inclui tributos ou despesas indiretas que não estejam modelados. Na implantação, o custo já cadastrado de cada produto é a base inicial; o sistema não recalcula retroativamente o custo médio de todo o estoque nem reescreve custos de vendas anteriores à V13.
