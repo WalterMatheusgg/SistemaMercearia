@@ -83,11 +83,12 @@ public class ReportingService {
                 "products",
                 db.rows(
                         "SELECT i.product_id,i.code,i.name,i.unit_code,sum(i.quantity) AS"
-                            + " quantity,sum(i.line_total) AS gross_revenue,"
+                            + " quantity,sum(i.line_total-CASE WHEN s.subtotal>0 THEN s.discount*i.line_total/s.subtotal ELSE 0 END) AS gross_revenue,"
                             + " sum(i.quantity*i.unit_cost) AS goods_cost,"
-                            + " sum(i.line_total)-sum(i.quantity*i.unit_cost) AS gross_profit,"
-                            + " CASE WHEN sum(i.line_total)=0 THEN NULL ELSE"
-                            + " round((sum(i.line_total)-sum(i.quantity*i.unit_cost))*100/sum(i.line_total),1)"
+                            + " sum(i.line_total-CASE WHEN s.subtotal>0 THEN s.discount*i.line_total/s.subtotal ELSE 0 END)-sum(i.quantity*i.unit_cost) AS gross_profit,"
+                            + " CASE WHEN sum(i.line_total-CASE WHEN s.subtotal>0 THEN s.discount*i.line_total/s.subtotal ELSE 0 END)=0 THEN NULL ELSE"
+                            + " round((sum(i.line_total-CASE WHEN s.subtotal>0 THEN s.discount*i.line_total/s.subtotal ELSE 0 END)-sum(i.quantity*i.unit_cost))*100/"
+                            + "sum(i.line_total-CASE WHEN s.subtotal>0 THEN s.discount*i.line_total/s.subtotal ELSE 0 END),1)"
                             + " END AS gross_margin_percent FROM sale_item i JOIN"
                             + " sale s ON s.id=i.sale_id WHERE s.store_id=? AND s.confirmed_at>=?"
                             + " AND s.confirmed_at<? AND s.status NOT IN"
