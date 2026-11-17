@@ -87,7 +87,7 @@ public class ReportingService {
                             + " sale s ON s.id=i.sale_id WHERE s.store_id=? AND s.confirmed_at>=?"
                             + " AND s.confirmed_at<? AND s.status NOT IN"
                             + " ('CANCELLED','EXPIRED','QUOTE','PENDING_PAYMENT') GROUP BY"
-                            + " i.product_id,i.code,i.name,i.unit_code ORDER BY gross_revenue DESC"
+                            + " i.product_id,i.code,i.name,i.unit_code ORDER BY quantity DESC,gross_revenue DESC"
                             + " LIMIT 30",
                         actor.storeId(),
                         from,
