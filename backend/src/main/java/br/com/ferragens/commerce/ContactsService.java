@@ -27,7 +27,19 @@ public class ContactsService {
             @Size(max = 40) String phone,
             @Size(max = 30) String document,
             @Size(max = 500) String address,
-            boolean active) {}
+            boolean active,
+            @Size(max = 160) String representativeName,
+            @Size(max = 40) String whatsapp,
+            @Size(max = 120) String city,
+            @Size(max = 1000) String products,
+            @Size(max = 1000) String brands,
+            @Size(max = 200) String minimumOrder,
+            @Size(max = 500) String quantityDiscount,
+            @Size(max = 500) String paymentTerms,
+            @Size(max = 160) String deliveryTime,
+            @Size(max = 300) String freightTerms,
+            @Size(max = 1000) String returnPolicy,
+            @Size(max = 1000) String warrantyPolicy) {}
 
     static String kind(String kind) {
         if (!Set.of("CUSTOMER", "SUPPLIER").contains(kind))
@@ -47,7 +59,7 @@ public class ContactsService {
                         + "%";
         String from = " FROM party WHERE store_id=? AND kind=? AND lower(name) LIKE ? ESCAPE '\\'";
         return db.page(
-                "SELECT id,name,email,phone,document,address,active" + from + " ORDER BY name,id",
+                "SELECT id,name,email,phone,document,address,active,representative_name,whatsapp,city,products,brands,minimum_order,quantity_discount,payment_terms,delivery_time,freight_terms,return_policy,warranty_policy" + from + " ORDER BY name,id",
                 "SELECT count(*)" + from,
                 page,
                 size,
@@ -76,8 +88,8 @@ public class ContactsService {
                             if (id == null)
                                 db.jdbc.update(
                                         "INSERT INTO"
-                                            + " party(id,store_id,kind,name,email,phone,document,address,active)"
-                                            + " VALUES(?,?,?,?,?,?,?,?,?)",
+                                            + " party(id,store_id,kind,name,email,phone,document,address,active,representative_name,whatsapp,city,products,brands,minimum_order,quantity_discount,payment_terms,delivery_time,freight_terms,return_policy,warranty_policy)"
+                                            + " VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
                                         target,
                                         actor.storeId(),
                                         kind,
@@ -86,7 +98,13 @@ public class ContactsService {
                                         Db.optional(body.phone(), 40),
                                         Db.optional(body.document(), 30),
                                         Db.optional(body.address(), 500),
-                                        body.active());
+                                        body.active(),
+                                        Db.optional(body.representativeName(), 160), Db.optional(body.whatsapp(), 40),
+                                        Db.optional(body.city(), 120), Db.optional(body.products(), 1000),
+                                        Db.optional(body.brands(), 1000), Db.optional(body.minimumOrder(), 200),
+                                        Db.optional(body.quantityDiscount(), 500), Db.optional(body.paymentTerms(), 500),
+                                        Db.optional(body.deliveryTime(), 160), Db.optional(body.freightTerms(), 300),
+                                        Db.optional(body.returnPolicy(), 1000), Db.optional(body.warrantyPolicy(), 1000));
                             else {
                                 db.one(
                                         "SELECT id FROM party WHERE id=? AND store_id=? AND kind=?"
@@ -96,7 +114,7 @@ public class ContactsService {
                                         kind);
                                 db.jdbc.update(
                                         "UPDATE party SET"
-                                            + " name=?,email=?,phone=?,document=?,address=?,active=?,updated_at=now()"
+                                            + " name=?,email=?,phone=?,document=?,address=?,active=?,representative_name=?,whatsapp=?,city=?,products=?,brands=?,minimum_order=?,quantity_discount=?,payment_terms=?,delivery_time=?,freight_terms=?,return_policy=?,warranty_policy=?,updated_at=now()"
                                             + " WHERE id=?",
                                         name,
                                         Db.optional(body.email(), 254),
@@ -104,7 +122,12 @@ public class ContactsService {
                                         Db.optional(body.document(), 30),
                                         Db.optional(body.address(), 500),
                                         body.active(),
-                                        id);
+                                        Db.optional(body.representativeName(), 160), Db.optional(body.whatsapp(), 40),
+                                        Db.optional(body.city(), 120), Db.optional(body.products(), 1000),
+                                        Db.optional(body.brands(), 1000), Db.optional(body.minimumOrder(), 200),
+                                        Db.optional(body.quantityDiscount(), 500), Db.optional(body.paymentTerms(), 500),
+                                        Db.optional(body.deliveryTime(), 160), Db.optional(body.freightTerms(), 300),
+                                        Db.optional(body.returnPolicy(), 1000), Db.optional(body.warrantyPolicy(), 1000), id);
                             }
                             db.audit(
                                     actor,
@@ -120,7 +143,7 @@ public class ContactsService {
     public Map<String, Object> detail(Actor actor, UUID id, String kind) {
         var result =
                 db.one(
-                        "SELECT id,kind,name,email,phone,document,address,active FROM party WHERE"
+                        "SELECT id,kind,name,email,phone,document,address,active,representative_name,whatsapp,city,products,brands,minimum_order,quantity_discount,payment_terms,delivery_time,freight_terms,return_policy,warranty_policy FROM party WHERE"
                                 + " id=? AND store_id=? AND kind=?",
                         id,
                         actor.storeId(),
