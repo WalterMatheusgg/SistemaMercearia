@@ -28,3 +28,9 @@ CREATE TABLE supplier_offer_tier (
     UNIQUE (offer_id, minimum_quantity)
 );
 CREATE INDEX supplier_offer_tier_lookup ON supplier_offer_tier(offer_id, minimum_quantity DESC);
+
+-- Frete negociado no pedido e rateado proporcionalmente conforme os itens são recebidos.
+ALTER TABLE purchase_order
+    ADD COLUMN freight_cost NUMERIC(14,2) NOT NULL DEFAULT 0 CHECK (freight_cost >= 0);
+ALTER TABLE purchase_receipt
+    ADD COLUMN freight_cost NUMERIC(14,2) NOT NULL DEFAULT 0 CHECK (freight_cost >= 0);
