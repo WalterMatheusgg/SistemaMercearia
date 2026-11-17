@@ -10,6 +10,7 @@
 | V6 | Dados comerciais complementares de fornecedores: representante, WhatsApp, cidade, portfólio, marcas, pedido mínimo, descontos, pagamento, entrega, frete, troca e garantia |
 | V10 | Cotações estruturadas por fornecedor/produto, faixas de preço por volume e frete no pedido/recebimento |
 | V11 | Custo de aquisição efetivo por item recebido e livro de eventos do custo médio ponderado |
+| V12 | Proteção contra alteração ou exclusão do histórico de eventos de custo |
 
 ## Relações comerciais
 
