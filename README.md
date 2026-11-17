@@ -200,3 +200,5 @@ Desenvolvido por **[Walter Matheus](https://github.com/WalterMatheusgg)**
 O módulo Compras permite registrar cotações por fornecedor e produto, com marca, código do fornecedor, preço unitário, quantidade mínima, custo de frete, prazo de entrega, data e validade da cotação, observações e faixas de preço por volume. A comparação calcula o custo estimado para a quantidade informada (preço unitário aplicável pela faixa + frete), lista as ofertas válidas que atendem ao pedido mínimo e preserva o histórico por desativação lógica. Impostos, descontos negociados fora das faixas e condições especiais de pagamento não entram automaticamente no cálculo e devem ser considerados na negociação.
 
 O frete da cotação é levado ao pedido de compra como custo separado. Em recebimentos parciais, o sistema rateia o frete proporcionalmente ao valor dos itens recebidos; ao devolver um recebimento, a parcela correspondente é cancelada junto da conta a pagar.
+
+As revisões de uma cotação desativam a versão anterior e criam um novo registro, mantendo os preços e as faixas antigas para auditoria e comparação histórica.
