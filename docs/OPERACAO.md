@@ -63,3 +63,5 @@ Esta versão atende uma loja, um local principal e um caixa físico. Ainda não 
 
 
 O frete informado no pedido compõe o total da compra e é rateado proporcionalmente entre os recebimentos parciais. A devolução integral de um recebimento cancela também a parcela de frete e a conta vinculada.
+
+As revisões de uma cotação desativam a versão anterior e criam um novo registro, mantendo os preços e as faixas antigas para auditoria e comparação histórica.
