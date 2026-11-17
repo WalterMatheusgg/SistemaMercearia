@@ -40,6 +40,7 @@ class CommerceIntegrationTest {
     @Autowired InventoryService stock;
     @Autowired SalesService sales;
     @Autowired PurchasingService purchases;
+    @Autowired SupplierOffersService supplierOffers;
     @Autowired FinanceService finance;
     @Autowired CashService cash;
     @Autowired CatalogService catalog;
@@ -319,6 +320,35 @@ class CommerceIntegrationTest {
         assertThatThrownBy(() -> sales.cancel(actor, UUID.randomUUID(), id, "Outro cliente", true))
                 .isInstanceOf(NotFoundException.class);
         assertThat(balance("reserved")).isEqualByComparingTo("1");
+    }
+
+    @Test
+    void supplierOfferComparisonAppliesQuantityTierMinimumAndFreight() {
+        var offer = supplierOffers.save(actor, UUID.randomUUID(), null,
+                new SupplierOffersService.Offer(
+                        supplier, product, "Marca teste", "SKU-FORN-1", m("10.00"),
+                        m("2"), Db.today(), Db.today().plusDays(30), 4, m("5.00"),
+                        "Cotação válida para teste", true,
+                        List.of(new SupplierOffersService.Tier(m("10"), m("8.00")))));
+        UUID offerId = Db.id(offer, "id");
+        var comparison = supplierOffers.compare(actor, product, m("10"));
+        var rows = (List<Map<String,Object>>) comparison.get("content");
+        assertThat(rows).hasSize(1);
+        assertThat(rows.getFirst().get("effectiveUnitCost")).isEqualTo("8.00");
+        assertThat(rows.getFirst().get("estimatedTotal")).isEqualTo("85.00");
+        assertThat(supplierOffers.compare(actor, product, m("1")).get("content")).isEmpty();
+        supplierOffers.deactivate(actor, UUID.randomUUID(), offerId);
+        assertThat(supplierOffers.compare(actor, product, m("10")).get("content")).isEmpty();
+    }
+
+    @Test
+    void supplierOfferRejectsTierBelowMinimumOrderQuantity() {
+        assertThatThrownBy(() -> supplierOffers.save(actor, UUID.randomUUID(), null,
+                new SupplierOffersService.Offer(
+                        supplier, product, null, null, m("10.00"), m("5"), Db.today(),
+                        null, null, m("0"), null, true,
+                        List.of(new SupplierOffersService.Tier(m("4"), m("9.00"))))))
+                .isInstanceOf(BusinessRuleException.class);
     }
 
     @Test
