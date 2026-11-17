@@ -454,6 +454,9 @@ class CommerceIntegrationTest {
         assertThat(db.jdbc.queryForObject(
                 "SELECT count(*) FROM product_cost_event WHERE product_id=?",
                 Long.class, product)).isEqualTo(3L);
+        assertThatThrownBy(() -> db.jdbc.update(
+                "UPDATE product_cost_event SET cost_after=0 WHERE product_id=?", product))
+                .isInstanceOf(org.springframework.dao.DataAccessException.class);
     }
 
     @Test
