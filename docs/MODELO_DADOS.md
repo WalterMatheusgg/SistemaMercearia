@@ -36,3 +36,10 @@ Dinheiro é NUMERIC(14,2)/BigDecimal e trafega como string decimal. Totais de li
 `account_token` contém somente hash do segredo e propósito/validade/uso. `notification_outbox` guarda destinatário, evento, mensagem, tentativas, lease e resultado; chave única usuário/evento. `notification_preference` configura os alertas por usuário. `audit_event` registra ator, entidade, motivo e instante sem senhas ou tokens.
 
 O catálogo/local/caixa desta versão atendem uma loja principal; não há promessa de isolamento de catálogo multiloja. Não existem tabelas simuladas de tributos, gateway bancário ou emissão fiscal.
+
+
+### Cotações estruturadas de fornecedores
+
+- `supplier_offer`: vincula fornecedor, produto, marca/código do fornecedor, preço unitário base, quantidade mínima, frete, prazo, data/validade, observações e estado ativo.
+- `supplier_offer_tier`: registra faixas de quantidade e preço unitário por cotação. A faixa aplicável é a maior quantidade mínima que não ultrapassa a quantidade comparada.
+- As cotações são isoladas por loja e mantidas no histórico por desativação lógica. A comparação exclui ofertas inativas, vencidas, fornecedores inativos e quantidades abaixo do pedido mínimo.
