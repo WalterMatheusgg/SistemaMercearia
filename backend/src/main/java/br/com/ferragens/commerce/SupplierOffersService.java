@@ -106,7 +106,7 @@ public class SupplierOffersService {
             Set<BigDecimal> thresholds=new HashSet<>();
             if(body.tiers()!=null) for(var tier:body.tiers()) {
                 BigDecimal threshold = validQuantity(tier.minimumQuantity());
-                if(threshold.compareTo(minimumOrder)<0 || !thresholds.add(threshold))
+                if(threshold.compareTo(minimumOrder)<0 || !thresholds.add(threshold.stripTrailingZeros()))
                     throw new BusinessRuleException("Faixas de preço devem ser únicas e não inferiores ao pedido mínimo.");
                 db.jdbc.update("INSERT INTO supplier_offer_tier(id,offer_id,minimum_quantity,unit_cost) VALUES(?,?,?,?)",
                     UUID.randomUUID(),target,threshold,Db.money(tier.unitCost(),false));
