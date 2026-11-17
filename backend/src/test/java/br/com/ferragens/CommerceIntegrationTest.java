@@ -122,6 +122,10 @@ class CommerceIntegrationTest {
             assertThat(book.getSheet("Movimentos de caixa")).isNotNull();
             assertThat(book.getSheet("Compras")).isNotNull();
             assertThat(book.getSheet("Receb. compras")).isNotNull();
+            assertThat(book.getSheet("Compras").getRow(3).getCell(4).getStringCellValue())
+                    .isEqualTo("Frete do pedido");
+            assertThat(book.getSheet("Receb. compras").getRow(3).getCell(3).getStringCellValue())
+                    .isEqualTo("Frete alocado");
             var movementSheet = book.getSheet("Entradas e saídas");
             assertThat(movementSheet.getRow(3).getCell(7).getStringCellValue()).isEqualTo("Variação (+/-)");
             assertThat(movementSheet.getLastRowNum()).isGreaterThanOrEqualTo(4);
