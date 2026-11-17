@@ -80,19 +80,55 @@ export class ContactsComponent {
     );
   }
 
+  exporting = false;
+
   exportSuppliers(): void {
-    if (this.kind !== 'SUPPLIER') return;
+    if (this.kind !== 'SUPPLIER' || this.exporting) return;
+    this.exporting = true;
+    const all: Row[] = [];
+    const loadPage = (page: number, expectedTotal?: number): void => {
+      this.http.get<Page>('/api/admin/contacts/SUPPLIER', {
+        params: { query: this.query, page, size: 100 },
+      }).subscribe({
+        next: (result) => {
+          all.push(...result.content);
+          const total = result.totalElements ?? expectedTotal ?? all.length;
+          if (all.length < total && result.content.length > 0) {
+            loadPage(page + 1, total);
+            return;
+          }
+          this.downloadSuppliersCsv(all);
+          this.exporting = false;
+        },
+        error: (e) => {
+          this.error.set('Não foi possível exportar todos os fornecedores. ' + detail(e));
+          this.exporting = false;
+        },
+      });
+    };
+    loadPage(0);
+  }
+
+  private downloadSuppliersCsv(rows: Row[]): void {
     const headers = ['Empresa','Representante comercial','Telefone','WhatsApp','E-mail','Cidade','Endereço','Produtos','Marcas','Pedido mínimo','Preços e descontos por quantidade','Condições de pagamento','Prazo de entrega','Valor/condições do frete','Política de troca','Garantia','Ativo'];
     const keys = ['name','representativeName','phone','whatsapp','email','city','address','products','brands','minimumOrder','quantityDiscount','paymentTerms','deliveryTime','freightTerms','returnPolicy','warrantyPolicy','active'];
-    const escapeCell = (value: unknown) => '"' + String(value ?? '').replace(/"/g, '""') + '"';
-    const lines = [headers, ...this.rows().map(row => keys.map(key => key === 'active' ? (row[key] ? 'Sim' : 'Não') : row[key]))];
+    const escapeCell = (value: unknown) => {
+      let text = String(value ?? '');
+      // Evita que planilhas interpretem dados do cadastro como fórmulas.
+      if (/^[\\s\\u0000-\\u001f]*[=+@-]/.test(text)) text = "'" + text;
+      return '"' + text.replace(/"/g, '""') + '"';
+    };
+    const lines = [headers, ...rows.map(row => keys.map(key =>
+      key === 'active' ? (row[key] ? 'Sim' : 'Não') : row[key]))];
     const csv = '\uFEFF' + lines.map(line => line.map(escapeCell).join(';')).join('\r\n');
     const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
     const url = URL.createObjectURL(blob);
     const anchor = document.createElement('a');
     anchor.href = url;
     anchor.download = 'fornecedores-merceria.csv';
+    document.body.appendChild(anchor);
     anchor.click();
+    anchor.remove();
     URL.revokeObjectURL(url);
   }
 
