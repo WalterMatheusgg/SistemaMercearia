@@ -27,6 +27,7 @@ public class SalesService {
     private final FinanceService finance;
     private final CashService cash;
     private final Notifications notices;
+    private final ProductCostingService costing;
 
     public SalesService(
             Db db,
@@ -35,7 +36,8 @@ public class SalesService {
             InventoryService inventory,
             FinanceService finance,
             CashService cash,
-            Notifications notices) {
+            Notifications notices,
+            ProductCostingService costing) {
         this.db = db;
         this.gate = gate;
         this.catalog = catalog;
@@ -43,6 +45,7 @@ public class SalesService {
         this.finance = finance;
         this.cash = cash;
         this.notices = notices;
+        this.costing = costing;
     }
 
     public record Item(@NotNull UUID productId, @NotNull BigDecimal quantity) {}
@@ -460,7 +463,7 @@ public class SalesService {
                     else if (!status.equals("QUOTE")) {
                         for (var item : items(id)) {
                             UUID movement = Db.id(item, "movementId");
-                            inventory.execute(
+                            var returnedMovement = inventory.execute(
                                     actor,
                                     UUID.randomUUID(),
                                     new Command(
@@ -480,6 +483,9 @@ public class SalesService {
                                                                             .length())),
                                             null,
                                             movement));
+                            costing.add(Db.id(item, "productId"), returnedMovement.id(), id,
+                                    "SALE_RETURN", Db.decimal(item, "quantity"),
+                                    Db.decimal(item, "unitCost"));
                         }
                         finance.cancelTitle(actor, id, note);
                     }
@@ -681,6 +687,10 @@ public class SalesService {
                         sale,
                         null);
         for (var item : items(sale)) {
+            UUID productId = Db.id(item, "productId");
+            BigDecimal confirmedUnitCost = costing.currentCost(productId);
+            db.jdbc.update("UPDATE sale_item SET unit_cost=? WHERE id=?",
+                    confirmedUnitCost, Db.id(item, "id"));
             var movement =
                     inventory.execute(
                             actor,
