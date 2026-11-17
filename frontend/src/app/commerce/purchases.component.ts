@@ -54,6 +54,7 @@ export class PurchasesComponent {
   cancelReason = '';
   lines: { productId: string; name: string; quantity: string; unitCost: string }[] = [];
   offerEditing: string | null = null;
+  offerOpen = false;
   offerForm = { supplierId: '', productId: '', brand: '', supplierProductCode: '',
     unitCost: '', minimumOrderQuantity: '1', quotedAt: today(), validUntil: '',
     deliveryDays: '', freightCost: '0', notes: '', active: true };
@@ -137,6 +138,7 @@ export class PurchasesComponent {
   }
   newOffer() {
     this.offerEditing = null;
+    this.offerOpen = true;
     this.offerForm = { supplierId: this.supplierId || '', productId: this.productId || '',
       brand: '', supplierProductCode: '', unitCost: '', minimumOrderQuantity: '1',
       quotedAt: today(), validUntil: '', deliveryDays: '', freightCost: '0', notes: '', active: true };
@@ -144,6 +146,7 @@ export class PurchasesComponent {
   }
   editOffer(offer: Row) {
     this.offerEditing = offer.id;
+    this.offerOpen = true;
     this.offerForm = {
       supplierId: String(offer['supplierId'] ?? ''), productId: String(offer['productId'] ?? ''),
       brand: String(offer['brand'] ?? ''), supplierProductCode: String(offer['supplierProductCode'] ?? ''),
@@ -168,7 +171,7 @@ export class PurchasesComponent {
       tiers: this.offerTiers.map(t => ({ minimumQuantity: decimal(t.minimumQuantity), unitCost: decimal(t.unitCost) })),
     };
     this.action.submit('/api/admin/supplier-offers' + (this.offerEditing ? '/' + this.offerEditing : ''),
-      body, () => { this.offerEditing = null; this.loadOffers(); this.compareOffers(); },
+      body, () => { this.offerEditing = null; this.offerOpen = false; this.loadOffers(); this.compareOffers(); },
       this.offerEditing ? 'PUT' : 'POST');
   }
   deactivateOffer(offer: Row) {
