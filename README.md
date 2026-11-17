@@ -193,3 +193,8 @@ O [GitHub Actions](https://github.com/WalterMatheusgg/SistemaMercearia/actions/w
 Desenvolvido por **[Walter Matheus](https://github.com/WalterMatheusgg)**
 
 </div>
+
+
+### Cotações de fornecedores
+
+O módulo Compras permite registrar cotações por fornecedor e produto, com marca, código do fornecedor, preço unitário, quantidade mínima, custo de frete, prazo de entrega, data e validade da cotação, observações e faixas de preço por volume. A comparação calcula o custo estimado para a quantidade informada (preço unitário aplicável pela faixa + frete), lista as ofertas válidas que atendem ao pedido mínimo e preserva o histórico por desativação lógica. Impostos, descontos negociados fora das faixas e condições especiais de pagamento não entram automaticamente no cálculo e devem ser considerados na negociação.
