@@ -8,13 +8,16 @@
 | V4 | Devolução integral de recebimento ao fornecedor, referência aos movimentos compensatórios e preservação do documento original |
 | V5 | Dinheiro entregue e troco calculado na venda; somente o pagamento líquido movimenta a gaveta |
 | V6 | Fotos privadas de produtos, vinculadas ao cadastro |
+| V7 | Eventos internos de erro e diagnóstico |
+| V8 | Tratamento de produtos sem categoria |
+| V9 | Marca de produto |
 | V10 | Sessões de autenticação persistidas em JDBC |
-| V15 | Perfil comercial complementar dos fornecedores: representante, WhatsApp, cidade, portfólio, marcas, pedido mínimo, descontos, pagamento, entrega, frete, troca e garantia |
-| V16 | Cotações estruturadas por fornecedor/produto, faixas de preço por volume e frete no pedido/recebimento |
 | V11 | Correção do search_path da função de proteção do histórico |
 | V12 | Identificação e leitura por código de barras de prateleira |
 | V13 | Custo de aquisição efetivo por item recebido e livro de eventos do custo médio ponderado |
 | V14 | Proteção contra alteração ou exclusão do histórico de eventos de custo |
+| V15 | Perfil comercial complementar dos fornecedores: representante, WhatsApp, cidade, portfólio, marcas, pedido mínimo, descontos, pagamento, entrega, frete, troca e garantia |
+| V16 | Cotações estruturadas por fornecedor/produto, faixas de preço por volume e frete no pedido/recebimento |
 
 ## Relações comerciais
 
