@@ -85,6 +85,8 @@ public class SupplierOffersService {
                 body.supplierId(),actor.storeId());
             db.one("SELECT id FROM product WHERE id=? AND active FOR UPDATE",body.productId());
             BigDecimal minimumOrder = validQuantity(body.minimumOrderQuantity());
+            BigDecimal baseCost = Db.money(body.unitCost(), false);
+            BigDecimal freight = Db.money(body.freightCost(), false);
             LocalDate quoted=body.quotedAt()==null?Db.today():body.quotedAt();
             if(body.validUntil()!=null && body.validUntil().isBefore(quoted))
                 throw new BusinessRuleException("A validade não pode ser anterior à data da cotação.");
@@ -92,14 +94,14 @@ public class SupplierOffersService {
             if(id==null) db.jdbc.update(
                 "INSERT INTO supplier_offer(id,store_id,supplier_id,product_id,brand,supplier_product_code,unit_cost,minimum_order_quantity,quoted_at,valid_until,delivery_days,freight_cost,notes,active,created_by) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
                 target,actor.storeId(),body.supplierId(),body.productId(),Db.optional(body.brand(),80),
-                Db.optional(body.supplierProductCode(),80),Db.money(body.unitCost(),false),
+                Db.optional(body.supplierProductCode(),80),baseCost,
                 minimumOrder,quoted,body.validUntil(),body.deliveryDays(),
-                Db.money(body.freightCost(),false),Db.optional(body.notes(),500),body.active(),actor.userId());
+                freight,Db.optional(body.notes(),500),body.active(),actor.userId());
             else {
                 db.one("SELECT id FROM supplier_offer WHERE id=? AND store_id=? FOR UPDATE",id,actor.storeId());
                 db.jdbc.update("UPDATE supplier_offer SET supplier_id=?,product_id=?,brand=?,supplier_product_code=?,unit_cost=?,minimum_order_quantity=?,quoted_at=?,valid_until=?,delivery_days=?,freight_cost=?,notes=?,active=?,updated_at=now() WHERE id=?",
                     body.supplierId(),body.productId(),Db.optional(body.brand(),80),Db.optional(body.supplierProductCode(),80),
-                    Db.money(body.unitCost(),false),minimumOrder,quoted,body.validUntil(),
+                    baseCost,minimumOrder,quoted,body.validUntil(),
                     body.deliveryDays(),Db.money(body.freightCost(),false),Db.optional(body.notes(),500),body.active(),id);
                 db.jdbc.update("DELETE FROM supplier_offer_tier WHERE offer_id=?",id);
             }
@@ -108,8 +110,11 @@ public class SupplierOffersService {
                 BigDecimal threshold = validQuantity(tier.minimumQuantity());
                 if(threshold.compareTo(minimumOrder)<0 || !thresholds.add(threshold.stripTrailingZeros()))
                     throw new BusinessRuleException("Faixas de preço devem ser únicas e não inferiores ao pedido mínimo.");
+                BigDecimal tierCost = Db.money(tier.unitCost(), false);
+                if (tierCost.compareTo(baseCost) > 0)
+                    throw new BusinessRuleException("O preço por faixa não pode superar o preço unitário base.");
                 db.jdbc.update("INSERT INTO supplier_offer_tier(id,offer_id,minimum_quantity,unit_cost) VALUES(?,?,?,?)",
-                    UUID.randomUUID(),target,threshold,Db.money(tier.unitCost(),false));
+                    UUID.randomUUID(),target,threshold,tierCost);
             }
             db.audit(actor,id==null?"SUPPLIER_OFFER_CREATED":"SUPPLIER_OFFER_UPDATED",target,
                 "Cotação de fornecedor para produto "+body.productId());
