@@ -47,6 +47,7 @@ export class PurchasesComponent {
   productId = '';
   amount = '1';
   cost = '';
+  freightCost = '0';
   dueDate = today();
   note = '';
   readonly suggestedNotice = signal('');
@@ -146,6 +147,7 @@ export class PurchasesComponent {
       this.productId = productId;
       this.amount = this.compareQuantity;
       this.cost = String(offer['effectiveUnitCost']);
+      this.freightCost = String(offer['freightCost'] ?? '0');
       this.lines = [{ productId, name, quantity: this.compareQuantity, unitCost: this.cost }];
       this.open = true;
       this.suggestedNotice.set('Cotação selecionada: confira os dados e o prazo antes de registrar o pedido.');
@@ -244,10 +246,12 @@ export class PurchasesComponent {
         })),
         dueDate: this.dueDate,
         note: this.note,
+        freightCost: decimal(this.freightCost),
       },
       (r) => {
         this.open = false;
         this.lines = [];
+        this.freightCost = '0';
         this.show(r.id);
         this.load();
       },
