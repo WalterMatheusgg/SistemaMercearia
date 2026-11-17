@@ -334,8 +334,8 @@ class CommerceIntegrationTest {
         var comparison = supplierOffers.compare(actor, product, m("10"));
         var rows = (List<Map<String,Object>>) comparison.get("content");
         assertThat(rows).hasSize(1);
-        assertThat(rows.getFirst().get("effectiveUnitCost")).isEqualTo("8.00");
-        assertThat(rows.getFirst().get("estimatedTotal")).isEqualTo("85.00");
+        assertThat(Db.decimal(rows.getFirst(), "effectiveUnitCost")).isEqualByComparingTo("8.00");
+        assertThat(Db.decimal(rows.getFirst(), "estimatedTotal")).isEqualByComparingTo("85.00");
         assertThat(supplierOffers.compare(actor, product, m("1")).get("content")).isEmpty();
         supplierOffers.deactivate(actor, UUID.randomUUID(), offerId);
         assertThat(supplierOffers.compare(actor, product, m("10")).get("content")).isEmpty();
