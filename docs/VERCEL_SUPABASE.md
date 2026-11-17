@@ -15,11 +15,11 @@ Na Vercel, as variáveis privadas `DB_URL`, `DB_USERNAME`, `DB_PASSWORD` devem a
 
 Defina ainda `SPRING_PROFILES_ACTIVE=prod,vercel`, `APP_PUBLIC_URL` com HTTPS, `SESSION_COOKIE_SECURE=true`, `PORT=8080` e `BOOTSTRAP_ADMIN_ENABLED=false` depois do primeiro administrador criado. Somente um banco vazio precisa temporariamente de `prod,vercel,bootstrap` e de credenciais fortes de bootstrap. Remova-as depois do primeiro acesso. O perfil `prod` obriga cookies seguros e desabilita Swagger público.
 
-Verifique o banco (`flyway_schema_history` versões V1–V11 em `loja`), `/actuator/health`, login e ações não destrutivas de Produtos e Estoque. A atualização não migra automaticamente dados do Codespace; consulte o procedimento de backup e restauração em `docs/HOSPEDAGEM.md`.
+Verifique o banco (`flyway_schema_history` versões V1–V12 em `loja`), `/actuator/health`, login e ações não destrutivas de Produtos e Estoque. A atualização não migra automaticamente dados do Codespace; consulte o procedimento de backup e restauração em `docs/HOSPEDAGEM.md`.
 
 ## Estado verificado em 07/11/2026
 
-A autenticação da Vercel foi removida apenas do domínio de **produção** (a Loja mantém seu login); os previews continuam protegidos. No Supabase, o Flyway aplicou as migrações até V11. A Vercel usa Hikari com uma conexão por instância como mitigação de emergência. Foram observados cold starts de cerca de 18–21 segundos e o erro `EMAXCONNSESSION` por limite de clientes do pooler. O perfil `prod,railway` foi preparado, mas **não há deploy persistente homologado**.
+A autenticação da Vercel foi removida apenas do domínio de **produção** (a Loja mantém seu login); os previews continuam protegidos. No Supabase, o Flyway aplicou as migrações até V12. A Vercel usa Hikari com uma conexão por instância como mitigação de emergência. Foram observados cold starts de cerca de 18–21 segundos e o erro `EMAXCONNSESSION` por limite de clientes do pooler. O perfil `prod,railway` foi preparado, mas **não há deploy persistente homologado**.
 
 ## Limites: não é produção de loja comercial
 
@@ -41,8 +41,23 @@ ao Supabase, com backup e verificação em um runner de manutenção confiável,
 antes de publicar qualquer release que acrescente migrações. O backend
 continua com `ddl-auto: validate`, que ajuda a detectar divergências.
 Confirme a versão de `loja.flyway_schema_history` antes de novas releases;
-na configuração atual V12 já está aplicada. Não use o runtime Vercel para
-fazer migração concorrente em inúmeras instâncias.
+na configuração atual V12 já está aplicada. As migrações V13–V16 desta evolução ainda precisam ser aplicadas no Supabase por um runner de manutenção, antes de usar os novos fluxos de compras/custos. Não use o runtime Vercel para fazer migração concorrente em inúmeras instâncias.
+
+### Migrações de compras e custo médio (V13–V16)
+
+A evolução do módulo de compras acrescenta as migrações V13–V16:
+- V13: custo de aquisição efetivo por recebimento e tabela de eventos do custo médio ponderado.
+- V14: proteção contra alteração/exclusão dos eventos de custo.
+- V15: perfil comercial de fornecedor, migrado para uma versão única e com IF NOT EXISTS.
+- V16: cotações estruturadas, faixas de preço e frete no pedido/recebimento, também idempotente para instalações que já tenham parte dessas estruturas.
+
+Antes de publicar ou usar as novas funções no ambiente Supabase:
+1. Faça e confira um backup restaurável.
+2. Confira loja.flyway_schema_history e a versão atual do schema.
+3. Execute as migrações V13–V16 em sequência, usando um runner de manutenção conectado ao schema loja e com a mesma versão do código.
+4. Confirme que todas as quatro versões aparecem em loja.flyway_schema_history e valide cadastro, recebimento parcial, devolução e exportação Excel.
+
+A Vercel continua com Flyway desativado. Um deploy de código, por si só, não aplica essas migrações.
 
 **Limite importante:** essas medidas reduzem chamadas e conexões; não tornam
 o processo Java persistente. Primeiro acesso após inatividade ainda terá
