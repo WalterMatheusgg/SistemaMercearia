@@ -57,3 +57,6 @@ A aplicação é funcional localmente para esses fluxos, mas a entrada em produ�
 - Limite de tentativas de autenticação é por processo/IP. Em várias instâncias, use limitador compartilhado no proxy e planeje persistência/afinidade de sessão.
 
 Esta versão atende uma loja, um local principal e um caixa físico. Ainda não oferece operação offline, filiais, múltiplos caixas, frete por transportadora, tributos, conciliação automática, devolução parcial de venda ou transferência entre locais. São ampliações de escopo, não botões simulados.
+
+
+| Cotações | Em Compras, registre uma cotação para cada combinação fornecedor/produto, incluindo preço base, pedido mínimo, marca, código do fornecedor, frete, prazo, validade e faixas de preço por quantidade. Use Comparar preços para ordenar ofertas válidas pelo total estimado da quantidade escolhida (preço aplicável × quantidade + frete). Impostos e condições negociadas fora dos campos estruturados devem ser conferidos separadamente. Cotações antigas podem ser desativadas sem apagar o histórico. |
