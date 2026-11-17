@@ -112,6 +112,8 @@
       @if (management()) { <button class="primary" type="button" (click)="newOffer()">Nova cotação</button> }
     </div>
     <div class="grid">
+      <label>Buscar produto<input name="compareQuery" [(ngModel)]="query" placeholder="Nome ou código" /></label>
+      <button type="button" (click)="searchProducts()">Buscar produto</button>
       <label>Produto para comparar
         <select name="compareProduct" [(ngModel)]="compareProductId">
           <option value="">Selecione um produto</option>
@@ -149,6 +151,8 @@
         <h3>{{ offerEditing ? 'Editar cotação' : 'Cadastrar cotação' }}</h3>
         <fieldset [disabled]="action.locked()">
           <div class="grid">
+            <label>Buscar fornecedor<input name="offerSupplierQuery" [(ngModel)]="supplierQuery" placeholder="Nome do fornecedor" /></label>
+            <button type="button" (click)="searchSuppliers()">Buscar fornecedor</button>
             <label>Fornecedor
               <select name="offerSupplier" [(ngModel)]="offerForm.supplierId" required>
                 <option value="">Selecione</option>
