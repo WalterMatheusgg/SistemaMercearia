@@ -125,7 +125,7 @@ public class StoreWorkbookService {
                 ORDER BY e.occurred_at,e.id
                 """, storeId, from, to);
         List<Map<String, Object>> purchases = rows("""
-                SELECT o.created_at,o.supplier_name,o.status,o.total,o.due_date,
+                SELECT o.created_at,o.supplier_name,o.status,o.total,o.freight_cost,o.due_date,
                        o.note,o.id
                 FROM purchase_order o WHERE o.store_id=?
                   AND o.created_at>=? AND o.created_at<?
@@ -133,7 +133,7 @@ public class StoreWorkbookService {
                 """, storeId, from, to);
         List<Map<String, Object>> receipts = rows("""
                 SELECT r.received_at,o.supplier_name,o.id AS purchase_id,
-                       r.total,r.cancelled_at,r.note
+                       r.total,r.freight_cost,r.cancelled_at,r.note
                 FROM purchase_receipt r JOIN purchase_order o ON o.id=r.purchase_id
                 WHERE o.store_id=? AND r.received_at>=? AND r.received_at<?
                 ORDER BY r.received_at,r.id
@@ -198,7 +198,7 @@ public class StoreWorkbookService {
             section(workbook, styles, "Compras", "COMPRAS CRIADAS NO PERÍODO",
                     purchases,time("Criada em","createdAt"),
                     text("Fornecedor","supplierName",32),text("Status atual","status",18),
-                    money("Valor previsto","total"),date("Vencimento","dueDate"),
+                    money("Valor previsto","total"),money("Frete do pedido","freightCost"),date("Vencimento","dueDate"),
                     text("Observação","note",45),text("ID do pedido","id",38));
             section(workbook, styles, "Receb. compras", "RECEBIMENTOS DE COMPRAS NO PERÍODO",
                     receipts,time("Recebido em","receivedAt"),
