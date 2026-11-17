@@ -43,3 +43,6 @@ O catálogo/local/caixa desta versão atendem uma loja principal; não há prome
 - `supplier_offer`: vincula fornecedor, produto, marca/código do fornecedor, preço unitário base, quantidade mínima, frete, prazo, data/validade, observações e estado ativo.
 - `supplier_offer_tier`: registra faixas de quantidade e preço unitário por cotação. A faixa aplicável é a maior quantidade mínima que não ultrapassa a quantidade comparada.
 - As cotações são isoladas por loja e mantidas no histórico por desativação lógica. A comparação exclui ofertas inativas, vencidas, fornecedores inativos e quantidades abaixo do pedido mínimo.
+
+
+O campo `purchase_order.freight_cost` armazena o frete total do pedido. `purchase_receipt.freight_cost` registra a parcela reconhecida em cada recebimento; o rateio acompanha o valor acumulado de mercadoria recebida e é reconciliado quando uma remessa é devolvida.
