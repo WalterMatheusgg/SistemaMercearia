@@ -37,10 +37,10 @@ O repositório se chama **SistemaMercearia**, enquanto a marca apresentada na in
 | 🧱 **Produtos** | Cadastro com categoria, marca, unidade, preço, quantidade inicial e foto opcional |
 | 📦 **Estoque** | Entrada, saída, contagem, perda, mínimo, estorno, reposição sugerida histórico, leitura de etiquetas e impressão Code 128 |
 | 🛒 **Vendas** | Seleção de itens, conferência do total, descontos autorizados, pagamentos e devoluções |
-| 👥 **Clientes e fornecedores** | Cadastros, contatos e vínculos com operações |
+| 👥 **Clientes e fornecedores** | Cadastros, contatos, ficha comercial completa do fornecedor e exportação CSV da página atual (até 100 registros) |
 | 🚚 **Compras** | Pedidos e recebimentos parciais ou integrais, com atualização do estoque |
 | 💰 **Financeiro e caixa** | Contas, pagamentos, recebimentos e movimentos de dinheiro |
-| 📈 **Relatórios** | Vendas, pagamentos, custos, estoque e exportação CSV |
+| 📈 **Relatórios** | Vendas, pagamentos, custos, estoque, ranking por quantidade vendida e exportação CSV/Excel |
 | 🔐 **Equipe** | Usuários, autenticação e permissões por função |
 | ✨ **Assistente** | Consultas internas, importação em lote com prévia e IA externa opcional |
 | ✉️ **Notificações** | Preferências e fila transacional; envio real exige SMTP e worker persistente |
