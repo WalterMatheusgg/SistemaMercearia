@@ -13,7 +13,7 @@
 | Compras | Pedido ao fornecedor, recebimento parcial/completo, entrada física e contas a pagar apenas do material recebido e devolução integral de recebimentos |
 | Financeiro | Títulos avulsos e de origem comercial, pagamentos parciais, estorno e saldos sem duplicar faturamento |
 | Loja virtual | Catálogo, carrinho, cliente verificado, cálculo no servidor, reserva com expiração, pedido, conferência manual de pagamento, preparo e retirada/entrega |
-| Relatórios | Vendas por data, ticket, produtos, pagamentos por meio, posição de contas, custo histórico das mercadorias vendidas, lucro e margem brutos estimados, estoque físico avaliado a custo, comparativo de períodos e materiais sem vendas há 90 dias (com cadastro mais antigo que 90 dias), exportação CSV |
+| Relatórios | Vendas por data, ticket, ranking de produtos por quantidade, faturamento após rateio proporcional do desconto, custo histórico, lucro bruto e margem estimada por produto; pagamentos por meio, posição de contas, estoque físico avaliado a custo, comparativo de períodos e materiais sem vendas há 90 dias, exportação CSV |
 | E-mail | Preferências por usuário, verificação do destinatário, outbox transacional, reenvios automáticos limitados e histórico; resumo às 21h de Brasília |
 | Operação | Docker integrado, perfil de produção, saúde, CI, testes de navegador, backup e restauração em banco separado |
 
