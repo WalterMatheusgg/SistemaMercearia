@@ -144,7 +144,7 @@
     } @else {
       <p class="muted">Nenhuma cotação válida atende ao produto e à quantidade selecionados.</p>
     }
-    @if (management() && offerEditing !== null || management() && offerForm.productId !== '') {
+    @if (management() && offerOpen) {
       <form class="panel gap" (ngSubmit)="saveOffer()" #offerFormRef="ngForm">
         <h3>{{ offerEditing ? 'Editar cotação' : 'Cadastrar cotação' }}</h3>
         <fieldset [disabled]="action.locked()">
@@ -184,7 +184,7 @@
           <label><input type="checkbox" name="offerActive" [(ngModel)]="offerForm.active" /> Cotação ativa</label>
           <div class="toolbar gap">
             <button class="primary" [disabled]="offerFormRef.invalid || action.locked()">Salvar cotação</button>
-            <button type="button" (click)="offerEditing = null; offerForm.productId = ''; offerTiers = []">Fechar</button>
+            <button type="button" (click)="offerEditing = null; offerOpen = false; offerForm.productId = ''; offerTiers = []">Fechar</button>
           </div>
         </fieldset>
       </form>
