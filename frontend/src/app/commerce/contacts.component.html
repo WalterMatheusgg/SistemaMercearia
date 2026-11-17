@@ -5,7 +5,10 @@
       <h1>{{ title }}</h1>
       <small>{{ explanation }}</small>
     </div>
-    <button class="primary" (click)="edit()" [disabled]="action.locked()">Novo cadastro</button>
+    <div class="header-actions">
+      @if (kind === 'SUPPLIER') { <button type="button" (click)="exportSuppliers()">Exportar planilha CSV</button> }
+      <button class="primary" (click)="edit()" [disabled]="action.locked()">Novo cadastro</button>
+    </div>
   </header>
   @if (kind === 'SUPPLIER' && canManageMaterials()) {
     <nav class="supplier-shortcuts" aria-label="Ações de materiais">
@@ -48,6 +51,25 @@
               ><input type="checkbox" [(ngModel)]="form.active" name="active" />Ativo</label
             >
           </div>
+
+          @if (kind === 'SUPPLIER') {
+            <h3>Informações comerciais do fornecedor</h3>
+            <div class="grid">
+              <label>Representante comercial<input [(ngModel)]="form.representativeName" name="representativeName" maxlength="160" /></label>
+              <label>WhatsApp<input [(ngModel)]="form.whatsapp" name="whatsapp" maxlength="40" placeholder="(DDD) 99999-9999" /></label>
+              <label>Cidade<input [(ngModel)]="form.city" name="city" maxlength="120" /></label>
+              <label>Produtos comercializados<input [(ngModel)]="form.products" name="products" maxlength="1000" /></label>
+              <label>Marcas disponíveis<input [(ngModel)]="form.brands" name="brands" maxlength="1000" /></label>
+              <label>Pedido mínimo<input [(ngModel)]="form.minimumOrder" name="minimumOrder" maxlength="200" placeholder="Valor ou quantidade mínima" /></label>
+              <label class="wide">Preços e descontos por quantidade<textarea [(ngModel)]="form.quantityDiscount" name="quantityDiscount" maxlength="500"></textarea></label>
+              <label>Condições de pagamento<input [(ngModel)]="form.paymentTerms" name="paymentTerms" maxlength="500" /></label>
+              <label>Prazo de entrega<input [(ngModel)]="form.deliveryTime" name="deliveryTime" maxlength="160" /></label>
+              <label>Valor/condições do frete<input [(ngModel)]="form.freightTerms" name="freightTerms" maxlength="300" /></label>
+              <label class="wide">Política de troca<textarea [(ngModel)]="form.returnPolicy" name="returnPolicy" maxlength="1000"></textarea></label>
+              <label class="wide">Garantia<textarea [(ngModel)]="form.warrantyPolicy" name="warrantyPolicy" maxlength="1000"></textarea></label>
+            </div>
+          }
+
           <div class="actions gap">
             <button type="button" (click)="open = false">Cancelar</button
             ><button class="primary" [disabled]="contactForm.invalid">Salvar</button>
@@ -65,7 +87,7 @@
         <thead>
           <tr>
             <th>Nome</th>
-            <th>Contato</th>
+            <th>Representante / contato</th>
             <th>Documento</th>
             <th>Situação</th>
             <th>Ações</th>
@@ -79,7 +101,7 @@
                 ><small>{{ row['address'] }}</small>
               </td>
               <td>
-                {{ row['email'] || '—' }}<small>{{ row['phone'] }}</small>
+                {{ row['representativeName'] || '—' }}<small>{{ row['phone'] }} · WhatsApp {{ row['whatsapp'] || '—' }} · {{ row['email'] || '' }}</small><small>{{ row['city'] || '' }}</small>
               </td>
               <td>{{ row['document'] || '—' }}</td>
               <td>{{ row['active'] ? 'Ativo' : 'Inativo' }}</td>
