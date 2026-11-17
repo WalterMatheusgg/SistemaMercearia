@@ -6,7 +6,7 @@
       <small>{{ explanation }}</small>
     </div>
     <div class="header-actions">
-      @if (kind === 'SUPPLIER') { <button type="button" (click)="exportSuppliers()">Exportar planilha CSV</button> }
+      @if (kind === 'SUPPLIER') { <button type="button" (click)="exportSuppliers()">Exportar planilha CSV (até 100)</button> }
       <button class="primary" (click)="edit()" [disabled]="action.locked()">Novo cadastro</button>
     </div>
   </header>
@@ -132,7 +132,7 @@
       <span>{{ total }} cadastros · Página {{ page + 1 }}</span>
       <div>
         <button [disabled]="page === 0" (click)="page = page - 1; load()">Anterior</button
-        ><button [disabled]="(page + 1) * 20 >= total" (click)="page = page + 1; load()">
+        ><button [disabled]="(page + 1) * 100 >= total" (click)="page = page + 1; load()">
           Próxima
         </button>
       </div>
