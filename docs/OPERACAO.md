@@ -66,4 +66,4 @@ O frete informado no pedido compõe o total da compra e é rateado proporcionalm
 
 As revisões de uma cotação desativam a versão anterior e criam um novo registro, mantendo os preços e as faixas antigas para auditoria e comparação histórica.
 
-**Limite atual do custo:** o frete compõe o total do pedido, dos recebimentos e das contas a pagar, mas ainda não altera automaticamente o custo unitário mantido no cadastro do produto nem o custo histórico gravado nas vendas. Portanto, a margem bruta por produto não deve ser interpretada como margem líquida de frete de aquisição.
+O frete de cada recebimento é rateado entre os produtos e incorporado ao custo médio ponderado do cadastro. Na confirmação da venda, o sistema grava o custo vigente em cada item, preservando o histórico e os relatórios de margem. Devoluções integrais de vendas recompõem o estoque pelo custo histórico vendido; devoluções de compras reduzem o estoque pelo custo médio vigente. O histórico fica registrado em `product_cost_event`. Trata-se de custeio gerencial, não fiscal: tributos e despesas indiretas não cadastradas ficam fora do cálculo.
