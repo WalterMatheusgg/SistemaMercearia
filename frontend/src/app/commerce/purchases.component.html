@@ -108,7 +108,7 @@
   <section class="panel">
     <div class="toolbar">
       <div><h2>Cotações e comparação de fornecedores</h2>
-        <p class="muted">Registre preços por produto, faixas de quantidade, frete e validade. A comparação considera o custo da quantidade informada mais o frete.</p>
+        <p class="muted">Registre preços por produto, faixas de quantidade, frete e validade. A comparação considera o preço aplicável à quantidade mais o frete informado. Impostos e condições negociadas fora da cotação não entram no cálculo.</p>
       </div>
       @if (management()) { <button class="primary" type="button" (click)="newOffer()">Nova cotação</button> }
     </div>
@@ -199,12 +199,14 @@
     }
     <div class="scroll gap">
       <table>
-        <thead><tr><th>Produto</th><th>Fornecedor</th><th>Marca</th><th>Preço base</th><th>Pedido mínimo</th><th>Validade</th><th>Situação</th><th></th></tr></thead>
+        <thead><tr><th>Produto</th><th>Fornecedor</th><th>Marca</th><th>Preço base</th><th>Faixas de preço</th><th>Pedido mínimo</th><th>Validade</th><th>Situação</th><th></th></tr></thead>
         <tbody>
           @for (offer of offers(); track offer.id) {
             <tr>
               <td>{{ offer['productName'] }}</td><td>{{ offer['supplierName'] }}</td><td>{{ offer['brand'] || '—' }}</td>
-              <td>{{ money(offer['unitCost']) }}</td><td>{{ quantity(offer['minimumOrderQuantity']) }}</td>
+              <td>{{ money(offer['unitCost']) }}</td>
+              <td>@for (tier of offer['tiers']; track tier.id) { <small>A partir de {{ quantity(tier.minimumQuantity) }}: {{ money(tier.unitCost) }}<br /></small> } @if (!offer['tiers']?.length) { — }</td>
+              <td>{{ quantity(offer['minimumOrderQuantity']) }}</td>
               <td>{{ offer['validUntil'] ? date(offer['validUntil']) : 'Sem validade definida' }}</td>
               <td>{{ offer['active'] ? 'Ativa' : 'Inativa' }}</td>
               <td>
