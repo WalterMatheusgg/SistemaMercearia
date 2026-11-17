@@ -354,6 +354,43 @@ class CommerceIntegrationTest {
     }
 
     @Test
+    void purchaseFreightIsAllocatedAcrossPartialReceiptsAndReconciledAfterReturn() {
+        opening("50");
+        UUID orderId = Db.id(purchases.create(actor, UUID.randomUUID(),
+                new PurchasingService.Order(
+                        supplier,
+                        List.of(new PurchasingService.Item(product, m("10"), m("10.00"))),
+                        Db.today(), "Compra com frete", m("10.00"))), "id");
+        assertThat(Db.decimal(purchases.detail(actor, orderId), "total"))
+                .isEqualByComparingTo("110.00");
+        UUID itemId = Db.id(((List<Map<String,Object>>) purchases.detail(actor, orderId)
+                .get("items")).getFirst(), "id");
+        purchases.receive(actor, UUID.randomUUID(),
+                new PurchasingService.Receipt(List.of(new PurchasingService.Received(itemId, m("5"))),
+                        "Primeira parte recebida"));
+        var first = ((List<Map<String,Object>>) purchases.detail(actor, orderId).get("receipts")).getFirst();
+        UUID firstReceiptId = Db.id(first, "id");
+        assertThat(Db.decimal(first, "freightCost")).isEqualByComparingTo("5.00");
+        assertThat(Db.decimal(first, "total")).isEqualByComparingTo("55.00");
+
+        purchases.receive(actor, UUID.randomUUID(),
+                new PurchasingService.Receipt(List.of(new PurchasingService.Received(itemId, m("5"))),
+                        "Segunda parte recebida"));
+        purchases.returnReceipt(actor, UUID.randomUUID(), orderId, firstReceiptId,
+                "Devolução integral da primeira remessa");
+        assertThat(balance("physical")).isEqualByComparingTo("55");
+
+        purchases.receive(actor, UUID.randomUUID(),
+                new PurchasingService.Receipt(List.of(new PurchasingService.Received(itemId, m("5"))),
+                        "Reposição após devolução"));
+        BigDecimal activePayables = db.jdbc.queryForObject(
+                "SELECT COALESCE(sum(a.amount),0) FROM financial_account a JOIN purchase_receipt r "+
+                "ON r.id=a.receipt_id WHERE r.purchase_id=? AND a.status<>'CANCELLED'",
+                BigDecimal.class, orderId);
+        assertThat(activePayables).isEqualByComparingTo("110.00");
+    }
+
+    @Test
     void partialReceiptsCreateOnlyReceivedStockAndPayables() {
         opening("50");
         UUID id =
