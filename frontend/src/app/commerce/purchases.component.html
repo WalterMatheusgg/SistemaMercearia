@@ -211,7 +211,7 @@
               <td>{{ offer['active'] ? 'Ativa' : 'Inativa' }}</td>
               <td>
                 @if (management()) {
-                  <button type="button" (click)="editOffer(offer)">Editar</button>
+                  <button type="button" (click)="editOffer(offer)">Criar revisão</button>
                   @if (offer['active']) { <button type="button" class="danger" (click)="deactivateOffer(offer)">Desativar</button> }
                 }
               </td>
