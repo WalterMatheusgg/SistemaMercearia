@@ -60,6 +60,7 @@ export class PurchasesComponent {
     deliveryDays: '', freightCost: '0', notes: '', active: true };
   offerTiers: { minimumQuantity: string; unitCost: string }[] = [];
   compareProductId = '';
+  compareRequested = false;
   compareQuantity = '1';
   receiveLines: {
     itemId: string;
@@ -132,6 +133,7 @@ export class PurchasesComponent {
       this.error.set('Selecione um produto e informe uma quantidade válida para comparar.');
       return;
     }
+    this.compareRequested = true;
     this.http.get<{content: Row[]}>('/api/admin/supplier-offers/compare', {
       params: { productId: this.compareProductId, quantity: decimal(this.compareQuantity) },
     }).subscribe({ next: r => this.comparisons.set(r.content), error: e => this.error.set(detail(e)) });
@@ -199,13 +201,13 @@ export class PurchasesComponent {
       tiers: this.offerTiers.map(t => ({ minimumQuantity: decimal(t.minimumQuantity), unitCost: decimal(t.unitCost) })),
     };
     this.action.submit('/api/admin/supplier-offers' + (this.offerEditing ? '/' + this.offerEditing : ''),
-      body, () => { this.offerEditing = null; this.offerOpen = false; this.loadOffers(); this.compareOffers(); },
+      body, () => { this.offerEditing = null; this.offerOpen = false; this.loadOffers(); this.compareProductId = this.offerForm.productId; this.compareOffers(); },
       this.offerEditing ? 'PUT' : 'POST');
   }
   deactivateOffer(offer: Row) {
     if (window.confirm('Desativar esta cotação? O histórico será preservado.'))
       this.action.submit('/api/admin/supplier-offers/' + offer.id + '/deactivate', {},
-        () => this.loadOffers());
+        () => { this.loadOffers(); if (this.compareProductId) this.compareOffers(); });
   }
   add() {
     const p = this.products().find((p) => p.id === this.productId);
