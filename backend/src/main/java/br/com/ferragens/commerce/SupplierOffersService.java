@@ -32,7 +32,7 @@ public class SupplierOffersService {
                         @Min(0) @Max(3650) Integer deliveryDays,
                         @NotNull @DecimalMin("0.00") BigDecimal freightCost,
                         @Size(max=500) String notes, boolean active,
-                        @Size(max=30) List<@Valid Tier> tiers) {}
+                        @Size(max=30) List<@NotNull @Valid Tier> tiers) {}
 
     @Transactional(readOnly=true)
     public Map<String,Object> list(Actor actor, UUID productId, UUID supplierId, boolean includeInactive) {
@@ -102,7 +102,7 @@ public class SupplierOffersService {
                 db.jdbc.update("UPDATE supplier_offer SET supplier_id=?,product_id=?,brand=?,supplier_product_code=?,unit_cost=?,minimum_order_quantity=?,quoted_at=?,valid_until=?,delivery_days=?,freight_cost=?,notes=?,active=?,updated_at=now() WHERE id=?",
                     body.supplierId(),body.productId(),Db.optional(body.brand(),80),Db.optional(body.supplierProductCode(),80),
                     baseCost,minimumOrder,quoted,body.validUntil(),
-                    body.deliveryDays(),Db.money(body.freightCost(),false),Db.optional(body.notes(),500),body.active(),id);
+                    body.deliveryDays(),freight,Db.optional(body.notes(),500),body.active(),id);
                 db.jdbc.update("DELETE FROM supplier_offer_tier WHERE offer_id=?",id);
             }
             Set<BigDecimal> thresholds=new HashSet<>();
