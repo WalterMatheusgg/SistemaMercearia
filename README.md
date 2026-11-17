@@ -40,7 +40,7 @@ O repositório se chama **SistemaMercearia**, enquanto a marca apresentada na in
 | 👥 **Clientes e fornecedores** | Cadastros, contatos, ficha comercial do fornecedor e exportação CSV de todos os registros do filtro atual |
 | 🚚 **Compras** | Pedidos e recebimentos parciais ou integrais, com atualização do estoque |
 | 💰 **Financeiro e caixa** | Contas, pagamentos, recebimentos e movimentos de dinheiro |
-| 📈 **Relatórios** | Vendas, pagamentos, custos, estoque, ranking por quantidade vendida com faturamento, custo, lucro bruto e margem estimada por produto; exportação CSV/Excel |
+| 📈 **Relatórios** | Vendas, pagamentos, custos, estoque, ranking por quantidade vendida com faturamento, custo, lucro bruto e margem estimada por produto; exportação CSV/Excel com histórico de eventos de custo |
 | 🔐 **Equipe** | Usuários, autenticação e permissões por função |
 | ✨ **Assistente** | Consultas internas, importação em lote com prévia e IA externa opcional |
 | ✉️ **Notificações** | Preferências e fila transacional; envio real exige SMTP e worker persistente |
