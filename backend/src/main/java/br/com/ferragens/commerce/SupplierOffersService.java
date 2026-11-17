@@ -90,21 +90,20 @@ public class SupplierOffersService {
             LocalDate quoted=body.quotedAt()==null?Db.today():body.quotedAt();
             if(body.validUntil()!=null && body.validUntil().isBefore(quoted))
                 throw new BusinessRuleException("A validade não pode ser anterior à data da cotação.");
-            UUID target=id==null?UUID.randomUUID():id;
-            if(id==null) db.jdbc.update(
-                "INSERT INTO supplier_offer(id,store_id,supplier_id,product_id,brand,supplier_product_code,unit_cost,minimum_order_quantity,quoted_at,valid_until,delivery_days,freight_cost,notes,active,created_by) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
-                target,actor.storeId(),body.supplierId(),body.productId(),Db.optional(body.brand(),80),
-                Db.optional(body.supplierProductCode(),80),baseCost,
-                minimumOrder,quoted,body.validUntil(),body.deliveryDays(),
-                freight,Db.optional(body.notes(),500),body.active(),actor.userId());
-            else {
-                db.one("SELECT id FROM supplier_offer WHERE id=? AND store_id=? FOR UPDATE",id,actor.storeId());
-                db.jdbc.update("UPDATE supplier_offer SET supplier_id=?,product_id=?,brand=?,supplier_product_code=?,unit_cost=?,minimum_order_quantity=?,quoted_at=?,valid_until=?,delivery_days=?,freight_cost=?,notes=?,active=?,updated_at=now() WHERE id=?",
-                    body.supplierId(),body.productId(),Db.optional(body.brand(),80),Db.optional(body.supplierProductCode(),80),
-                    baseCost,minimumOrder,quoted,body.validUntil(),
-                    body.deliveryDays(),freight,Db.optional(body.notes(),500),body.active(),id);
-                db.jdbc.update("DELETE FROM supplier_offer_tier WHERE offer_id=?",id);
+            UUID target = UUID.randomUUID();
+            if (id != null) {
+                db.one("SELECT id FROM supplier_offer WHERE id=? AND store_id=? FOR UPDATE",
+                        id, actor.storeId());
+                // Revisões preservam a cotação anterior e suas faixas para consulta histórica.
+                db.jdbc.update("UPDATE supplier_offer SET active=false,updated_at=now() WHERE id=?",
+                        id);
             }
+            db.jdbc.update(
+                    "INSERT INTO supplier_offer(id,store_id,supplier_id,product_id,brand,supplier_product_code,unit_cost,minimum_order_quantity,quoted_at,valid_until,delivery_days,freight_cost,notes,active,created_by) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
+                    target, actor.storeId(), body.supplierId(), body.productId(),
+                    Db.optional(body.brand(), 80), Db.optional(body.supplierProductCode(), 80),
+                    baseCost, minimumOrder, quoted, body.validUntil(), body.deliveryDays(),
+                    freight, Db.optional(body.notes(), 500), body.active(), actor.userId());
             Set<BigDecimal> thresholds=new HashSet<>();
             if(body.tiers()!=null) for(var tier:body.tiers()) {
                 BigDecimal threshold = validQuantity(tier.minimumQuantity());
@@ -116,7 +115,7 @@ public class SupplierOffersService {
                 db.jdbc.update("INSERT INTO supplier_offer_tier(id,offer_id,minimum_quantity,unit_cost) VALUES(?,?,?,?)",
                     UUID.randomUUID(),target,threshold,tierCost);
             }
-            db.audit(actor,id==null?"SUPPLIER_OFFER_CREATED":"SUPPLIER_OFFER_UPDATED",target,
+            db.audit(actor,id==null?"SUPPLIER_OFFER_CREATED":"SUPPLIER_OFFER_REVISED",target,
                 "Cotação de fornecedor para produto "+body.productId());
             return target;
         });
