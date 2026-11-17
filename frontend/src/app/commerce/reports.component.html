@@ -102,7 +102,7 @@
         @for (product of data.products; track product.productId + product.unitCode + product.name; let i = $index) {
           <div class="best-product"><span class="product-ranking">{{ i+1 }}</span>
             <div><strong>{{ product.name }}</strong><small>{{ quantity(product.quantity) }} {{ product.unitCode }}</small></div>
-            <span class="product-revenue">{{ money(product.grossRevenue) }}</span>
+            <span class="product-revenue">{{ money(product.grossRevenue) }}<small>Lucro bruto: {{ money(product.grossProfit) }} · Margem: {{ percentage(product.grossMarginPercent) }}</small></span>
           </div>
         } @empty { <p class="insights-empty">Nenhum produto vendido neste período.</p> }
       </section>
