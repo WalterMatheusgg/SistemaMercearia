@@ -33,4 +33,4 @@ CREATE INDEX IF NOT EXISTS supplier_offer_tier_lookup ON supplier_offer_tier(off
 ALTER TABLE purchase_order
     ADD COLUMN IF NOT EXISTS freight_cost NUMERIC(14,2) NOT NULL DEFAULT 0 CHECK (freight_cost >= 0);
 ALTER TABLE purchase_receipt
-    ADD COLUMN freight_cost NUMERIC(14,2) NOT NULL DEFAULT 0 CHECK (freight_cost >= 0);
+    ADD COLUMN IF NOT EXISTS freight_cost NUMERIC(14,2) NOT NULL DEFAULT 0 CHECK (freight_cost >= 0);
