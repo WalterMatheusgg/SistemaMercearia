@@ -49,7 +49,7 @@ public class ProductCostingService {
         return after;
     }
 
-    /** Retira do valor do estoque a parcela recebida originalmente, sem reescrever vendas antigas. */
+    /** Retira estoque pelo custo médio vigente, sem reescrever vendas históricas. */
     public BigDecimal remove(UUID productId, UUID movementId, UUID sourceId, String sourceType,
                              BigDecimal quantity, BigDecimal unitCost) {
         BigDecimal qty = quantity;
