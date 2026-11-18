@@ -15,7 +15,7 @@ Na Vercel, as variáveis privadas `DB_URL`, `DB_USERNAME`, `DB_PASSWORD` devem a
 
 Defina ainda `SPRING_PROFILES_ACTIVE=prod,vercel`, `APP_PUBLIC_URL` com HTTPS, `SESSION_COOKIE_SECURE=true`, `PORT=8080` e `BOOTSTRAP_ADMIN_ENABLED=false` depois do primeiro administrador criado. Somente um banco vazio precisa temporariamente de `prod,vercel,bootstrap` e de credenciais fortes de bootstrap. Remova-as depois do primeiro acesso. O perfil `prod` obriga cookies seguros e desabilita Swagger público.
 
-Verifique o banco (`flyway_schema_history` versões V1–V12 em `loja`), `/actuator/health`, login e ações não destrutivas de Produtos e Estoque. A atualização não migra automaticamente dados do Codespace; consulte o procedimento de backup e restauração em `docs/HOSPEDAGEM.md`.
+Verifique o banco (`flyway_schema_history` versões V1–V16 em `loja`), `/actuator/health`, login e ações não destrutivas de Produtos e Estoque. A atualização não migra automaticamente dados do Codespace; consulte o procedimento de backup e restauração em `docs/HOSPEDAGEM.md`.
 
 ## Estado verificado em 07/11/2026
 
@@ -41,7 +41,7 @@ ao Supabase, com backup e verificação em um runner de manutenção confiável,
 antes de publicar qualquer release que acrescente migrações. O backend
 continua com `ddl-auto: validate`, que ajuda a detectar divergências.
 Confirme a versão de `loja.flyway_schema_history` antes de novas releases;
-na configuração atual V12 já está aplicada. As migrações V13–V16 desta evolução ainda precisam ser aplicadas no Supabase por um runner de manutenção, antes de usar os novos fluxos de compras/custos. Não use o runtime Vercel para fazer migração concorrente em inúmeras instâncias.
+na configuração atual V1–V16 estão aplicadas. Em 18/11/2026, a conferência do projeto Supabase Loja Ferragens confirmou as versões V13–V16 com sucesso, as 12 colunas do perfil comercial de fornecedor, as tabelas `supplier_offer` e `supplier_offer_tier`, os campos de frete em pedidos/recebimentos e os privilégios da role `loja_app`. O banco não recebeu registros artificiais durante a atualização. Não use o runtime Vercel para fazer migração concorrente em inúmeras instâncias.
 
 ### Migrações de compras e custo médio (V13–V16)
 
@@ -51,13 +51,17 @@ A evolução do módulo de compras acrescenta as migrações V13–V16:
 - V15: perfil comercial de fornecedor, migrado para uma versão única e com IF NOT EXISTS.
 - V16: cotações estruturadas, faixas de preço e frete no pedido/recebimento, também idempotente para instalações que já tenham parte dessas estruturas.
 
-Antes de publicar ou usar as novas funções no ambiente Supabase:
-1. Faça e confira um backup restaurável.
-2. Confira loja.flyway_schema_history e a versão atual do schema.
-3. Execute as migrações V13–V16 em sequência, usando um runner de manutenção conectado ao schema loja e com a mesma versão do código.
-4. Confirme que todas as quatro versões aparecem em loja.flyway_schema_history e valide cadastro, recebimento parcial, devolução e exportação Excel.
+## Situação das migrações V13–V16 (18/11/2026)
 
-A Vercel continua com Flyway desativado. Um deploy de código, por si só, não aplica essas migrações.
+As quatro migrações foram aplicadas ao schema privado `loja` do projeto Supabase Loja Ferragens e conferidas no histórico Flyway:
+- V13: custo efetivo por recebimento e livro de eventos do custo médio ponderado.
+- V14: proteção de imutabilidade dos eventos de custo.
+- V15: perfil comercial completo do fornecedor.
+- V16: cotações estruturadas, faixas por quantidade e frete em pedidos/recebimentos.
+
+A verificação confirmou as versões V1–V16 como bem-sucedidas, as colunas e tabelas esperadas e acesso de leitura/escrita da role `loja_app` às novas tabelas. Não foram inseridos dados fictícios no banco.
+
+Para futuras alterações, faça e confira um backup restaurável antes da migração, aplique as versões em sequência por um runner de manutenção conectado ao schema `loja`, e valide os fluxos afetados. A Vercel continua com Flyway desativado: um deploy de código, por si só, não aplica migrações.
 
 **Limite importante:** essas medidas reduzem chamadas e conexões; não tornam
 o processo Java persistente. Primeiro acesso após inatividade ainda terá
